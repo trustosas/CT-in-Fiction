@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-[#f5f2ed] text-[#1a1a1a] font-sans antialiased;
+  }
+}
+
+.editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.character-card {
+  @apply relative overflow-hidden transition-all duration-500 ease-out;
+}
+
+.character-image-container {
+  @apply aspect-[16/9] overflow-hidden rounded-sm mb-4;
+}
+
+.character-image {
+  @apply w-full h-full transition-transform duration-700;
+}

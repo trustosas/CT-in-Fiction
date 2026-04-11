@@ -1,0 +1,83 @@
+import Papa from 'papaparse';
+import { type Character } from '../data';
+
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhyird8EfAwfyJx4tyy7stnR10wzr8k3kyhZ1tSH9JZGmcKkD2e_Q0JmAGJrl1y15PCyghiRS1zRlT/pub?output=csv';
+
+export async function fetchCharacters(): Promise<Character[]> {
+  try {
+    // Adding a timestamp to bypass any potential browser caching
+    const cacheBuster = `&t=${Date.now()}`;
+    const response = await fetch(CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + cacheBuster);
+    const csvText = await response.text();
+    
+    // Split into lines and skip the first 6 metadata/header rows
+    const lines = csvText.split('\n');
+    const dataLines = lines.slice(6).join('\n');
+    
+    return new Promise((resolve, reject) => {
+      Papa.parse(dataLines, {
+        header: false, // We'll map manually by index
+        skipEmptyLines: 'greedy',
+        complete: (results) => {
+          const characters: Character[] = results.data.map((row: any, index: number) => {
+            // Mapping based on the observed spreadsheet structure:
+            // 0: Medium
+            // 1: Work Title
+            // 2: Year
+            // 3: Work Image URL
+            // 4: Name
+            // 5: Subject Image URL
+            // 6: Type
+            // 7: Alternate Type
+            // 8: Subtype
+            // ...
+            // 20: Initial Development
+            // 21: Final Development
+            // 22: Emotional Attitude
+            // 23: Analysis
+            // 24: Notes
+            // 25+: Motifs (96 values)
+
+            const name = row[4] || '';
+            const type = row[6] || '';
+            
+            // Extract motif values starting from index 25
+            const motifValues = row.slice(25, 25 + 96).map((val: any) => {
+              const sVal = String(val).trim().toUpperCase();
+              return sVal === 'TRUE' || sVal === '1' || sVal === 'YES';
+            });
+
+            return {
+              id: `char-${index}`,
+              medium: row[0] || '',
+              source: row[1] || '',
+              year: row[2] || '',
+              workImageUrl: row[3] || '',
+              name: name.trim(),
+              imageUrl: row[5] || '',
+              type: type.trim(),
+              alternateType: row[7] || '',
+              subtype: row[8] || '',
+              initialDevelopment: row[20] || '',
+              finalDevelopment: row[21] || '',
+              emotionalAttitude: row[22] || '',
+              analysis: row[23] || '',
+              notes: row[24] || '',
+              motifValues: motifValues.length > 0 ? motifValues : undefined
+            };
+          }).filter((char: any) => char.name && char.type && char.name.toLowerCase() !== 'name');
+
+          console.log(`Successfully parsed ${characters.length} characters from spreadsheet.`);
+          resolve(characters);
+        },
+        error: (error: any) => {
+          console.error('PapaParse error:', error);
+          reject(error);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
+  }
+}
