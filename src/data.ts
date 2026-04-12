@@ -9,6 +9,7 @@ export interface Character {
   type: string;
   alternateType?: string;
   subtype: string;
+  behaviourQualia: string;
   initialDevelopment: string;
   finalDevelopment: string;
   emotionalAttitude: string;

@@ -690,7 +690,7 @@ export default function App() {
                   <div className="flex flex-col items-end gap-0.5">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{char.type}</span>
                     <span className="font-sans text-sm font-bold tracking-[0.2em]">{char.finalDevelopment}</span>
-                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">{char.subtype}</span>
+                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">{char.subtype} • {char.behaviourQualia}</span>
                   </div>
                 </div>
               </motion.div>
@@ -745,7 +745,7 @@ export default function App() {
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="font-mono text-sm font-bold mb-1">{selectedCharacter.type}</span>
                       <span className="font-sans text-lg font-bold tracking-[0.2em] leading-none">{selectedCharacter.finalDevelopment}</span>
-                      <span className="font-mono text-[9px] opacity-40 tracking-tighter">{selectedCharacter.subtype}</span>
+                      <span className="font-mono text-[9px] opacity-40 tracking-tighter">{selectedCharacter.subtype} • {selectedCharacter.behaviourQualia}</span>
                     </div>
                   </div>
                 </div>
@@ -767,12 +767,12 @@ export default function App() {
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                     <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
                     <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
-                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type)}</p>
+                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
                   </div>
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                     <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Final Dev</p>
                     <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment}</span>
-                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type)}</p>
+                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
                   </div>
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                     <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Emotional Attitude</p>

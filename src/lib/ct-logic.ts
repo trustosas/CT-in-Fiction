@@ -307,7 +307,7 @@ export function getStructuredMotifs(values: boolean[]): FunctionMotifs[] {
   return structured;
 }
 
-export function getDevelopmentName(symbol: string, type: string): string {
+export function getDevelopmentName(symbol: string, type: string, behaviourQualia?: string): string {
   if (!type) {
     const genericMapping: Record<string, string> = {
       'I---': 'Standard',
@@ -324,7 +324,11 @@ export function getDevelopmentName(symbol: string, type: string): string {
 
   const ct = deriveCTData(type);
   const isJLead = ct.energetics.lead === 'Ji' || ct.energetics.lead === 'Je';
-  const isConductor = ct.energetics.lead === 'Je' || ct.energetics.lead === 'Pi';
+  
+  // Use behaviourQualia from DB if provided, otherwise fallback to derived logic
+  const isConductor = behaviourQualia 
+    ? behaviourQualia.toLowerCase().includes('conductor')
+    : (ct.energetics.lead === 'Je' || ct.energetics.lead === 'Pi');
 
   const mapping: Record<string, string> = {
     'I---': 'Standard',

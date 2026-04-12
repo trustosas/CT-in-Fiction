@@ -31,18 +31,19 @@ export async function fetchCharacters(): Promise<Character[]> {
             // 7: Alternate Type
             // 8: Subtype
             // ...
-            // 20: Initial Development
-            // 21: Final Development
-            // 22: Emotional Attitude
-            // 23: Analysis
-            // 24: Notes
-            // 25+: Motifs (96 values)
+            // 20: Behaviour Qualia
+            // 21: Initial Development
+            // 22: Final Development
+            // 23: Emotional Attitude
+            // 24: Analysis
+            // 25: Notes
+            // 26+: Motifs (96 values)
 
             const name = row[4] || '';
             const type = row[6] || '';
             
-            // Extract motif values starting from index 25
-            const motifValues = row.slice(25, 25 + 96).map((val: any) => {
+            // Extract motif values starting from index 26
+            const motifValues = row.slice(26, 26 + 96).map((val: any) => {
               const sVal = String(val).trim().toUpperCase();
               return sVal === 'TRUE' || sVal === '1' || sVal === 'YES';
             });
@@ -58,11 +59,12 @@ export async function fetchCharacters(): Promise<Character[]> {
               type: type.trim(),
               alternateType: row[7] || '',
               subtype: row[8] || '',
-              initialDevelopment: row[20] || '',
-              finalDevelopment: row[21] || '',
-              emotionalAttitude: row[22] || '',
-              analysis: row[23] || '',
-              notes: row[24] || '',
+              behaviourQualia: row[20] || '',
+              initialDevelopment: row[21] || '',
+              finalDevelopment: row[22] || '',
+              emotionalAttitude: row[23] || '',
+              analysis: row[24] || '',
+              notes: row[25] || '',
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
           }).filter((char: any) => char.name && char.type && char.name.toLowerCase() !== 'name');
