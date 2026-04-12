@@ -2,23 +2,23 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check } from 'lucide-react';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { deriveCTData, getStructuredMotifs } from './lib/ct-logic';
+import { deriveCTData, getStructuredMotifs, getDevelopmentName } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
-type View = 'home' | 'medium' | 'work' | 'archive';
+type View = 'home' | 'medium' | 'work' | 'feed';
 
 export default function App() {
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<View>('archive');
+  const [currentView, setCurrentView] = useState<View>('feed');
   const [activeWork, setActiveWork] = useState<string | null>(null);
   const [activeMedium, setActiveMedium] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(null);
-  const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(null);
   const [selectedLeadEnergetic, setSelectedLeadEnergetic] = useState<string | null>(null);
   const [selectedLeadFunction, setSelectedLeadFunction] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -34,11 +34,11 @@ export default function App() {
   useEffect(() => {
     let title = 'CT in Fiction DB';
     if (selectedCharacter) {
-      title = `${selectedCharacter.name} | CT in Fiction DB`;
+      title = selectedCharacter.name;
     } else if (currentView === 'work' && activeWork) {
-      title = `${activeWork} | CT in Fiction DB`;
+      title = activeWork;
     } else if (currentView === 'medium' && activeMedium) {
-      title = `${activeMedium} | CT in Fiction DB`;
+      title = activeMedium;
     }
     document.title = title;
   }, [currentView, activeWork, activeMedium, selectedCharacter]);
@@ -72,14 +72,14 @@ export default function App() {
     return Array.from(new Set(filtered.map(c => c.type))).sort();
   }, [characters, selectedQuadra]);
 
-  const subtypes = useMemo(() => {
+  const developments = useMemo(() => {
     const filtered = characters.filter(c => {
       const matchesType = !selectedType || c.type === selectedType;
       const ct = c.type ? deriveCTData(c.type) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
       return matchesType && matchesQuadra;
     });
-    return Array.from(new Set(filtered.map(c => c.subtype))).sort();
+    return Array.from(new Set(filtered.map(c => c.finalDevelopment))).sort();
   }, [characters, selectedType, selectedQuadra]);
   
   const quadras = useMemo(() => {
@@ -115,8 +115,8 @@ export default function App() {
   }, [selectedQuadra, types]);
 
   useEffect(() => {
-    if (selectedSubtype && !subtypes.includes(selectedSubtype)) setSelectedSubtype(null);
-  }, [selectedType, selectedQuadra, subtypes]);
+    if (selectedDevelopment && !developments.includes(selectedDevelopment)) setSelectedDevelopment(null);
+  }, [selectedType, selectedQuadra, developments]);
 
   useEffect(() => {
     if (selectedLeadEnergetic && !energetics.includes(selectedLeadEnergetic)) setSelectedLeadEnergetic(null);
@@ -157,11 +157,11 @@ export default function App() {
     const matchesEnergetic = !selectedLeadEnergetic || (ct && ct.energetics.lead.toLowerCase() === selectedLeadEnergetic.toLowerCase());
     const matchesFunction = !selectedLeadFunction || (ct && ct.functions.lead.toLowerCase() === selectedLeadFunction.toLowerCase());
     
-    // Subtype filtering (case-insensitive for robustness)
-    const matchesSubtype = !selectedSubtype || 
-                          (char.subtype && char.subtype.toLowerCase() === selectedSubtype.toLowerCase());
+    // Development filtering (case-insensitive for robustness)
+    const matchesDevelopment = !selectedDevelopment || 
+                          (char.finalDevelopment && char.finalDevelopment.toLowerCase() === selectedDevelopment.toLowerCase());
 
-    return matchesSearch && matchesType && matchesQuadra && matchesSubtype && matchesEnergetic && matchesFunction;
+    return matchesSearch && matchesType && matchesQuadra && matchesDevelopment && matchesEnergetic && matchesFunction;
   });
 
   const navigateToWork = (workTitle: string) => {
@@ -181,7 +181,7 @@ export default function App() {
   };
 
   const navigateToHome = () => {
-    setCurrentView('archive');
+    setCurrentView('feed');
     setActiveMedium(null);
     setActiveWork(null);
     setSelectedCharacter(null);
@@ -189,8 +189,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToArchive = () => {
-    setCurrentView('archive');
+  const navigateToFeed = () => {
+    setCurrentView('feed');
     setActiveMedium(null);
     setActiveWork(null);
     setSelectedCharacter(null);
@@ -239,7 +239,12 @@ export default function App() {
           className="w-full flex items-center justify-between bg-transparent border-b border-[#1a1a1a]/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-[#1a1a1a]"
         >
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
-            {value || placeholder}
+            {label === 'Development' && value ? (
+              <span className="flex items-center gap-3">
+                <span className="font-sans tracking-[0.2em]">{value}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getDevelopmentName(value, selectedType || '')}</span>
+              </span>
+            ) : (value || placeholder)}
           </span>
           <ChevronDown className={`w-3 h-3 transition-transform duration-300 pointer-events-none ${isOpen ? 'rotate-180' : 'opacity-50 group-hover:opacity-100'}`} />
         </button>
@@ -266,7 +271,12 @@ export default function App() {
                   onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
                   className="w-full px-4 py-2 text-[10px] font-mono tracking-wider text-left hover:bg-[#1a1a1a]/10 transition-colors flex items-center justify-between"
                 >
-                  {opt}
+                      {label === 'Development' ? (
+                        <span className="flex items-center gap-3">
+                          <span className="font-sans text-sm font-bold tracking-[0.2em]">{opt}</span>
+                          <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(opt, selectedType || '')}</span>
+                        </span>
+                      ) : opt}
                   {value === opt && <Check className="w-3 h-3" />}
                 </button>
               ))}
@@ -326,10 +336,10 @@ export default function App() {
 
               <nav className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
                 <button 
-                  onClick={navigateToArchive}
+                  onClick={navigateToFeed}
                   className="block font-serif text-2xl hover:italic transition-all text-left w-full"
                 >
-                  Archive
+                  Feed
                 </button>
                 
                 <div className="pt-6 border-t border-white/10">
@@ -349,7 +359,7 @@ export default function App() {
               </nav>
 
               <div className="pt-6 mt-auto border-t border-white/5 font-mono text-[8px] uppercase tracking-widest opacity-20">
-                CT Archive v1.0
+                CT in Fiction v1.0
               </div>
             </motion.div>
           </>
@@ -366,10 +376,10 @@ export default function App() {
             <Menu className="w-5 h-5" />
           </button>
           <button 
-            onClick={navigateToArchive}
-            className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'archive' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
+            onClick={navigateToFeed}
+            className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'feed' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
           >
-            Archive
+            Feed
           </button>
           {activeMedium && (
             <>
@@ -403,7 +413,7 @@ export default function App() {
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
                 {currentView === 'home' ? 'Media Library' : 
                  currentView === 'medium' ? `Medium: ${activeMedium}` :
-                 currentView === 'work' ? 'Work Profile' : 'Archive v1.0'}
+                 currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.0'}
               </span>
               {isLoading && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#1a1a1a]/5 rounded-full">
@@ -419,7 +429,7 @@ export default function App() {
               )}
             </div>
             
-            {currentView === 'archive' ? (
+            {currentView === 'feed' ? (
               <>
                 <h1 className="font-serif text-6xl md:text-8xl leading-none tracking-tight mb-6">
                   Fictional <br />
@@ -461,7 +471,7 @@ export default function App() {
             )}
           </div>
           
-          {(currentView === 'archive' || currentView === 'work') && (
+          {(currentView === 'feed' || currentView === 'work') && (
             <div className="flex flex-col gap-6 w-full md:w-auto">
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
@@ -509,11 +519,11 @@ export default function App() {
                         placeholder="All Types"
                       />
                       <CustomSelect 
-                        label="Subtype"
-                        value={selectedSubtype}
-                        options={subtypes}
-                        onChange={setSelectedSubtype}
-                        placeholder="All Subtypes"
+                        label="Development"
+                        value={selectedDevelopment}
+                        options={developments}
+                        onChange={setSelectedDevelopment}
+                        placeholder="All Developments"
                       />
                       <CustomSelect 
                         label="Lead Energetic"
@@ -534,14 +544,14 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              {(selectedQuadra || selectedType || selectedSubtype || selectedLeadEnergetic || selectedLeadFunction) && (
+              {(selectedQuadra || selectedType || selectedDevelopment || selectedLeadEnergetic || selectedLeadFunction) && (
                 <div className="pt-2">
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedQuadra(null);
                       setSelectedType(null);
-                      setSelectedSubtype(null);
+                      setSelectedDevelopment(null);
                       setSelectedLeadEnergetic(null);
                       setSelectedLeadFunction(null);
                     }}
@@ -587,13 +597,13 @@ export default function App() {
             </motion.div>
           ))}
 
-          {(currentView === 'archive' || currentView === 'work') && filteredCharacters.length === 0 && !isLoading && (
+          {(currentView === 'feed' || currentView === 'work') && filteredCharacters.length === 0 && !isLoading && (
             <div className="col-span-full py-32 text-center">
               <div className="max-w-md mx-auto">
                 <AlertCircle className="w-12 h-12 mx-auto mb-6 opacity-20" />
                 <h2 className="font-serif text-3xl mb-4">No Subjects Found</h2>
                 <p className="text-sm opacity-50 leading-relaxed mb-8">
-                  The archive is currently empty or the live sync is disconnected. 
+                  The feed is currently empty or the live sync is disconnected. 
                   If you are the administrator, ensure your Google Sheet is 
                   <strong> Published to the Web</strong> as a <strong>CSV</strong>.
                 </p>
@@ -609,7 +619,7 @@ export default function App() {
               </div>
             </div>
           )}
-          {(currentView === 'archive' || currentView === 'work') && filteredCharacters.map((char) => {
+          {(currentView === 'feed' || currentView === 'work') && filteredCharacters.map((char) => {
             const ct = deriveCTData(char.type);
             return (
               <motion.div
@@ -642,9 +652,10 @@ export default function App() {
                       {char.source} ({char.year})
                     </button>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded">{char.type}</span>
-                    <span className="font-mono text-[9px] opacity-40">{char.subtype}</span>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{char.type}</span>
+                    <span className="font-sans text-sm font-bold tracking-[0.2em]">{char.finalDevelopment}</span>
+                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">{char.subtype}</span>
                   </div>
                 </div>
               </motion.div>
@@ -696,9 +707,10 @@ export default function App() {
                       {selectedCharacter.source} ({selectedCharacter.year})
                     </button>
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
-                    <div className="flex flex-col items-end">
-                      <span className="font-mono text-sm font-bold">{selectedCharacter.type}</span>
-                      <span className="font-mono text-[10px] opacity-40">{selectedCharacter.subtype}</span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="font-mono text-sm font-bold mb-1">{selectedCharacter.type}</span>
+                      <span className="font-sans text-lg font-bold tracking-[0.2em] leading-none">{selectedCharacter.finalDevelopment}</span>
+                      <span className="font-mono text-[9px] opacity-40 tracking-tighter">{selectedCharacter.subtype}</span>
                     </div>
                   </div>
                 </div>
@@ -718,12 +730,14 @@ export default function App() {
                 {/* Development & Attitude */}
                 <div className="grid grid-cols-3 gap-4 mb-12">
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Initial Dev</p>
-                    <p className="font-mono text-lg font-bold tracking-widest">{selectedCharacter.initialDevelopment}</p>
+                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
+                    <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
+                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type)}</p>
                   </div>
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Final Dev</p>
-                    <p className="font-mono text-lg font-bold tracking-widest">{selectedCharacter.finalDevelopment}</p>
+                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Final Dev</p>
+                    <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment}</span>
+                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type)}</p>
                   </div>
                   <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                     <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Emotional Attitude</p>
@@ -767,18 +781,18 @@ export default function App() {
                       <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
                         <Compass className="w-3 h-3" /> Axes & Quadra
                       </h4>
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-3">
                         <div className="border border-[#1a1a1a]/5 p-3 rounded">
-                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Judgment Axis</p>
-                          <p className="font-serif italic text-lg">{ct.axes.judgment}</p>
+                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Judgment</p>
+                          <p className="font-serif italic text-base">{ct.axes.judgment}</p>
                         </div>
                         <div className="border border-[#1a1a1a]/5 p-3 rounded">
-                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Perception Axis</p>
-                          <p className="font-serif italic text-lg">{ct.axes.perception}</p>
+                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Perception</p>
+                          <p className="font-serif italic text-base">{ct.axes.perception}</p>
                         </div>
                         <div className="border border-[#1a1a1a]/5 p-3 rounded bg-[#1a1a1a] text-white">
                           <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Quadra</p>
-                          <p className="font-serif italic text-lg">{ct.quadra}</p>
+                          <p className="font-serif italic text-base">{ct.quadra}</p>
                         </div>
                       </div>
                     </div>
@@ -917,7 +931,7 @@ export default function App() {
 
       <footer className="mt-32 pt-12 border-t border-[#1a1a1a]/10 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
-          © 2026 Cognitive Typology Archive. All rights reserved.
+          © 2026 CT in Fiction. All rights reserved.
         </p>
         <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest opacity-40">
           <a href="#" className="hover:opacity-100 transition-opacity">Methodology</a>

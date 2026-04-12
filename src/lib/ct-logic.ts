@@ -307,6 +307,39 @@ export function getStructuredMotifs(values: boolean[]): FunctionMotifs[] {
   return structured;
 }
 
+export function getDevelopmentName(symbol: string, type: string): string {
+  if (!type) {
+    const genericMapping: Record<string, string> = {
+      'I---': 'Standard',
+      'II--': 'Full Reviser / Full Conductor',
+      'I-I-': 'Double-Introverted / Double-Extroverted',
+      'I--I': 'Judgement Polarized / Perception Polarized',
+      'III-': 'Judgement Heavy / Perception Heavy',
+      'II-I': 'Energy Inverted',
+      'I-II': 'Antithetical',
+      'IIII': 'Fully Conscious'
+    };
+    return genericMapping[symbol] || symbol;
+  }
+
+  const ct = deriveCTData(type);
+  const isJLead = ct.energetics.lead === 'Ji' || ct.energetics.lead === 'Je';
+  const isConductor = ct.energetics.lead === 'Je' || ct.energetics.lead === 'Pi';
+
+  const mapping: Record<string, string> = {
+    'I---': 'Standard',
+    'II--': isConductor ? 'Full Conductor' : 'Full Reviser',
+    'I-I-': (ct.energetics.lead === 'Je' || ct.energetics.lead === 'Pe') ? 'Double-Extroverted' : 'Double-Introverted',
+    'I--I': isJLead ? 'Judgement Polarized' : 'Perception Polarized',
+    'III-': isJLead ? 'Judgement Heavy' : 'Perception Heavy',
+    'II-I': 'Energy Inverted',
+    'I-II': 'Antithetical',
+    'IIII': 'Fully Conscious'
+  };
+
+  return mapping[symbol] || symbol;
+}
+
 export interface Motif {
   category: 'Philosophical' | 'Behavioural' | 'Linguistic';
   label: string;
