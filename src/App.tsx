@@ -26,6 +26,39 @@ export default function App() {
   const [activeMotifDesc, setActiveMotifDesc] = useState<string | null>(null);
   const [activeMotifId, setActiveMotifId] = useState<string | null>(null);
   const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEvents = (e: Event) => {
+      if (!activeMotifId) return;
+      
+      if (e.type === 'scroll') {
+        setActiveMotifId(null);
+        setActiveMotifDesc(null);
+        setMotifAnchor(null);
+        return;
+      }
+
+      if (e.type === 'mousedown' || e.type === 'touchstart') {
+        const target = e.target as HTMLElement;
+        if (bubbleRef.current && !bubbleRef.current.contains(target) && !target.closest('[data-motif-id]')) {
+          setActiveMotifId(null);
+          setActiveMotifDesc(null);
+          setMotifAnchor(null);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleEvents, true);
+    window.addEventListener('mousedown', handleEvents);
+    window.addEventListener('touchstart', handleEvents);
+
+    return () => {
+      window.removeEventListener('scroll', handleEvents, true);
+      window.removeEventListener('mousedown', handleEvents);
+      window.removeEventListener('touchstart', handleEvents);
+    };
+  }, [activeMotifId]);
 
   useEffect(() => {
     setActiveMotifDesc(null);
@@ -839,6 +872,7 @@ export default function App() {
                           return (
                             <div key={motifId} className="relative">
                               <button
+                                data-motif-id={motifId}
                                 onClick={(e) => {
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   if (isActive) {
@@ -883,6 +917,7 @@ export default function App() {
 
                           return (
                             <motion.div
+                              ref={bubbleRef}
                               initial={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
