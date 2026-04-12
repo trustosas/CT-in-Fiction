@@ -375,6 +375,16 @@ export interface DerivedCTData {
   quadra: Quadra;
 }
 
+export function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+}
+
 export function deriveCTData(type: string): DerivedCTData {
   const lead = getLeadFunction(type);
   const aux = getAuxFunction(type);

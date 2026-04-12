@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check } from 'lucide-react';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { deriveCTData, getStructuredMotifs, getDevelopmentName } from './lib/ct-logic';
+import { slugify, deriveCTData, getStructuredMotifs, getDevelopmentName } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
-type View = 'home' | 'medium' | 'work' | 'feed';
+type View = 'medium' | 'work' | 'feed';
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -45,12 +46,22 @@ const formatDate = (dateStr: string) => {
 };
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<AppContent />} />
+      <Route path="/:mediumSlug" element={<AppContent />} />
+      <Route path="/:mediumSlug/:workSlug" element={<AppContent />} />
+      <Route path="/:mediumSlug/:workSlug/:subjectSlug" element={<AppContent />} />
+    </Routes>
+  );
+}
+
+function AppContent() {
+  const navigate = useNavigate();
+  const { mediumSlug, workSlug, subjectSlug } = useParams();
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<View>('feed');
-  const [activeWork, setActiveWork] = useState<string | null>(null);
-  const [activeMedium, setActiveMedium] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -60,11 +71,112 @@ export default function App() {
   const [selectedLeadFunction, setSelectedLeadFunction] = useState<string | null>(null);
   const [selectedBehaviourQualia, setSelectedBehaviourQualia] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [activeMotifDesc, setActiveMotifDesc] = useState<string | null>(null);
   const [activeMotifId, setActiveMotifId] = useState<string | null>(null);
   const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setIsLoading(true);
+        const data = await fetchCharacters();
+        if (data && data.length > 0) {
+          setCharacters(data);
+          setError(null);
+        } else {
+          setError('Database is empty or inaccessible. Please check "Publish to Web" settings.');
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic data:', err);
+        setError('Sync Failed. Ensure Spreadsheet is "Published to Web" as CSV.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const publishedCharacters = useMemo(() => {
+    return characters.filter(c => c.isPublished);
+  }, [characters]);
+
+  const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
+
+  const works = useMemo(() => {
+    const workMap = new Map<string, { title: string; imageUrl: string; year: string }>();
+    publishedCharacters.forEach(char => {
+      if (!workMap.has(char.source)) {
+        workMap.set(char.source, { 
+          title: char.source, 
+          imageUrl: char.workImageUrl, 
+          year: char.year 
+        });
+      }
+    });
+    return Array.from(workMap.values());
+  }, [publishedCharacters]);
+
+  const activeMedium = useMemo(() => {
+    if (!mediumSlug) return null;
+    return media.find(m => slugify(m) === mediumSlug) || null;
+  }, [mediumSlug, media]);
+
+  const activeWork = useMemo(() => {
+    if (!workSlug) return null;
+    return works.find(w => slugify(w.title) === workSlug)?.title || null;
+  }, [workSlug, works]);
+
+  const selectedCharacter = useMemo(() => {
+    if (!subjectSlug) return null;
+    return publishedCharacters.find(c => slugify(c.name) === subjectSlug) || null;
+  }, [subjectSlug, publishedCharacters]);
+
+  const currentView = useMemo(() => {
+    if (workSlug) return 'work';
+    if (mediumSlug) return 'medium';
+    return 'feed';
+  }, [mediumSlug, workSlug]);
+
+  const navigateToWork = (workTitle: string) => {
+    const char = publishedCharacters.find(c => c.source === workTitle);
+    if (char) {
+      navigate(`/${slugify(char.medium)}/${slugify(workTitle)}`);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToMedium = (mediumName: string) => {
+    navigate(`/${slugify(mediumName)}`);
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToHome = () => {
+    navigate('/');
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToFeed = () => {
+    navigate('/');
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectCharacter = (char: Character | null) => {
+    if (char) {
+      navigate(`/${slugify(char.medium)}/${slugify(char.source)}/${slugify(char.name)}`);
+    } else {
+      if (activeWork && activeMedium) {
+        navigate(`/${slugify(activeMedium)}/${slugify(activeWork)}`);
+      } else if (activeMedium) {
+        navigate(`/${slugify(activeMedium)}`);
+      } else {
+        navigate('/');
+      }
+    }
+  };
 
   useEffect(() => {
     const handleEvents = (e: Event) => {
@@ -127,31 +239,6 @@ export default function App() {
     }
     document.title = title;
   }, [currentView, activeWork, activeMedium, selectedCharacter]);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true);
-        const data = await fetchCharacters();
-        if (data && data.length > 0) {
-          setCharacters(data);
-          setError(null);
-        } else {
-          setError('Database is empty or inaccessible. Please check "Publish to Web" settings.');
-        }
-      } catch (err) {
-        console.error('Failed to load dynamic data:', err);
-        setError('Sync Failed. Ensure Spreadsheet is "Published to Web" as CSV.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const publishedCharacters = useMemo(() => {
-    return characters.filter(c => c.isPublished);
-  }, [characters]);
 
   const types = useMemo(() => {
     const filtered = publishedCharacters.filter(c => {
@@ -229,22 +316,6 @@ export default function App() {
     if (selectedBehaviourQualia && !behaviourQualias.includes(selectedBehaviourQualia)) setSelectedBehaviourQualia(null);
   }, [selectedType, selectedQuadra, behaviourQualias]);
   
-  const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
-
-  const works = useMemo(() => {
-    const workMap = new Map<string, { title: string; imageUrl: string; year: string }>();
-    publishedCharacters.forEach(char => {
-      if (!workMap.has(char.source)) {
-        workMap.set(char.source, { 
-          title: char.source, 
-          imageUrl: char.workImageUrl, 
-          year: char.year 
-        });
-      }
-    });
-    return Array.from(workMap.values());
-  }, [publishedCharacters]);
-
   const filteredCharacters = useMemo(() => {
     return publishedCharacters
       .filter(char => {
@@ -276,40 +347,6 @@ export default function App() {
         return dateB.localeCompare(dateA);
       });
   }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, selectedType, selectedQuadra, selectedLeadEnergetic, selectedLeadFunction, selectedDevelopment]);
-
-  const navigateToWork = (workTitle: string) => {
-    setActiveWork(workTitle);
-    setCurrentView('work');
-    setSelectedCharacter(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const navigateToMedium = (mediumName: string) => {
-    setActiveMedium(mediumName);
-    setCurrentView('medium');
-    setActiveWork(null);
-    setSelectedCharacter(null);
-    setIsMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const navigateToHome = () => {
-    setCurrentView('feed');
-    setActiveMedium(null);
-    setActiveWork(null);
-    setSelectedCharacter(null);
-    setIsMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const navigateToFeed = () => {
-    setCurrentView('feed');
-    setActiveMedium(null);
-    setActiveWork(null);
-    setSelectedCharacter(null);
-    setIsMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const currentWorkData = activeWork ? works.find(w => w.title === activeWork) : null;
 
@@ -524,7 +561,7 @@ export default function App() {
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
-                {currentView === 'home' ? 'Media Library' : 
+                {currentView === 'feed' ? 'Media Library' : 
                  currentView === 'medium' ? `Medium: ${activeMedium}` :
                  currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.0'}
               </span>
@@ -750,7 +787,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="character-card group cursor-pointer"
-                onClick={() => setSelectedCharacter(char)}
+                onClick={() => handleSelectCharacter(char)}
               >
                 <div className="character-image-container aspect-[16/9]">
                   <img 
@@ -795,7 +832,7 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={() => setSelectedCharacter(null)}
+                onClick={() => handleSelectCharacter(null)}
                 className="fixed inset-0 bg-[#f5f2ed]/90 backdrop-blur-sm z-40"
               />
               <motion.div 
@@ -807,7 +844,7 @@ export default function App() {
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               >
                 <button 
-                  onClick={() => setSelectedCharacter(null)}
+                  onClick={() => handleSelectCharacter(null)}
                   className="absolute top-8 right-8 p-2 hover:bg-black/5 rounded-full transition-colors"
                 >
                   <X className="w-6 h-6" />
