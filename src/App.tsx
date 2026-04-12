@@ -64,8 +64,23 @@ export default function App() {
     loadData();
   }, []);
 
-  const types = useMemo(() => Array.from(new Set(characters.map(c => c.type))).sort(), [characters]);
-  const subtypes = useMemo(() => Array.from(new Set(characters.map(c => c.subtype))).sort(), [characters]);
+  const types = useMemo(() => {
+    const filtered = characters.filter(c => {
+      const ct = c.type ? deriveCTData(c.type) : null;
+      return !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
+    });
+    return Array.from(new Set(filtered.map(c => c.type))).sort();
+  }, [characters, selectedQuadra]);
+
+  const subtypes = useMemo(() => {
+    const filtered = characters.filter(c => {
+      const matchesType = !selectedType || c.type === selectedType;
+      const ct = c.type ? deriveCTData(c.type) : null;
+      const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
+      return matchesType && matchesQuadra;
+    });
+    return Array.from(new Set(filtered.map(c => c.subtype))).sort();
+  }, [characters, selectedType, selectedQuadra]);
   
   const quadras = useMemo(() => {
     const items = characters.map(c => c.type ? deriveCTData(c.type).quadra : null).filter(Boolean);
@@ -73,14 +88,43 @@ export default function App() {
   }, [characters]);
 
   const energetics = useMemo(() => {
-    const items = characters.map(c => c.type ? deriveCTData(c.type).energetics.lead : null).filter(Boolean);
+    const filtered = characters.filter(c => {
+      const matchesType = !selectedType || c.type === selectedType;
+      const ct = c.type ? deriveCTData(c.type) : null;
+      const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
+      return matchesType && matchesQuadra;
+    });
+    const items = filtered.map(c => c.type ? deriveCTData(c.type).energetics.lead : null).filter(Boolean);
     return Array.from(new Set(items as string[])).sort();
-  }, [characters]);
+  }, [characters, selectedType, selectedQuadra]);
 
   const functions = useMemo(() => {
-    const items = characters.map(c => c.type ? deriveCTData(c.type).functions.lead : null).filter(Boolean);
+    const filtered = characters.filter(c => {
+      const matchesType = !selectedType || c.type === selectedType;
+      const ct = c.type ? deriveCTData(c.type) : null;
+      const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
+      return matchesType && matchesQuadra;
+    });
+    const items = filtered.map(c => c.type ? deriveCTData(c.type).functions.lead : null).filter(Boolean);
     return Array.from(new Set(items as string[])).sort();
-  }, [characters]);
+  }, [characters, selectedType, selectedQuadra]);
+
+  // Reset dependent filters if they become invalid
+  useEffect(() => {
+    if (selectedType && !types.includes(selectedType)) setSelectedType(null);
+  }, [selectedQuadra, types]);
+
+  useEffect(() => {
+    if (selectedSubtype && !subtypes.includes(selectedSubtype)) setSelectedSubtype(null);
+  }, [selectedType, selectedQuadra, subtypes]);
+
+  useEffect(() => {
+    if (selectedLeadEnergetic && !energetics.includes(selectedLeadEnergetic)) setSelectedLeadEnergetic(null);
+  }, [selectedType, selectedQuadra, energetics]);
+
+  useEffect(() => {
+    if (selectedLeadFunction && !functions.includes(selectedLeadFunction)) setSelectedLeadFunction(null);
+  }, [selectedType, selectedQuadra, functions]);
   
   const media = useMemo(() => Array.from(new Set(characters.map(c => c.medium))).sort(), [characters]);
 
@@ -184,15 +228,20 @@ export default function App() {
 
     return (
       <div className="flex flex-col gap-1.5 group relative" ref={containerRef}>
-        <label className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-[#1a1a1a]">{label}</label>
-        <button 
+        <label 
           onClick={() => setIsOpen(!isOpen)}
+          className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-[#1a1a1a] cursor-pointer"
+        >
+          {label}
+        </label>
+        <button 
+          onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
           className="w-full flex items-center justify-between bg-transparent border-b border-[#1a1a1a]/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-[#1a1a1a]"
         >
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {value || placeholder}
           </span>
-          <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'opacity-50 group-hover:opacity-100'}`} />
+          <ChevronDown className={`w-3 h-3 transition-transform duration-300 pointer-events-none ${isOpen ? 'rotate-180' : 'opacity-50 group-hover:opacity-100'}`} />
         </button>
 
         <AnimatePresence>
@@ -201,10 +250,11 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
               className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#1a1a1a]/20 shadow-2xl z-[100] max-h-60 overflow-y-auto no-scrollbar"
             >
               <button 
-                onClick={() => { onChange(null); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onChange(null); setIsOpen(false); }}
                 className="w-full px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-left hover:bg-[#1a1a1a]/10 transition-colors flex items-center justify-between border-b border-[#1a1a1a]/5"
               >
                 {placeholder}
@@ -213,7 +263,7 @@ export default function App() {
               {options.map(opt => (
                 <button 
                   key={opt}
-                  onClick={() => { onChange(opt); setIsOpen(false); }}
+                  onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
                   className="w-full px-4 py-2 text-[10px] font-mono tracking-wider text-left hover:bg-[#1a1a1a]/10 transition-colors flex items-center justify-between"
                 >
                   {opt}
@@ -388,16 +438,6 @@ export default function App() {
                   Exploring {worksInMedium.length} works within the {activeMedium} medium.
                 </p>
               </>
-            ) : currentView === 'archive' ? (
-              <>
-                <h1 className="font-serif text-6xl md:text-8xl leading-none tracking-tight mb-6">
-                  Fictional <br />
-                  <span className="italic">Archetypes</span>
-                </h1>
-                <p className="text-lg opacity-70 leading-relaxed">
-                  A specialized database exploring the cognitive architectures of fictional subjects. 
-                </p>
-              </>
             ) : (
               <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
                 {currentWorkData && (
@@ -495,18 +535,21 @@ export default function App() {
               </AnimatePresence>
 
               {(selectedQuadra || selectedType || selectedSubtype || selectedLeadEnergetic || selectedLeadFunction) && (
-                <button 
-                  onClick={() => {
-                    setSelectedQuadra(null);
-                    setSelectedType(null);
-                    setSelectedSubtype(null);
-                    setSelectedLeadEnergetic(null);
-                    setSelectedLeadFunction(null);
-                  }}
-                  className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1.5 transition-opacity"
-                >
-                  <X className="w-3 h-3" /> Clear All Filters
-                </button>
+                <div className="pt-2">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedQuadra(null);
+                      setSelectedType(null);
+                      setSelectedSubtype(null);
+                      setSelectedLeadEnergetic(null);
+                      setSelectedLeadFunction(null);
+                    }}
+                    className="w-fit font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1.5 transition-opacity"
+                  >
+                    <X className="w-3 h-3" /> Clear All Filters
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -760,7 +803,7 @@ export default function App() {
                         ...m,
                         function: group.function,
                         name: m.label.split(':')[0].trim(),
-                        description: m.label.split(':').slice(1).join(':').trim()
+                        description: `${m.category}: ${m.label.split(':').slice(1).join(':').trim()}`
                       }))
                   );
 
@@ -772,7 +815,7 @@ export default function App() {
                         <Layers className="w-3 h-3" /> Observed Motif Profile
                       </h4>
                       
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mb-4">
                         {activeMotifs.map((motif, idx) => {
                           const motifId = `${motif.function}-${idx}`;
                           const isActive = activeMotifId === motifId;
@@ -789,45 +832,50 @@ export default function App() {
                                     setActiveMotifDesc(motif.description);
                                   }
                                 }}
-                                className={`group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-left ${
+                                className={`group flex items-center gap-1.5 px-2 py-1 rounded-full transition-all text-left ${
                                   isActive ? 'bg-[#1a1a1a] text-white' : 'bg-[#1a1a1a]/5 hover:bg-[#1a1a1a]/10'
                                 }`}
                               >
-                                <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                <span className={`font-mono text-[8px] font-bold px-1 py-0.5 rounded uppercase ${
                                   isActive ? 'bg-white/20 text-white' : 'bg-[#1a1a1a]/10'
                                 }`}>
                                   {motif.function}
                                 </span>
-                                <span className={`font-mono text-[9px] uppercase ${
-                                  isActive ? 'text-white/60' : 'opacity-40'
-                                }`}>
-                                  {motif.category}
-                                </span>
-                                <span className="text-[11px] font-medium">
+                                <span className="text-[10px] font-medium">
                                   {motif.name}
                                 </span>
                               </button>
-
-                              <AnimatePresence>
-                                {isActive && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute bottom-full left-0 mb-3 w-64 p-4 bg-[#1a1a1a] text-white rounded-sm shadow-xl z-10 origin-bottom-left"
-                                  >
-                                    <div className="absolute bottom-0 left-6 translate-y-1/2 rotate-45 w-2 h-2 bg-[#1a1a1a]" />
-                                    <p className="font-mono text-[8px] uppercase tracking-widest opacity-40 mb-2">Definition</p>
-                                    <p className="text-[11px] leading-relaxed italic opacity-90">
-                                      {motif.description}
-                                    </p>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
                             </div>
                           );
                         })}
                       </div>
+
+                      <AnimatePresence mode="wait">
+                        {activeMotifDesc && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-4 bg-[#1a1a1a] text-white rounded-sm shadow-xl mb-6 relative group">
+                              <button 
+                                onClick={() => {
+                                  setActiveMotifId(null);
+                                  setActiveMotifDesc(null);
+                                }}
+                                className="absolute top-3 right-3 p-1 hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <p className="font-mono text-[8px] uppercase tracking-widest opacity-40 mb-2">Definition</p>
+                              <p className="text-[11px] leading-relaxed italic opacity-90 pr-6">
+                                {activeMotifDesc}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })()}
