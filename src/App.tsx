@@ -32,6 +32,18 @@ export default function App() {
   }, [selectedCharacter]);
 
   useEffect(() => {
+    let title = 'CT in Fiction DB';
+    if (selectedCharacter) {
+      title = `${selectedCharacter.name} | CT in Fiction DB`;
+    } else if (currentView === 'work' && activeWork) {
+      title = `${activeWork} | CT in Fiction DB`;
+    } else if (currentView === 'medium' && activeMedium) {
+      title = `${activeMedium} | CT in Fiction DB`;
+    }
+    document.title = title;
+  }, [currentView, activeWork, activeMedium, selectedCharacter]);
+
+  useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
