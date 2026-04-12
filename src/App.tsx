@@ -25,10 +25,12 @@ export default function App() {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [activeMotifDesc, setActiveMotifDesc] = useState<string | null>(null);
   const [activeMotifId, setActiveMotifId] = useState<string | null>(null);
+  const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     setActiveMotifDesc(null);
     setActiveMotifId(null);
+    setMotifAnchor(null);
   }, [selectedCharacter]);
 
   useEffect(() => {
@@ -837,13 +839,21 @@ export default function App() {
                           return (
                             <div key={motifId} className="relative">
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
                                   if (isActive) {
                                     setActiveMotifId(null);
                                     setActiveMotifDesc(null);
+                                    setMotifAnchor(null);
                                   } else {
                                     setActiveMotifId(motifId);
                                     setActiveMotifDesc(motif.description);
+                                    setMotifAnchor({ 
+                                      top: rect.top, 
+                                      left: rect.left, 
+                                      width: rect.width,
+                                      height: rect.height
+                                    });
                                   }
                                 }}
                                 className={`group flex items-center gap-1.5 px-2 py-1 rounded-full transition-all text-left ${
@@ -864,31 +874,43 @@ export default function App() {
                         })}
                       </div>
 
-                      <AnimatePresence mode="wait">
-                        {activeMotifDesc && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="p-4 bg-[#1a1a1a] text-white rounded-sm shadow-xl mb-6 relative group">
-                              <button 
-                                onClick={() => {
-                                  setActiveMotifId(null);
-                                  setActiveMotifDesc(null);
-                                }}
-                                className="absolute top-3 right-3 p-1 hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                              <p className="font-mono text-[8px] uppercase tracking-widest opacity-40 mb-2">Definition</p>
-                              <p className="text-[11px] leading-relaxed italic opacity-90 pr-6">
+                      <AnimatePresence>
+                        {activeMotifDesc && motifAnchor && (() => {
+                          const bubbleWidth = Math.min(320, window.innerWidth - 32);
+                          const leftPos = Math.max(16, Math.min(motifAnchor.left + motifAnchor.width / 2 - bubbleWidth / 2, window.innerWidth - bubbleWidth - 16));
+                          const showAbove = motifAnchor.top + motifAnchor.height + 150 > window.innerHeight;
+                          const tailLeft = motifAnchor.left + motifAnchor.width / 2 - leftPos;
+
+                          return (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
+                              className="fixed z-[100] bg-[#1a1a1a] text-white p-4 rounded-xl shadow-2xl border border-white/10"
+                              style={{
+                                width: bubbleWidth,
+                                left: leftPos,
+                                top: showAbove ? 'auto' : motifAnchor.top + motifAnchor.height + 12,
+                                bottom: showAbove ? (window.innerHeight - motifAnchor.top) + 12 : 'auto',
+                              }}
+                            >
+                              {/* Speech Bubble Tail */}
+                              <div 
+                                className={`absolute w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent ${
+                                  showAbove 
+                                    ? 'border-t-[8px] border-t-[#1a1a1a] -bottom-2' 
+                                    : 'border-b-[8px] border-b-[#1a1a1a] -top-2'
+                                }`}
+                                style={{ left: Math.max(12, Math.min(tailLeft - 8, bubbleWidth - 24)) }}
+                              />
+
+                              <p className="font-mono text-[8px] uppercase tracking-widest opacity-40 mb-2">Motif Definition</p>
+                              <p className="text-[11px] leading-relaxed italic opacity-90 pr-4">
                                 {activeMotifDesc}
                               </p>
-                            </div>
-                          </motion.div>
-                        )}
+                            </motion.div>
+                          );
+                        })()}
                       </AnimatePresence>
                     </div>
                   );
