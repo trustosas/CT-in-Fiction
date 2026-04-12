@@ -58,6 +58,7 @@ export default function App() {
   const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(null);
   const [selectedLeadEnergetic, setSelectedLeadEnergetic] = useState<string | null>(null);
   const [selectedLeadFunction, setSelectedLeadFunction] = useState<string | null>(null);
+  const [selectedBehaviourQualia, setSelectedBehaviourQualia] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [activeMotifDesc, setActiveMotifDesc] = useState<string | null>(null);
@@ -197,6 +198,16 @@ export default function App() {
     return Array.from(new Set(items as string[])).sort();
   }, [publishedCharacters, selectedType, selectedQuadra]);
 
+  const behaviourQualias = useMemo(() => {
+    const filtered = publishedCharacters.filter(c => {
+      const matchesType = !selectedType || c.type === selectedType;
+      const ct = c.type ? deriveCTData(c.type) : null;
+      const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
+      return matchesType && matchesQuadra;
+    });
+    return Array.from(new Set(filtered.map(c => c.behaviourQualia))).sort();
+  }, [publishedCharacters, selectedType, selectedQuadra]);
+
   // Reset dependent filters if they become invalid
   useEffect(() => {
     if (selectedType && !types.includes(selectedType)) setSelectedType(null);
@@ -213,6 +224,10 @@ export default function App() {
   useEffect(() => {
     if (selectedLeadFunction && !functions.includes(selectedLeadFunction)) setSelectedLeadFunction(null);
   }, [selectedType, selectedQuadra, functions]);
+
+  useEffect(() => {
+    if (selectedBehaviourQualia && !behaviourQualias.includes(selectedBehaviourQualia)) setSelectedBehaviourQualia(null);
+  }, [selectedType, selectedQuadra, behaviourQualias]);
   
   const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
 
@@ -246,12 +261,13 @@ export default function App() {
         const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
         const matchesEnergetic = !selectedLeadEnergetic || (ct && ct.energetics.lead.toLowerCase() === selectedLeadEnergetic.toLowerCase());
         const matchesFunction = !selectedLeadFunction || (ct && ct.functions.lead.toLowerCase() === selectedLeadFunction.toLowerCase());
+        const matchesBehaviourQualia = !selectedBehaviourQualia || char.behaviourQualia === selectedBehaviourQualia;
         
         // Development filtering (case-insensitive for robustness)
         const matchesDevelopment = !selectedDevelopment || 
                               (char.finalDevelopment && char.finalDevelopment.toLowerCase() === selectedDevelopment.toLowerCase());
 
-        return matchesSearch && matchesType && matchesQuadra && matchesDevelopment && matchesEnergetic && matchesFunction;
+        return matchesSearch && matchesType && matchesQuadra && matchesDevelopment && matchesEnergetic && matchesFunction && matchesBehaviourQualia;
       })
       .sort((a, b) => {
         // Sort by publishedDate descending (newest first)
@@ -338,8 +354,8 @@ export default function App() {
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {label === 'Development' && value ? (
               <span className="flex items-center gap-3">
-                <span className="font-sans tracking-[0.2em]">{value}</span>
-                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getDevelopmentName(value, selectedType || '')}</span>
+                <span className="font-sans tracking-[0.2em] whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getDevelopmentName(value, selectedType || '', selectedBehaviourQualia || undefined)}</span>
               </span>
             ) : (value || placeholder)}
           </span>
@@ -370,8 +386,8 @@ export default function App() {
                 >
                       {label === 'Development' ? (
                         <span className="flex items-center gap-3">
-                          <span className="font-sans text-sm font-bold tracking-[0.2em]">{opt}</span>
-                          <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(opt, selectedType || '')}</span>
+                          <span className="font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap">{opt}</span>
+                          <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(opt, selectedType || '', selectedBehaviourQualia || undefined)}</span>
                         </span>
                       ) : opt}
                   {value === opt && <Check className="w-3 h-3" />}
@@ -600,7 +616,7 @@ export default function App() {
                     exit={{ height: 0, opacity: 0 }}
                     className="z-50"
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 pt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 pt-4">
                       <CustomSelect 
                         label="Quadra"
                         value={selectedQuadra}
@@ -623,6 +639,13 @@ export default function App() {
                         placeholder="All Developments"
                       />
                       <CustomSelect 
+                        label="Qualia"
+                        value={selectedBehaviourQualia}
+                        options={behaviourQualias}
+                        onChange={setSelectedBehaviourQualia}
+                        placeholder="All Qualias"
+                      />
+                      <CustomSelect 
                         label="Lead Energetic"
                         value={selectedLeadEnergetic}
                         options={energetics}
@@ -641,7 +664,7 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              {(selectedQuadra || selectedType || selectedDevelopment || selectedLeadEnergetic || selectedLeadFunction) && (
+              {(selectedQuadra || selectedType || selectedDevelopment || selectedLeadEnergetic || selectedLeadFunction || selectedBehaviourQualia) && (
                 <div className="pt-2">
                   <button 
                     onClick={(e) => {
@@ -651,6 +674,7 @@ export default function App() {
                       setSelectedDevelopment(null);
                       setSelectedLeadEnergetic(null);
                       setSelectedLeadFunction(null);
+                      setSelectedBehaviourQualia(null);
                     }}
                     className="w-fit font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1.5 transition-opacity"
                   >
@@ -751,7 +775,7 @@ export default function App() {
                   </div>
                   <div className="flex flex-col items-end gap-0.5">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{char.type}</span>
-                    <span className="font-sans text-sm font-bold tracking-[0.2em]">{char.finalDevelopment}</span>
+                    <span className="font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap">{char.finalDevelopment}</span>
                     <span className="font-mono text-[9px] opacity-40 tracking-tighter">{char.subtype} • {char.behaviourQualia}</span>
                   </div>
                 </div>
@@ -806,7 +830,7 @@ export default function App() {
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="font-mono text-sm font-bold mb-1">{selectedCharacter.type}</span>
-                      <span className="font-sans text-lg font-bold tracking-[0.2em] leading-none">{selectedCharacter.finalDevelopment}</span>
+                      <span className="font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
                       <span className="font-mono text-[9px] opacity-40 tracking-tighter">{selectedCharacter.subtype} • {selectedCharacter.behaviourQualia}</span>
                       {selectedCharacter.alternateType && (
                         <span className="font-mono text-[8px] opacity-30 tracking-tighter italic mt-1">Alt: {selectedCharacter.alternateType}</span>
