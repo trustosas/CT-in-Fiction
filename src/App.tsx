@@ -440,7 +440,7 @@ function AppContent() {
   const worksInMedium = useMemo(() => {
     if (!activeMedium) return [];
     const workMap = new Map<string, { title: string; imageUrl: string; year: string }>();
-    characters
+    publishedCharacters
       .filter(c => c.medium === activeMedium)
       .forEach(char => {
         if (!workMap.has(char.source)) {
@@ -452,7 +452,7 @@ function AppContent() {
         }
       });
     return Array.from(workMap.values());
-  }, [characters, activeMedium]);
+  }, [publishedCharacters, activeMedium]);
 
   const isNotFound = useMemo(() => {
     if (isLoading) return false;
@@ -779,7 +779,7 @@ function AppContent() {
                 <div>
                   <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all">{work.title}</h3>
                   <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
-                    {work.year} • {characters.filter(c => c.source === work.title).length} Subjects
+                    {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} Subjects
                   </p>
                 </div>
                 <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
