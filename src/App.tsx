@@ -14,20 +14,28 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return '';
   try {
     const hasTime = dateStr.includes(' ') || dateStr.includes('T');
-    const hasTimezone = /Z|[+-]\d{2}:?\d{2}$/.test(dateStr);
     
+    // If no timezone info is present, assume UTC to ensure consistent conversion for all users
     let normalizedStr = dateStr;
-    if (!hasTimezone) {
-      if (hasTime) {
-        normalizedStr = `${dateStr.replace(' ', 'T')}+01:00`;
-      } else {
-        // Just a date, assume start of day in Lagos (GMT+1)
-        normalizedStr = `${dateStr}T00:00:00+01:00`;
-      }
+    if (!dateStr.includes('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
+      // Append UTC to treat it as a universal timestamp
+      normalizedStr = dateStr.includes(' ') ? dateStr + ' UTC' : dateStr;
     }
     
     const date = new Date(normalizedStr);
-    if (isNaN(date.getTime())) return dateStr;
+    if (isNaN(date.getTime())) {
+      // Fallback to direct parsing if normalization failed
+      const fallbackDate = new Date(dateStr);
+      if (isNaN(fallbackDate.getTime())) return dateStr;
+      return new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: hasTime ? '2-digit' : undefined,
+        minute: hasTime ? '2-digit' : undefined,
+        hour12: true
+      }).format(fallbackDate);
+    }
 
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
@@ -61,7 +69,11 @@ function MarkdownAnalysis({ content }: { content: string }) {
 
     if (detectedUrl) {
       setLoading(true);
-      fetch(content.trim())
+      const url = content.trim();
+      const cacheBuster = `v=${Date.now()}`;
+      const bustedUrl = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
+      
+      fetch(bustedUrl)
         .then(res => res.text())
         .then(text => {
           setMarkdown(text);
