@@ -11,67 +11,61 @@ import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
+const parseDatabaseDate = (dateStr: string) => {
+  if (!dateStr) return null;
+  
   try {
-    const hasTime = dateStr.includes(' ') || dateStr.includes('T');
-    
-    // If no timezone info is present, assume GMT+1 (Lagos/London BST) as the source timezone
-    // to ensure consistent conversion for all users based on the database's reference time.
-    let normalizedStr = dateStr;
-    if (!dateStr.includes('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
+    // Handle M/D/YYYY format (e.g., 4/14/2026)
+    let processedStr = dateStr;
+    const dateParts = dateStr.split(' ')[0].split('/');
+    if (dateParts.length === 3 && dateParts[2].length === 4) {
+      const [m, d, y] = dateParts;
+      const isoDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      processedStr = dateStr.replace(dateStr.split(' ')[0], isoDate);
+    }
+
+    let normalizedStr = processedStr;
+    if (!processedStr.includes('Z') && !/[+-]\d{2}:?\d{2}$/.test(processedStr)) {
       // Append +01:00 to treat it as a GMT+1 timestamp
-      normalizedStr = dateStr.includes(' ') ? dateStr.replace(' ', 'T') + '+01:00' : dateStr;
+      // We use T separator for ISO compatibility
+      normalizedStr = processedStr.includes(' ') ? processedStr.replace(' ', 'T') + '+01:00' : processedStr;
     }
     
-    const date = new Date(normalizedStr);
+    let date = new Date(normalizedStr);
     if (isNaN(date.getTime())) {
-      // Fallback to direct parsing if normalization failed
-      const fallbackDate = new Date(dateStr);
-      if (isNaN(fallbackDate.getTime())) return dateStr;
-      return new Intl.DateTimeFormat(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: hasTime ? '2-digit' : undefined,
-        minute: hasTime ? '2-digit' : undefined,
-        second: hasTime ? '2-digit' : undefined,
-        hour12: true
-      }).format(fallbackDate);
+      date = new Date(dateStr);
     }
-
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    };
-
-    if (hasTime) {
-      options.hour = '2-digit';
-      options.minute = '2-digit';
-      options.second = '2-digit';
-      options.hour12 = true;
-    }
-
-    return new Intl.DateTimeFormat(undefined, options).format(date);
+    return isNaN(date.getTime()) ? null : date;
   } catch (e) {
-    return dateStr;
+    return null;
   }
 };
 
-const getRelativeTime = (dateStr: string) => {
-  if (!dateStr) return '';
-  try {
-    let normalizedStr = dateStr;
-    if (!dateStr.includes('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
-      normalizedStr = dateStr.includes(' ') ? dateStr.replace(' ', 'T') + '+01:00' : dateStr;
-    }
-    const date = new Date(normalizedStr);
-    if (isNaN(date.getTime())) return '';
-    return `(${formatDistanceToNow(date, { addSuffix: true })})`;
-  } catch (e) {
-    return '';
+const formatDate = (dateStr: string) => {
+  const date = parseDatabaseDate(dateStr);
+  if (!date) return dateStr;
+  
+  const hasTime = dateStr.includes(' ') || dateStr.includes('T');
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  };
+
+  if (hasTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+    options.second = '2-digit';
+    options.hour12 = true;
   }
+
+  return new Intl.DateTimeFormat(undefined, options).format(date);
+};
+
+const getRelativeTime = (dateStr: string) => {
+  const date = parseDatabaseDate(dateStr);
+  if (!date) return '';
+  return `(${formatDistanceToNow(date, { addSuffix: true })})`;
 };
 
 function MarkdownAnalysis({ content }: { content: string }) {
