@@ -68,6 +68,11 @@ const getRelativeTime = (dateStr: string) => {
   return `(${formatDistanceToNow(date, { addSuffix: true })})`;
 };
 
+const pluralize = (count: number, singular: string, plural?: string) => {
+  if (count === 1) return singular;
+  return plural || `${singular}s`;
+};
+
 function MarkdownAnalysis({ content }: { content: string }) {
   const [markdown, setMarkdown] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -628,7 +633,7 @@ function AppContent() {
                 </button>
                 
                 <div className="pt-6 border-t border-white/10">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">Media</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">{pluralize(media.length, 'Medium', 'Media')}</span>
                   <div className="space-y-2">
                     {media.map(m => (
                       <button 
@@ -730,7 +735,7 @@ function AppContent() {
                   {activeMedium}
                 </h1>
                 <p className="text-lg opacity-70 leading-relaxed">
-                  Exploring {worksInMedium.length} works within the {activeMedium} medium.
+                  Exploring {worksInMedium.length} {pluralize(worksInMedium.length, 'work')} within the {activeMedium} medium.
                 </p>
               </>
             ) : (
@@ -749,7 +754,7 @@ function AppContent() {
                     {activeWork}
                   </h1>
                   <p className="font-mono text-xs uppercase tracking-widest opacity-50">
-                    Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed Subjects
+                    Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed {pluralize(filteredCharacters.length, 'Subject')}
                   </p>
                 </div>
               </div>
@@ -890,7 +895,7 @@ function AppContent() {
                 <div>
                   <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all">{work.title}</h3>
                   <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
-                    {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} Subjects
+                    {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} {pluralize(publishedCharacters.filter(c => c.source === work.title).length, 'Subject')}
                   </p>
                 </div>
                 <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -902,7 +907,7 @@ function AppContent() {
             <div className="col-span-full py-32 text-center">
               <div className="max-w-md mx-auto">
                 <AlertCircle className="w-12 h-12 mx-auto mb-6 opacity-20" />
-                <h2 className="font-serif text-3xl mb-4">No Subjects Found</h2>
+                <h2 className="font-serif text-3xl mb-4">No {pluralize(0, 'Subject')} Found</h2>
                 <p className="text-sm opacity-50 leading-relaxed">
                   No subjects match your current search or filter criteria in the database.
                 </p>
@@ -1145,21 +1150,31 @@ function AppContent() {
                       </h4>
                       <MarkdownAnalysis content={selectedCharacter.analysis} />
                       
-                      <div className="flex flex-col gap-4 pt-4 border-t border-[#1a1a1a]/5">
+                      <div className="flex flex-col gap-6 pt-6 border-t border-[#1a1a1a]/10">
                         {selectedCharacter.publishedDate && (
-                          <div>
-                            <p className="font-mono text-[8px] uppercase opacity-40 mb-0.5">Published</p>
-                            <p className="font-mono text-[9px] opacity-60">
-                              {formatDate(selectedCharacter.publishedDate)} <span className="opacity-60 ml-1">{getRelativeTime(selectedCharacter.publishedDate)}</span>
-                            </p>
+                          <div className="flex flex-col gap-1">
+                            <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Published</p>
+                            <div className="flex flex-col">
+                              <p className="font-mono text-[10px] font-bold">
+                                {formatDate(selectedCharacter.publishedDate)}
+                              </p>
+                              <p className="font-mono text-[9px] opacity-40 italic">
+                                {getRelativeTime(selectedCharacter.publishedDate)}
+                              </p>
+                            </div>
                           </div>
                         )}
                         {selectedCharacter.editedDate && selectedCharacter.editedDate !== selectedCharacter.publishedDate && (
-                          <div>
-                            <p className="font-mono text-[8px] uppercase opacity-40 mb-0.5">Last Edited</p>
-                            <p className="font-mono text-[9px] opacity-60">
-                              {formatDate(selectedCharacter.editedDate)} <span className="opacity-60 ml-1">{getRelativeTime(selectedCharacter.editedDate)}</span>
-                            </p>
+                          <div className="flex flex-col gap-1">
+                            <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Last Edited</p>
+                            <div className="flex flex-col">
+                              <p className="font-mono text-[10px] font-bold">
+                                {formatDate(selectedCharacter.editedDate)}
+                              </p>
+                              <p className="font-mono text-[9px] opacity-40 italic">
+                                {getRelativeTime(selectedCharacter.editedDate)}
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
