@@ -312,7 +312,7 @@ function AppContent() {
   }, [selectedCharacter]);
 
   useEffect(() => {
-    let title = 'CT in Fiction DB';
+    let title = 'CT in Fiction';
     if (selectedCharacter) {
       title = selectedCharacter.name;
     } else if (currentView === 'work' && activeWork) {
