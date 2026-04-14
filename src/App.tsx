@@ -1297,7 +1297,6 @@ function AppContent() {
           © 2026 CT in Fiction. All rights reserved.
         </p>
         <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest opacity-40">
-          <a href="#" className="hover:opacity-100 transition-opacity">Methodology</a>
           <a href="https://docs.google.com/spreadsheets/d/1IQxu5vK1Zr4twJ1rcxVgDiS-EnhoKj79K9thuOtdpic/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">Database</a>
           <a href="mailto:osayandeosas1000@gmail.com" className="hover:opacity-100 transition-opacity">Contact</a>
         </div>
