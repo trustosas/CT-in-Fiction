@@ -73,53 +73,7 @@ const pluralize = (count: number, singular: string, plural?: string) => {
   return plural || `${singular}s`;
 };
 
-function MarkdownAnalysis({ content, refreshTrigger }: { content: string, refreshTrigger?: number }) {
-  const [markdown, setMarkdown] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-
-  const fetchAnalysis = () => {
-    if (!content) {
-      setMarkdown('');
-      return;
-    }
-    const urlPattern = /^https?:\/\//;
-    const detectedUrl = urlPattern.test(content.trim());
-
-    if (detectedUrl) {
-      setLoading(true);
-      const url = content.trim();
-      const cacheBuster = `v=${Date.now()}`;
-      const bustedUrl = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
-      
-      fetch(bustedUrl)
-        .then(res => res.text())
-        .then(text => {
-          setMarkdown(text);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Failed to fetch analysis:', err);
-          setMarkdown(`Failed to load analysis from: ${content}`);
-          setLoading(false);
-        });
-    } else {
-      setMarkdown(content);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnalysis();
-  }, [content, refreshTrigger]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-12 border border-[#1a1a1a]/5 rounded bg-[#1a1a1a]/5 justify-center mb-6">
-        <Loader2 className="w-6 h-6 animate-spin opacity-20" />
-        <span className="font-mono text-[10px] uppercase tracking-widest opacity-40">Decrypting Analysis...</span>
-      </div>
-    );
-  }
-
+function MarkdownAnalysis({ markdown }: { markdown: string }) {
   return (
     <div className="mb-8 relative group">
       <div className="prose prose-sm max-w-none prose-neutral opacity-90 leading-relaxed font-serif text-lg">
@@ -163,16 +117,45 @@ function AppContent() {
   const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
+  const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchAnalysisMarkdown = async (content: string) => {
+    if (!content) return '';
+    const urlPattern = /^https?:\/\//;
+    if (urlPattern.test(content.trim())) {
+      const url = content.trim();
+      const cacheBuster = `v=${Date.now()}`;
+      const bustedUrl = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
+      try {
+        const res = await fetch(bustedUrl);
+        return await res.text();
+      } catch (err) {
+        console.error('Failed to fetch analysis:', err);
+        return `Failed to load analysis from: ${content}`;
+      }
+    }
+    return content;
+  };
 
   const loadData = async (isSilent = false) => {
     try {
       if (!isSilent) setIsLoading(true);
+      if (subjectSlug) setAnalysisMarkdown('');
       const data = await fetchCharacters();
       if (data && data.length > 0) {
         setCharacters(data);
         setError(null);
-        // Increment refresh trigger to force child components (like MarkdownAnalysis) to re-fetch
+
+        // If we are on a subject page, fetch the analysis too
+        if (subjectSlug) {
+          const char = data.find(c => slugify(c.name) === subjectSlug);
+          if (char && char.analysis) {
+            const markdown = await fetchAnalysisMarkdown(char.analysis);
+            setAnalysisMarkdown(markdown);
+          }
+        }
+
         setRefreshTrigger(prev => prev + 1);
       } else {
         setError('Database is empty or inaccessible. Please check "Publish to Web" settings.');
@@ -193,6 +176,8 @@ function AppContent() {
   useEffect(() => {
     if (subjectSlug) {
       loadData(true); // Silent refresh
+    } else {
+      setAnalysisMarkdown('');
     }
   }, [subjectSlug]);
 
@@ -1193,7 +1178,7 @@ function AppContent() {
                       <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
                         <Activity className="w-3 h-3" /> Analysis
                       </h4>
-                      <MarkdownAnalysis content={selectedCharacter.analysis} refreshTrigger={refreshTrigger} />
+                      <MarkdownAnalysis markdown={analysisMarkdown} />
                       
                       <div className="flex flex-col gap-6 pt-6 border-t border-[#1a1a1a]/10">
                         {selectedCharacter.publishedDate && (
