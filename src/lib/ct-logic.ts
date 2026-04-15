@@ -1,3 +1,23 @@
+export const ENERGETIC_NAMES: Record<string, string> = {
+  'Ji': 'Introverted Judgment',
+  'Je': 'Extroverted Judgment',
+  'Pi': 'Introverted Perception',
+  'Pe': 'Extroverted Perception'
+};
+
+export const FUNCTION_NAMES: Record<string, string> = {
+  'Fi': 'Introverted Feeling',
+  'Te': 'Extroverted Thinking',
+  'Ti': 'Introverted Thinking',
+  'Fe': 'Extroverted Feeling',
+  'Ne': 'Extroverted Intuition',
+  'Si': 'Introverted Sensing',
+  'Se': 'Extroverted Sensing',
+  'Ni': 'Introverted Intuition'
+};
+
+export const FUNCTION_ORDER = ['Se', 'Si', 'Ne', 'Ni', 'Te', 'Ti', 'Fe', 'Fi'];
+
 export const MOTIF_DEFINITIONS: Record<string, Record<string, string[]>> = {
   'Je': {
     'Philosophical': [
@@ -235,7 +255,43 @@ export function getPolarFunction(lead: FunctionCode): FunctionCode {
 }
 
 export function getEnergetic(func: string): EnergeticCode {
-  return ENERGETIC_CLASS[func] || (func as EnergeticCode);
+  const code = normalizeFunctionCode(func);
+  return ENERGETIC_CLASS[code] || (code as EnergeticCode);
+}
+
+export function normalizeFunctionCode(func: string): string {
+  if (!func) return '';
+  const trimmed = func.trim();
+  
+  // 1. Check if it's already a code (e.g. "Se", "Se-lead", "Se-aux", "Je")
+  const code = trimmed.substring(0, 2);
+  if (FUNCTION_NAMES[code] || ENERGETIC_NAMES[code]) return code;
+  
+  // 2. Check if it's a full name (e.g. "Extroverted Sensing")
+  for (const [c, name] of Object.entries(FUNCTION_NAMES)) {
+    if (trimmed.toLowerCase().includes(name.toLowerCase())) return c;
+  }
+  
+  // 3. Fallback for common variations
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('sensing')) {
+    if (lower.includes('extroverted') || lower.includes('extraverted')) return 'Se';
+    if (lower.includes('introverted')) return 'Si';
+  }
+  if (lower.includes('intuition')) {
+    if (lower.includes('extroverted') || lower.includes('extraverted')) return 'Ne';
+    if (lower.includes('introverted')) return 'Ni';
+  }
+  if (lower.includes('thinking')) {
+    if (lower.includes('extroverted') || lower.includes('extraverted')) return 'Te';
+    if (lower.includes('introverted')) return 'Ti';
+  }
+  if (lower.includes('feeling')) {
+    if (lower.includes('extroverted') || lower.includes('extraverted')) return 'Fe';
+    if (lower.includes('introverted')) return 'Fi';
+  }
+
+  return '';
 }
 
 export function getAuxEnergetic(aux: string): EnergeticCode {
@@ -311,7 +367,7 @@ export function getStructuredMotifs(values: boolean[]): FunctionMotifs[] {
   return structured;
 }
 
-export function getDevelopmentName(symbol: string, type: string, behaviourQualia?: string): string {
+export function getDevelopmentName(symbol: string, type: string, behaviourQualia?: string, dbLeadE?: string, dbAuxE?: string): string {
   if (!type) {
     const genericMapping: Record<string, string> = {
       'I---': 'Standard',
@@ -326,7 +382,7 @@ export function getDevelopmentName(symbol: string, type: string, behaviourQualia
     return genericMapping[symbol] || symbol;
   }
 
-  const ct = deriveCTData(type);
+  const ct = deriveCTData(type, dbLeadE, dbAuxE);
   const isJLead = ct.energetics.lead === 'Ji' || ct.energetics.lead === 'Je';
   
   // Use behaviourQualia from DB if provided, otherwise fallback to derived logic
@@ -423,12 +479,35 @@ export function slugify(text: string): string {
     .replace(/--+/g, '-');
 }
 
-export function deriveCTData(type: string): DerivedCTData {
+export function deriveCTData(type: string, dbLeadE?: string, dbAuxE?: string): DerivedCTData {
   const lead = type.substring(0, 2);
   const aux = type.substring(2, 4);
 
-  const leadE = getEnergetic(lead);
-  const auxE = getAuxEnergetic(aux);
+  let leadE = dbLeadE ? getEnergetic(dbLeadE) : getEnergetic(lead);
+  let auxE = dbAuxE ? getAuxEnergetic(dbAuxE) : getAuxEnergetic(aux);
+
+  // If auxE is missing but leadE is present, infer from hierarchy (Division #4)
+  if (!auxE && leadE) {
+    const hierarchy: Record<string, EnergeticCode> = {
+      'Je': 'Pi',
+      'Ji': 'Pe',
+      'Pe': 'Ji',
+      'Pi': 'Je'
+    };
+    auxE = hierarchy[leadE];
+  }
+
+  // If leadE is missing but auxE is present
+  if (!leadE && auxE) {
+    const reverseHierarchy: Record<string, EnergeticCode> = {
+      'Pi': 'Je',
+      'Pe': 'Ji',
+      'Ji': 'Pe',
+      'Je': 'Pi'
+    };
+    leadE = reverseHierarchy[auxE];
+  }
+
   const tertE = getTertEnergetic(auxE);
   const polarE = getPolarEnergetic(leadE);
 

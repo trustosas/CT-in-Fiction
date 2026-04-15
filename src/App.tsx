@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, deriveCTData, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, getEnergetic } from './lib/ct-logic';
+import { slugify, deriveCTData, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, getEnergetic, getQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
@@ -385,82 +385,197 @@ function AppContent() {
     const filtered = viewFilteredCharacters.filter(c => {
       const ct = c.type ? deriveCTData(c.type) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      return matchesQuadra;
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesLeadEnergetic = !selectedLeadEnergetic || getEnergetic(c.leadFunction).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction).toLowerCase() === selectedAuxEnergetic.toLowerCase());
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      return matchesQuadra && matchesLeadFunction && matchesAuxFunction && matchesLeadEnergetic && matchesAuxEnergetic && matchesBehaviourQualia && matchesSubtype;
     });
-    return Array.from(new Set(filtered.map(c => c.finalDevelopment || c.initialDevelopment))).filter(Boolean).sort();
-  }, [viewFilteredCharacters, selectedQuadra]);
+    return Array.from(new Set(filtered.map(c => c.finalDevelopment || c.initialDevelopment))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction, selectedAuxFunction, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype]);
   
   const quadras = useMemo(() => {
-    const items = viewFilteredCharacters.map(c => c.type ? deriveCTData(c.type).quadra : null).filter(Boolean);
-    return Array.from(new Set(items as string[])).sort();
-  }, [viewFilteredCharacters]);
+    const filtered = viewFilteredCharacters.filter(c => {
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesLeadEnergetic = !selectedLeadEnergetic || getEnergetic(c.leadFunction).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction).toLowerCase() === selectedAuxEnergetic.toLowerCase());
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      return matchesLeadFunction && matchesAuxFunction && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype;
+    });
+    const items = filtered.map(c => c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic).quadra : null).filter(Boolean);
+    return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedLeadFunction, selectedAuxFunction, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype]);
 
   const functions = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      const matchesEnergetic = !selectedLeadEnergetic || getEnergetic(c.leadFunction).toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      return matchesQuadra && matchesEnergetic;
+      const matchesLeadEnergetic = !selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      // Je -> Pi, Ji -> Pe, Pe -> Ji, Pi -> Je
+      let matchesLore = true;
+      const leadE = selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction));
+      const auxE = selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction)));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+      
+      return matchesQuadra && matchesLeadEnergetic && matchesAuxEnergetic && matchesAuxFunction && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesLore;
     });
-    const items = filtered.map(c => c.leadFunction).filter(Boolean);
-    return Array.from(new Set(items as string[])).sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedLeadEnergetic]);
+    const items = filtered.map(c => normalizeFunctionCode(c.leadFunction)).filter(f => f && FUNCTION_ORDER.includes(f));
+    return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort((a, b) => FUNCTION_ORDER.indexOf(a) - FUNCTION_ORDER.indexOf(b));
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadEnergetic, selectedAuxEnergetic, selectedAuxFunction, selectedDevelopment, selectedBehaviourQualia, selectedSubtype]);
 
   const energetics = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      const matchesFunction = !selectedLeadFunction || c.leadFunction.toLowerCase() === selectedLeadFunction.toLowerCase();
-      return matchesQuadra && matchesFunction;
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      let matchesLore = true;
+      const leadE = c.leadEnergetic || getEnergetic(c.leadFunction);
+      const auxE = selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction)));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+
+      return matchesQuadra && matchesLeadFunction && matchesAuxFunction && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesLore;
     });
-    const items = filtered.map(c => getEnergetic(c.leadFunction)).filter(Boolean);
-    return Array.from(new Set(items as string[])).sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction]);
+    const items = filtered.map(c => c.leadEnergetic || getEnergetic(c.leadFunction)).filter(Boolean);
+    return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction, selectedAuxFunction, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype]);
 
   const auxFunctions = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction).toLowerCase() === selectedAuxEnergetic.toLowerCase());
-      return matchesQuadra && matchesAuxEnergetic;
+      const matchesLeadEnergetic = !selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      let matchesLore = true;
+      const leadE = selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction));
+      const auxE = c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+      
+      return matchesQuadra && matchesLeadEnergetic && matchesAuxEnergetic && matchesLeadFunction && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesLore;
     });
-    const items = filtered.map(c => c.auxiliaryFunction).filter(Boolean);
-    return Array.from(new Set(items as string[])).sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedAuxEnergetic]);
+    const items = filtered.map(c => normalizeFunctionCode(c.auxiliaryFunction)).filter(f => f && FUNCTION_ORDER.includes(f));
+    return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort((a, b) => FUNCTION_ORDER.indexOf(a) - FUNCTION_ORDER.indexOf(b));
+  }, [viewFilteredCharacters, selectedQuadra, selectedAuxEnergetic, selectedLeadEnergetic, selectedLeadFunction, selectedDevelopment, selectedBehaviourQualia, selectedSubtype]);
 
   const auxEnergetics = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      const matchesAuxFunction = !selectedAuxFunction || c.auxiliaryFunction.toLowerCase() === selectedAuxFunction.toLowerCase();
-      return matchesQuadra && matchesAuxFunction;
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesLeadEnergetic = !selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      let matchesLore = true;
+      const leadE = selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction));
+      const auxE = c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+
+      return matchesQuadra && matchesLeadFunction && matchesAuxFunction && matchesLeadEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesLore;
     });
-    const items = filtered.map(c => c.auxiliaryFunction ? getEnergetic(c.auxiliaryFunction) : null).filter(Boolean);
-    return Array.from(new Set(items as string[])).sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedAuxFunction]);
+    const items = filtered.map(c => c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).filter(Boolean);
+    return Array.from(new Set(items as string[])).filter(i => i && i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction, selectedAuxFunction, selectedLeadEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype]);
 
   const behaviourQualias = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      return matchesQuadra;
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesLeadEnergetic = !selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      let matchesLore = true;
+      const leadE = selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction));
+      const auxE = selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction)));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+      
+      return matchesQuadra && matchesLeadFunction && matchesAuxFunction && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesSubtype && matchesLore;
     });
-    return Array.from(new Set(filtered.map(c => c.behaviourQualia))).filter(Boolean).sort();
-  }, [viewFilteredCharacters, selectedQuadra]);
+    return Array.from(new Set(filtered.map(c => c.behaviourQualia))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction, selectedAuxFunction, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedSubtype]);
 
   const subtypes = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => {
-      const ct = c.type ? deriveCTData(c.type) : null;
+      const ct = c.type ? deriveCTData(c.type, c.leadEnergetic, c.auxiliaryEnergetic) : null;
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
-      return matchesQuadra;
+      const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(c.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+      const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(c.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+      const matchesLeadEnergetic = !selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+      const matchesAuxEnergetic = !selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
+      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
+      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
+      
+      // Lore: Lead and Aux must follow specific oscillation hierarchies
+      let matchesLore = true;
+      const leadE = selectedLeadEnergetic || (c.leadEnergetic || getEnergetic(c.leadFunction));
+      const auxE = selectedAuxEnergetic || (c.auxiliaryEnergetic || (c.auxiliaryFunction && getEnergetic(c.auxiliaryFunction)));
+      
+      if (leadE && auxE) {
+        const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+        matchesLore = mapping[leadE] === auxE;
+      }
+      
+      return matchesQuadra && matchesLeadFunction && matchesAuxFunction && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesLore;
     });
-    return Array.from(new Set(filtered.map(c => c.subtype))).filter(Boolean).sort();
-  }, [viewFilteredCharacters, selectedQuadra]);
+    return Array.from(new Set(filtered.map(c => c.subtype))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, selectedQuadra, selectedLeadFunction, selectedAuxFunction, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia]);
 
   // Reset dependent filters if they become invalid
   useEffect(() => {
     if (selectedLeadFunction && !functions.includes(selectedLeadFunction)) setSelectedLeadFunction(null);
-  }, [selectedQuadra, selectedLeadEnergetic, functions]);
+  }, [selectedQuadra, selectedLeadEnergetic, selectedAuxEnergetic, selectedAuxFunction, functions]);
 
   useEffect(() => {
     if (selectedLeadEnergetic && !energetics.includes(selectedLeadEnergetic)) setSelectedLeadEnergetic(null);
@@ -468,7 +583,7 @@ function AppContent() {
 
   useEffect(() => {
     if (selectedAuxFunction && !auxFunctions.includes(selectedAuxFunction)) setSelectedAuxFunction(null);
-  }, [selectedQuadra, selectedAuxEnergetic, auxFunctions]);
+  }, [selectedQuadra, selectedAuxEnergetic, selectedLeadEnergetic, selectedLeadFunction, auxFunctions]);
 
   useEffect(() => {
     if (selectedAuxEnergetic && !auxEnergetics.includes(selectedAuxEnergetic)) setSelectedAuxEnergetic(null);
@@ -497,23 +612,33 @@ function AppContent() {
                              char.source.toLowerCase().includes(searchQuery.toLowerCase());
         
         // Derived data filtering
-        const ct = char.type ? deriveCTData(char.type) : null;
+        const ct = char.type ? deriveCTData(char.type, char.leadEnergetic, char.auxiliaryEnergetic) : null;
         const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
         
         // Function/Energetic filtering
-        const matchesLeadFunction = !selectedLeadFunction || char.leadFunction.toLowerCase() === selectedLeadFunction.toLowerCase();
-        const matchesAuxFunction = !selectedAuxFunction || char.auxiliaryFunction.toLowerCase() === selectedAuxFunction.toLowerCase();
-        const matchesLeadEnergetic = !selectedLeadEnergetic || getEnergetic(char.leadFunction).toLowerCase() === selectedLeadEnergetic.toLowerCase();
-        const matchesAuxEnergetic = !selectedAuxEnergetic || (char.auxiliaryFunction && getEnergetic(char.auxiliaryFunction).toLowerCase() === selectedAuxEnergetic.toLowerCase());
+        const matchesLeadFunction = !selectedLeadFunction || normalizeFunctionCode(char.leadFunction).toLowerCase() === selectedLeadFunction.toLowerCase();
+        const matchesAuxFunction = !selectedAuxFunction || normalizeFunctionCode(char.auxiliaryFunction).toLowerCase() === selectedAuxFunction.toLowerCase();
+        const matchesLeadEnergetic = !selectedLeadEnergetic || (char.leadEnergetic || getEnergetic(char.leadFunction)).toLowerCase() === selectedLeadEnergetic.toLowerCase();
+        const matchesAuxEnergetic = !selectedAuxEnergetic || (char.auxiliaryEnergetic || (char.auxiliaryFunction && getEnergetic(char.auxiliaryFunction))).toLowerCase() === selectedAuxEnergetic.toLowerCase();
         
+        // Lore: Lead and Aux must follow specific oscillation hierarchies
+        let matchesLore = true;
+        const leadE = selectedLeadEnergetic || (char.leadEnergetic || getEnergetic(char.leadFunction));
+        const auxE = selectedAuxEnergetic || (char.auxiliaryEnergetic || (char.auxiliaryFunction && getEnergetic(char.auxiliaryFunction)));
+        
+        if (leadE && auxE) {
+          const mapping: Record<string, string> = { 'Je': 'Pi', 'Ji': 'Pe', 'Pe': 'Ji', 'Pi': 'Je' };
+          matchesLore = mapping[leadE] === auxE;
+        }
+
         const matchesDevelopment = !selectedDevelopment || 
-                              ((char.finalDevelopment || char.initialDevelopment) && (char.finalDevelopment || char.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase());
+                               ((char.finalDevelopment || char.initialDevelopment) && (char.finalDevelopment || char.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase());
         const matchesBehaviourQualia = !selectedBehaviourQualia || char.behaviourQualia === selectedBehaviourQualia;
         const matchesSubtype = !selectedSubtype || char.subtype === selectedSubtype;
         
         return matchesSearch && matchesQuadra && matchesLeadFunction && matchesAuxFunction && 
                matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && 
-               matchesBehaviourQualia && matchesSubtype;
+               matchesBehaviourQualia && matchesSubtype && matchesLore;
       })
       .sort((a, b) => {
         // Sort by publishedDate descending (newest first)
@@ -542,24 +667,6 @@ function AppContent() {
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
-
-    const ENERGETIC_NAMES: Record<string, string> = {
-      'Ji': 'Introverted Judgment',
-      'Je': 'Extroverted Judgment',
-      'Pi': 'Introverted Perception',
-      'Pe': 'Extroverted Perception'
-    };
-
-    const FUNCTION_NAMES: Record<string, string> = {
-      'Fi': 'Introverted Feeling',
-      'Te': 'Extroverted Thinking',
-      'Ti': 'Introverted Thinking',
-      'Fe': 'Extroverted Feeling',
-      'Ne': 'Extroverted Intuition',
-      'Si': 'Introverted Sensing',
-      'Se': 'Extroverted Sensing',
-      'Ni': 'Introverted Intuition'
-    };
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -1112,7 +1219,7 @@ function AppContent() {
       {/* Modal / Detail View */}
       <AnimatePresence>
         {selectedCharacter && (() => {
-          const ct = deriveCTData(selectedCharacter.type);
+          const ct = deriveCTData(selectedCharacter.type, selectedCharacter.leadEnergetic, selectedCharacter.auxiliaryEnergetic);
           return (
             <>
               <motion.div 
@@ -1194,14 +1301,14 @@ function AppContent() {
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
                       <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
-                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia, selectedCharacter.leadEnergetic, selectedCharacter.auxiliaryEnergetic)}</p>
                     </div>
                   )}
                   {(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment) && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Development</p>
                       <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
-                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia, selectedCharacter.leadEnergetic, selectedCharacter.auxiliaryEnergetic)}</p>
                     </div>
                   )}
                   {selectedCharacter.emotionalAttitude && (
@@ -1242,7 +1349,10 @@ function AppContent() {
                               {Object.entries(ct.energetics).filter(([_, val]) => val).map(([key, val]) => (
                                 <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
-                                  <p className="font-serif italic text-base">{val}</p>
+                                  <div className="flex flex-col">
+                                    <p className="font-serif italic text-base leading-tight">{val}</p>
+                                    <p className="font-mono text-[8px] opacity-40 uppercase tracking-tighter">{ENERGETIC_NAMES[val]}</p>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1273,7 +1383,10 @@ function AppContent() {
                               {Object.entries(ct.functions).filter(([_, val]) => val).map(([key, val]) => (
                                 <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
-                                  <p className="font-serif italic text-base">{val}</p>
+                                  <div className="flex flex-col">
+                                    <p className="font-serif italic text-base leading-tight">{val}</p>
+                                    <p className="font-mono text-[8px] opacity-40 uppercase tracking-tighter">{FUNCTION_NAMES[val as string]}</p>
+                                  </div>
                                 </div>
                               ))}
                             </div>

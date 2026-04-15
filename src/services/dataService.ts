@@ -30,7 +30,17 @@ export async function fetchCharacters(): Promise<Character[]> {
             // 6: Type
             // 7: Alternate Type
             // 8: Subtype
-            // ...
+            // 9: Lead Energetic
+            // 10: Auxiliary Energetic
+            // 11: Tertiary Energetic
+            // 12: Polar Energetic
+            // 13: Lead Function
+            // 14: Auxiliary Function
+            // 15: Tertiary Function
+            // 16: Polar Function
+            // 17: Judgment Axis
+            // 18: Perception Axis
+            // 19: Quadra
             // 20: Behaviour Qualia
             // 21: Initial Development
             // 22: Final Development
@@ -62,8 +72,10 @@ export async function fetchCharacters(): Promise<Character[]> {
               name: name.trim(),
               imageUrl: row[5] || '',
               type: type.trim(),
-              leadFunction: row[9] || '',
-              auxiliaryFunction: row[10] || '',
+              leadEnergetic: row[9] || '',
+              auxiliaryEnergetic: row[10] || '',
+              leadFunction: row[13] || '',
+              auxiliaryFunction: row[14] || '',
               alternateType: row[7] || '',
               subtype: row[8] || '',
               behaviourQualia: row[20] || '',
