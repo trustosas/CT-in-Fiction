@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
-import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, RefreshCw } from 'lucide-react';
+import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
@@ -957,7 +957,9 @@ function AppContent() {
                     <span className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.finalDevelopment || char.initialDevelopment}
                     </span>
-                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">{char.subtype} • {char.behaviourQualia}</span>
+                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">
+                      {[char.subtype, char.behaviourQualia].filter(Boolean).join(' • ')}
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -987,21 +989,12 @@ function AppContent() {
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               >
-                <div className="absolute top-8 right-8 flex items-center gap-2">
-                  <button 
-                    onClick={() => loadData(true)}
-                    className="p-2 hover:bg-black/5 rounded-full transition-colors"
-                    title="Refresh Data"
-                  >
-                    <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-                  </button>
-                  <button 
-                    onClick={() => handleSelectCharacter(null)}
-                    className="p-2 hover:bg-black/5 rounded-full transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
+                <button 
+                  onClick={() => handleSelectCharacter(null)}
+                  className="absolute top-8 right-8 p-2 hover:bg-black/5 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
 
                 <div className="mb-12">
                   <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-40 mb-4 block">
