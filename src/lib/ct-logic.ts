@@ -208,20 +208,22 @@ const ENERGETIC_CLASS: Record<string, EnergeticCode> = {
   'Ti': 'Ji', 'Fi': 'Ji',
   'Te': 'Je', 'Fe': 'Je',
   'Se': 'Pe', 'Ne': 'Pe',
-  'Si': 'Pi', 'Ni': 'Pi'
+  'Si': 'Pi', 'Ni': 'Pi',
+  'Ji': 'Ji', 'Je': 'Je',
+  'Pe': 'Pe', 'Pi': 'Pi'
 };
 
-const ENERGETIC_OPPOSITES: Record<string, EnergeticCode> = {
+const ENERGETIC_OPPOSITES: Record<EnergeticCode, EnergeticCode> = {
   'Ji': 'Je', 'Je': 'Ji',
   'Pi': 'Pe', 'Pe': 'Pi'
 };
 
-export function getLeadFunction(type: string): FunctionCode {
-  return type.substring(0, 2) as FunctionCode;
+export function getLeadFunction(type: string): string {
+  return type.substring(0, 2);
 }
 
-export function getAuxFunction(type: string): FunctionCode {
-  return type.substring(2, 4) as FunctionCode;
+export function getAuxFunction(type: string): string {
+  return type.substring(2, 4);
 }
 
 export function getTertiaryFunction(aux: FunctionCode): FunctionCode {
@@ -232,22 +234,16 @@ export function getPolarFunction(lead: FunctionCode): FunctionCode {
   return OPPOSITES[lead];
 }
 
-export function getEnergetic(func: FunctionCode): EnergeticCode {
-  return ENERGETIC_CLASS[func];
+export function getEnergetic(func: string): EnergeticCode {
+  return ENERGETIC_CLASS[func] || (func as EnergeticCode);
 }
 
-export function getAuxEnergetic(leadE: EnergeticCode): EnergeticCode {
-  const map: Record<EnergeticCode, EnergeticCode> = {
-    'Ji': 'Pe', 'Pe': 'Pi', 'Pi': 'Je', 'Je': 'Ji'
-  };
-  return map[leadE];
+export function getAuxEnergetic(aux: string): EnergeticCode {
+  return getEnergetic(aux);
 }
 
-export function getTertEnergetic(leadE: EnergeticCode): EnergeticCode {
-  const map: Record<EnergeticCode, EnergeticCode> = {
-    'Ji': 'Pi', 'Pe': 'Je', 'Pi': 'Ji', 'Je': 'Pe'
-  };
-  return map[leadE];
+export function getTertEnergetic(auxE: EnergeticCode): EnergeticCode {
+  return ENERGETIC_OPPOSITES[auxE];
 }
 
 export function getPolarEnergetic(leadE: EnergeticCode): EnergeticCode {
@@ -255,24 +251,32 @@ export function getPolarEnergetic(leadE: EnergeticCode): EnergeticCode {
 }
 
 export function getJudgmentAxis(type: string): string {
-  if (type.includes('Fe') || type.includes('Ti')) return 'Fe-Ti';
-  if (type.includes('Te') || type.includes('Fi')) return 'Te-Fi';
-  return 'Unknown';
+  const lf = type.substring(0, 2);
+  const af = type.substring(2, 4);
+  if (['Fi', 'Te'].includes(lf) || ['Fi', 'Te'].includes(af)) return 'Te-Fi';
+  if (['Ti', 'Fe'].includes(lf) || ['Ti', 'Fe'].includes(af)) return 'Fe-Ti';
+  return '';
 }
 
 export function getPerceptionAxis(type: string): string {
-  if (type.includes('Se') || type.includes('Ni')) return 'Se-Ni';
-  if (type.includes('Ne') || type.includes('Si')) return 'Ne-Si';
-  return 'Unknown';
+  const lf = type.substring(0, 2);
+  const af = type.substring(2, 4);
+  if (['Si', 'Ne'].includes(lf) || ['Si', 'Ne'].includes(af)) return 'Ne-Si';
+  if (['Se', 'Ni'].includes(lf) || ['Se', 'Ni'].includes(af)) return 'Se-Ni';
+  return '';
 }
 
-export function getQuadra(type: string): Quadra {
-  const funcs = [type.substring(0, 2), type.substring(2, 4)];
-  if ((funcs.includes('Ti') && funcs.includes('Ne')) || (funcs.includes('Fe') && funcs.includes('Si'))) return 'Alpha';
-  if ((funcs.includes('Ti') && funcs.includes('Se')) || (funcs.includes('Fe') && funcs.includes('Ni'))) return 'Beta';
-  if ((funcs.includes('Fi') && funcs.includes('Se')) || (funcs.includes('Te') && funcs.includes('Ni'))) return 'Gamma';
-  if ((funcs.includes('Fi') && funcs.includes('Ne')) || (funcs.includes('Te') && funcs.includes('Si'))) return 'Delta';
-  return 'Alpha'; // Fallback
+export function getQuadra(type: string): Quadra | '' {
+  const jAxis = getJudgmentAxis(type);
+  const pAxis = getPerceptionAxis(type);
+  
+  if (!jAxis || !pAxis) return '';
+
+  if (jAxis === 'Te-Fi') {
+    return pAxis === 'Ne-Si' ? 'Delta' : 'Gamma';
+  } else {
+    return pAxis === 'Se-Ni' ? 'Beta' : 'Alpha';
+  }
 }
 
 export function getStructuredMotifs(values: boolean[]): FunctionMotifs[] {
@@ -344,6 +348,18 @@ export function getDevelopmentName(symbol: string, type: string, behaviourQualia
   return mapping[symbol] || symbol;
 }
 
+export function formatTypeDisplay(type: string): string {
+  if (!type) return '';
+  const lead = type.substring(0, 2);
+  const aux = type.substring(2, 4);
+  const isAuxUncertain = ['Ji', 'Je', 'Pe', 'Pi'].includes(aux);
+  
+  if (isAuxUncertain) {
+    return `${lead}-lead`;
+  }
+  return type;
+}
+
 export interface Motif {
   category: 'Philosophical' | 'Behavioural' | 'Linguistic';
   label: string;
@@ -357,10 +373,10 @@ export interface FunctionMotifs {
 
 export interface DerivedCTData {
   functions: {
-    lead: FunctionCode;
-    aux: FunctionCode;
-    tert: FunctionCode;
-    polar: FunctionCode;
+    lead: FunctionCode | null;
+    aux: FunctionCode | null;
+    tert: FunctionCode | null;
+    polar: FunctionCode | null;
   };
   energetics: {
     lead: EnergeticCode;
@@ -372,7 +388,7 @@ export interface DerivedCTData {
     judgment: string;
     perception: string;
   };
-  quadra: Quadra;
+  quadra: Quadra | '';
 }
 
 export function getSubtypeName(subtype: string): string {
@@ -408,20 +424,28 @@ export function slugify(text: string): string {
 }
 
 export function deriveCTData(type: string): DerivedCTData {
-  const lead = getLeadFunction(type);
-  const aux = getAuxFunction(type);
-  const tert = getTertiaryFunction(aux);
-  const polar = getPolarFunction(lead);
+  const lead = type.substring(0, 2);
+  const aux = type.substring(2, 4);
 
   const leadE = getEnergetic(lead);
-  
+  const auxE = getAuxEnergetic(aux);
+  const tertE = getTertEnergetic(auxE);
+  const polarE = getPolarEnergetic(leadE);
+
+  const isUncertain = (token: string) => ['Ji', 'Je', 'Pe', 'Pi'].includes(token);
+
+  const leadF = isUncertain(lead) ? null : lead as FunctionCode;
+  const auxF = isUncertain(aux) ? null : aux as FunctionCode;
+  const tertF = auxF ? getTertiaryFunction(auxF) : null;
+  const polarF = leadF ? getPolarFunction(leadF) : null;
+
   return {
-    functions: { lead, aux, tert, polar },
+    functions: { lead: leadF, aux: auxF, tert: tertF, polar: polarF },
     energetics: {
       lead: leadE,
-      aux: getAuxEnergetic(leadE),
-      tert: getTertEnergetic(leadE),
-      polar: getPolarEnergetic(leadE)
+      aux: auxE,
+      tert: tertE,
+      polar: polarE
     },
     axes: {
       judgment: getJudgmentAxis(type),

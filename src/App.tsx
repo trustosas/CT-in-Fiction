@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, deriveCTData, getStructuredMotifs, getDevelopmentName, getSubtypeName } from './lib/ct-logic';
+import { slugify, deriveCTData, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
@@ -497,6 +497,8 @@ function AppContent() {
                 <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getSubtypeName(value)}</span>
               </span>
+            ) : label === 'Type' && value ? (
+              formatTypeDisplay(value)
             ) : (value || placeholder)}
           </span>
           <ChevronDown className={`w-3 h-3 transition-transform duration-300 pointer-events-none ${isOpen ? 'rotate-180' : 'opacity-50 group-hover:opacity-100'}`} />
@@ -534,6 +536,8 @@ function AppContent() {
                           <span className="font-serif italic text-sm whitespace-nowrap">{opt}</span>
                           <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getSubtypeName(opt)}</span>
                         </span>
+                      ) : label === 'Type' ? (
+                        formatTypeDisplay(opt)
                       ) : opt}
                   {value === opt && <Check className="w-3 h-3" />}
                 </button>
@@ -948,7 +952,7 @@ function AppContent() {
                     </button>
                   </div>
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{char.type}</span>
+                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type)}</span>
                     <span className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.finalDevelopment || char.initialDevelopment}
                     </span>
@@ -1005,7 +1009,7 @@ function AppContent() {
                     </button>
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="font-mono text-sm font-bold mb-1">{selectedCharacter.type}</span>
+                      <span className="font-mono text-sm font-bold mb-1">{formatTypeDisplay(selectedCharacter.type)}</span>
                       <span className={`font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
                         {selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}
                       </span>
@@ -1027,29 +1031,39 @@ function AppContent() {
 
                 {/* Core Profile Data */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
-                  <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Subtype</p>
-                    <span className="font-serif italic text-xl block leading-none mb-1">{selectedCharacter.subtype}</span>
-                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getSubtypeName(selectedCharacter.subtype)}</p>
-                  </div>
-                  <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Qualia</p>
-                    <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
-                  </div>
-                  <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
-                    <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
-                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
-                  </div>
-                  <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Final Dev</p>
-                    <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment}</span>
-                    <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
-                  </div>
-                  <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                    <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Emotional Attitude</p>
-                    <p className="font-serif italic text-xl leading-none">{selectedCharacter.emotionalAttitude}</p>
-                  </div>
+                  {selectedCharacter.subtype && (
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Subtype</p>
+                      <span className="font-serif italic text-xl block leading-none mb-1">{selectedCharacter.subtype}</span>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getSubtypeName(selectedCharacter.subtype)}</p>
+                    </div>
+                  )}
+                  {selectedCharacter.behaviourQualia && (
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Qualia</p>
+                      <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
+                    </div>
+                  )}
+                  {selectedCharacter.initialDevelopment && (
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
+                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
+                    </div>
+                  )}
+                  {selectedCharacter.finalDevelopment && (
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Final Dev</p>
+                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment}</span>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
+                    </div>
+                  )}
+                  {selectedCharacter.emotionalAttitude && (
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Emotional Attitude</p>
+                      <p className="font-serif italic text-xl leading-none">{selectedCharacter.emotionalAttitude}</p>
+                    </div>
+                  )}
                   {selectedCharacter.alternateType && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Alternate Type</p>
@@ -1079,7 +1093,7 @@ function AppContent() {
                             className="overflow-hidden"
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
-                              {Object.entries(ct.energetics).map(([key, val]) => (
+                              {Object.entries(ct.energetics).filter(([_, val]) => val).map(([key, val]) => (
                                 <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <p className="font-serif italic text-base">{val}</p>
@@ -1110,7 +1124,7 @@ function AppContent() {
                             className="overflow-hidden"
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
-                              {Object.entries(ct.functions).map(([key, val]) => (
+                              {Object.entries(ct.functions).filter(([_, val]) => val).map(([key, val]) => (
                                 <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <p className="font-serif italic text-base">{val}</p>
@@ -1129,18 +1143,24 @@ function AppContent() {
                         <Compass className="w-3 h-3" /> Axes & Quadra
                       </h4>
                       <div className="grid grid-cols-3 gap-3">
-                        <div className="border border-[#1a1a1a]/5 p-3 rounded">
-                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Judgment</p>
-                          <p className="font-serif italic text-base">{ct.axes.judgment}</p>
-                        </div>
-                        <div className="border border-[#1a1a1a]/5 p-3 rounded">
-                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Perception</p>
-                          <p className="font-serif italic text-base">{ct.axes.perception}</p>
-                        </div>
-                        <div className="border border-[#1a1a1a]/5 p-3 rounded bg-[#1a1a1a] text-white">
-                          <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Quadra</p>
-                          <p className="font-serif italic text-base">{ct.quadra}</p>
-                        </div>
+                        {ct.axes.judgment && (
+                          <div className="border border-[#1a1a1a]/5 p-3 rounded">
+                            <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Judgment</p>
+                            <p className="font-serif italic text-base">{ct.axes.judgment}</p>
+                          </div>
+                        )}
+                        {ct.axes.perception && (
+                          <div className="border border-[#1a1a1a]/5 p-3 rounded">
+                            <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Perception</p>
+                            <p className="font-serif italic text-base">{ct.axes.perception}</p>
+                          </div>
+                        )}
+                        {ct.quadra && (
+                          <div className="border border-[#1a1a1a]/5 p-3 rounded bg-[#1a1a1a] text-white">
+                            <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Quadra</p>
+                            <p className="font-serif italic text-base">{ct.quadra}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
