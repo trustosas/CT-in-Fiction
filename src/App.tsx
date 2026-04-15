@@ -123,17 +123,18 @@ function AppContent() {
 
   const fetchLatestCommitSha = async () => {
     try {
+      // Use a standard JSON fetch which is often more reliable in browser environments
       const res = await fetch('https://api.github.com/repos/trustosas/CT-in-Fiction-Analyses/commits/main', {
-        headers: {
-          'Accept': 'application/vnd.github.VERSION.sha'
-        }
+        mode: 'cors',
+        cache: 'no-store'
       });
       if (res.ok) {
-        const sha = await res.text();
-        return sha.trim();
+        const data = await res.json();
+        return data.sha;
       }
     } catch (err) {
-      console.error('Failed to fetch commit SHA:', err);
+      // Silently fail to avoid console noise if the API is unreachable or blocked
+      // The system will fallback to the randomized cache buster automatically
     }
     return null;
   };
@@ -149,11 +150,6 @@ function AppContent() {
         // Replace branch references with the specific commit SHA
         url = url.replace('/refs/heads/main/', `/${sha}/`);
         url = url.replace('/main/', `/${sha}/`);
-      } else {
-        // Fallback to random string cache busting for non-GitHub URLs or if SHA fetch failed
-        const randomStr = Math.random().toString(36).substring(2, 8);
-        const cacheBuster = `v=${randomStr}`;
-        url = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
       }
 
       try {
