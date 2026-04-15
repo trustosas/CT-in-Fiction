@@ -119,17 +119,45 @@ function AppContent() {
 
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
-  const fetchAnalysisMarkdown = async (content: string) => {
+  const fetchLatestCommitSha = async () => {
+    try {
+      const res = await fetch('https://api.github.com/repos/trustosas/CT-in-Fiction-Analyses/commits/main', {
+        headers: {
+          'Accept': 'application/vnd.github.VERSION.sha'
+        }
+      });
+      if (res.ok) {
+        const sha = await res.text();
+        return sha.trim();
+      }
+    } catch (err) {
+      console.error('Failed to fetch commit SHA:', err);
+    }
+    return null;
+  };
+
+  const fetchAnalysisMarkdown = async (content: string, sha?: string | null) => {
     if (!content) return '';
     const urlPattern = /^https?:\/\//;
     if (urlPattern.test(content.trim())) {
-      const url = content.trim();
-      const randomStr = Math.random().toString(36).substring(2, 8);
-      const cacheBuster = `v=${randomStr}`;
-      const bustedUrl = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
+      let url = content.trim();
+      
+      // If it's a GitHub raw URL and we have a SHA, use it for deterministic cache busting
+      if (url.includes('raw.githubusercontent.com') && sha) {
+        // Replace branch references with the specific commit SHA
+        url = url.replace('/refs/heads/main/', `/${sha}/`);
+        url = url.replace('/main/', `/${sha}/`);
+      } else {
+        // Fallback to random string cache busting for non-GitHub URLs or if SHA fetch failed
+        const randomStr = Math.random().toString(36).substring(2, 8);
+        const cacheBuster = `v=${randomStr}`;
+        url = url.includes('?') ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
+      }
+
       try {
-        const res = await fetch(bustedUrl, { cache: 'no-store' });
+        const res = await fetch(url, { cache: 'no-store' });
         return await res.text();
       } catch (err) {
         console.error('Failed to fetch analysis:', err);
@@ -143,7 +171,15 @@ function AppContent() {
     try {
       if (!isSilent) setIsLoading(true);
       if (subjectSlug) setAnalysisMarkdown('');
-      const data = await fetchCharacters();
+      
+      // Fetch both characters and the latest commit SHA in parallel
+      const [data, sha] = await Promise.all([
+        fetchCharacters(),
+        fetchLatestCommitSha()
+      ]);
+
+      if (sha) setLatestCommitSha(sha);
+
       if (data && data.length > 0) {
         setCharacters(data);
         setError(null);
@@ -152,7 +188,7 @@ function AppContent() {
         if (subjectSlug) {
           const char = data.find(c => slugify(c.name) === subjectSlug);
           if (char && char.analysis) {
-            const markdown = await fetchAnalysisMarkdown(char.analysis);
+            const markdown = await fetchAnalysisMarkdown(char.analysis, sha);
             setAnalysisMarkdown(markdown);
           }
         }
