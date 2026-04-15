@@ -387,7 +387,7 @@ function AppContent() {
       const matchesQuadra = !selectedQuadra || (ct && ct.quadra.toLowerCase() === selectedQuadra.toLowerCase());
       return matchesQuadra;
     });
-    return Array.from(new Set(filtered.map(c => c.finalDevelopment))).filter(Boolean).sort();
+    return Array.from(new Set(filtered.map(c => c.finalDevelopment || c.initialDevelopment))).filter(Boolean).sort();
   }, [viewFilteredCharacters, selectedQuadra]);
   
   const quadras = useMemo(() => {
@@ -507,7 +507,7 @@ function AppContent() {
         const matchesAuxEnergetic = !selectedAuxEnergetic || (char.auxiliaryFunction && getEnergetic(char.auxiliaryFunction).toLowerCase() === selectedAuxEnergetic.toLowerCase());
         
         const matchesDevelopment = !selectedDevelopment || 
-                              (char.finalDevelopment && char.finalDevelopment.toLowerCase() === selectedDevelopment.toLowerCase());
+                              ((char.finalDevelopment || char.initialDevelopment) && (char.finalDevelopment || char.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase());
         const matchesBehaviourQualia = !selectedBehaviourQualia || char.behaviourQualia === selectedBehaviourQualia;
         const matchesSubtype = !selectedSubtype || char.subtype === selectedSubtype;
         
@@ -1190,18 +1190,18 @@ function AppContent() {
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
                     </div>
                   )}
-                  {selectedCharacter.initialDevelopment && (
+                  {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
                       <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
                       <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
                     </div>
                   )}
-                  {selectedCharacter.finalDevelopment && (
+                  {(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment) && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Final Dev</p>
-                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment}</span>
-                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
+                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Development</p>
+                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
+                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.type, selectedCharacter.behaviourQualia)}</p>
                     </div>
                   )}
                   {selectedCharacter.emotionalAttitude && (
