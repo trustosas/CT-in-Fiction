@@ -393,6 +393,25 @@ export function getSubtypeName(subtype: string): string {
   return mapping[subtype] || '';
 }
 
+export function getEmotionalDescriptor(attitude: string, axis: string): string | null {
+  if (!attitude || !axis) return null;
+  const lowerAttitude = attitude.toLowerCase();
+  const isGuarded = lowerAttitude.includes('guarded') && !lowerAttitude.includes('unguarded');
+  const isUnguarded = lowerAttitude.includes('unguarded');
+  
+  const cleanAxis = axis.trim();
+
+  if (cleanAxis === 'Fe-Ti') {
+    if (isGuarded) return 'Directive';
+    if (isUnguarded) return 'Adaptive';
+  }
+  if (cleanAxis === 'Te-Fi') {
+    if (isGuarded) return 'Unseelie';
+    if (isUnguarded) return 'Seelie';
+  }
+  return null;
+}
+
 export function slugify(text: string): string {
   return text
     .toString()

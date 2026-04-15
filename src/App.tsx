@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER } from './lib/ct-logic';
+import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
@@ -1251,7 +1251,18 @@ function AppContent() {
                   {selectedCharacter.emotionalAttitude && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Emotional Attitude</p>
-                      <p className="font-serif italic text-xl leading-none">{selectedCharacter.emotionalAttitude}</p>
+                      {getEmotionalDescriptor(selectedCharacter.emotionalAttitude, selectedCharacter.judgmentAxis) ? (
+                        <>
+                          <p className="font-serif italic text-xl leading-none mb-1">
+                            {getEmotionalDescriptor(selectedCharacter.emotionalAttitude, selectedCharacter.judgmentAxis)}
+                          </p>
+                          <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">
+                            {selectedCharacter.emotionalAttitude}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-serif italic text-xl leading-none">{selectedCharacter.emotionalAttitude}</p>
+                      )}
                     </div>
                   )}
                   {selectedCharacter.alternateType && (
