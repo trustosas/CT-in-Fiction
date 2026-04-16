@@ -96,6 +96,36 @@ export default function App() {
   );
 }
 
+function SmartWorkImage({ src, alt, className }: { src: string, alt: string, className?: string }) {
+  const [isLogo, setIsLogo] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!src) return;
+    
+    // Reset state when src changes
+    setIsLogo(null);
+
+    fetch(`/api/image-metadata?url=${encodeURIComponent(src)}`)
+      .then(res => res.json())
+      .then(data => {
+        setIsLogo(data.isLogo);
+      })
+      .catch(err => {
+        console.error("Failed to fetch image metadata:", err);
+        setIsLogo(false); // Fallback to art
+      });
+  }, [src]);
+
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      className={`${className} ${isLogo === true ? 'object-contain p-6' : 'object-cover p-0'} transition-all duration-300 ${isLogo === null ? 'opacity-0' : 'opacity-100'}`}
+      referrerPolicy="no-referrer"
+    />
+  );
+}
+
 function AppContent() {
   const navigate = useNavigate();
   const { mediumSlug, workSlug, subjectSlug } = useParams();
@@ -1008,11 +1038,11 @@ function AppContent() {
             ) : (
               <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
                 {currentWorkData && (
-                  <div className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm flex items-center justify-center p-4">
-                    <img 
+                  <div className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center">
+                    <SmartWorkImage 
                       src={currentWorkData.imageUrl} 
                       alt={currentWorkData.title}
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full h-full"
                     />
                   </div>
                 )}
@@ -1175,11 +1205,11 @@ function AppContent() {
               className="character-card group cursor-pointer"
               onClick={() => navigateToWork(work.title)}
             >
-              <div className="character-image-container aspect-[4/3] mb-6 bg-[#1a1a1a]/5 p-8 flex items-center justify-center">
-                <img 
+              <div className="character-image-container aspect-[4/3] mb-6 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+                <SmartWorkImage 
                   src={work.imageUrl} 
                   alt={work.title}
-                  className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform"
+                  className="w-full h-full group-hover:scale-105 transition-transform"
                 />
               </div>
               <div className="flex justify-between items-end">
@@ -1722,12 +1752,12 @@ function AppContent() {
                   <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     <button 
                       onClick={() => navigateToWork(selectedCharacter.source)}
-                      className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm flex items-center justify-center p-6 hover:bg-[#1a1a1a]/10 transition-colors group"
+                      className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
                     >
-                      <img 
+                      <SmartWorkImage 
                         src={selectedCharacter.workImageUrl} 
                         alt={selectedCharacter.source}
-                        className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform"
+                        className="w-full h-full group-hover:scale-105 transition-transform"
                       />
                     </button>
                     <div>
