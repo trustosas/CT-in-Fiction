@@ -120,6 +120,7 @@ function AppContent() {
   const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
+  const [wasOnFeed, setWasOnFeed] = useState(false);
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
@@ -317,15 +318,19 @@ function AppContent() {
 
   const handleSelectCharacter = (char: Character | null) => {
     if (char) {
+      setWasOnFeed(!mediumSlug && !workSlug);
       navigate(`/${slugify(char.medium)}/${slugify(char.source)}/${slugify(char.name)}`);
     } else {
-      if (activeWork && activeMedium) {
+      if (wasOnFeed) {
+        navigate('/');
+      } else if (activeWork && activeMedium) {
         navigate(`/${slugify(activeMedium)}/${slugify(activeWork)}`);
       } else if (activeMedium) {
         navigate(`/${slugify(activeMedium)}`);
       } else {
         navigate('/');
       }
+      setWasOnFeed(false);
     }
   };
 
