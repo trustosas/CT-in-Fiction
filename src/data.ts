@@ -29,6 +29,7 @@ export interface Character {
   isPublished: boolean;
   publishedDate?: string;
   editedDate?: string;
+  isWorkArtOpaque?: boolean;
   motifValues?: boolean[];
 }
 

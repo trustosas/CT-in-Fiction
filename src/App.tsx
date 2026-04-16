@@ -96,31 +96,12 @@ export default function App() {
   );
 }
 
-function SmartWorkImage({ src, alt, className }: { src: string, alt: string, className?: string }) {
-  const [isLogo, setIsLogo] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!src) return;
-    
-    // Reset state when src changes
-    setIsLogo(null);
-
-    fetch(`/api/image-metadata?url=${encodeURIComponent(src)}`)
-      .then(res => res.json())
-      .then(data => {
-        setIsLogo(data.isLogo);
-      })
-      .catch(err => {
-        console.error("Failed to fetch image metadata:", err);
-        setIsLogo(false); // Fallback to art
-      });
-  }, [src]);
-
+function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: string, className?: string, isOpaque?: boolean }) {
   return (
     <img 
       src={src} 
       alt={alt}
-      className={`${className} ${isLogo === true ? 'object-contain p-6' : 'object-cover p-0'} transition-all duration-300 ${isLogo === null ? 'opacity-0' : 'opacity-100'}`}
+      className={`${className} ${isOpaque === true ? 'object-cover p-0' : 'object-contain p-6'}`}
       referrerPolicy="no-referrer"
     />
   );
@@ -270,14 +251,18 @@ function AppContent() {
   const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
 
   const works = useMemo(() => {
-    const workMap = new Map<string, { title: string; imageUrl: string; year: string }>();
+    const workMap = new Map<string, { title: string; imageUrl: string; year: string; isOpaque?: boolean }>();
     publishedCharacters.forEach(char => {
-      if (!workMap.has(char.source)) {
+      const existing = workMap.get(char.source);
+      if (!existing) {
         workMap.set(char.source, { 
           title: char.source, 
           imageUrl: char.workImageUrl, 
-          year: char.year 
+          year: char.year,
+          isOpaque: char.isWorkArtOpaque
         });
+      } else if (char.isWorkArtOpaque) {
+        existing.isOpaque = true;
       }
     });
     return Array.from(workMap.values());
@@ -847,16 +832,20 @@ function AppContent() {
 
   const worksInMedium = useMemo(() => {
     if (!activeMedium) return [];
-    const workMap = new Map<string, { title: string; imageUrl: string; year: string }>();
+    const workMap = new Map<string, { title: string; imageUrl: string; year: string; isOpaque?: boolean }>();
     publishedCharacters
       .filter(c => c.medium === activeMedium)
       .forEach(char => {
-        if (!workMap.has(char.source)) {
+        const existing = workMap.get(char.source);
+        if (!existing) {
           workMap.set(char.source, { 
             title: char.source, 
             imageUrl: char.workImageUrl, 
-            year: char.year 
+            year: char.year,
+            isOpaque: char.isWorkArtOpaque
           });
+        } else if (char.isWorkArtOpaque) {
+          existing.isOpaque = true;
         }
       });
     return Array.from(workMap.values());
@@ -1043,6 +1032,7 @@ function AppContent() {
                       src={currentWorkData.imageUrl} 
                       alt={currentWorkData.title}
                       className="w-full h-full"
+                      isOpaque={currentWorkData.isOpaque}
                     />
                   </div>
                 )}
@@ -1210,6 +1200,7 @@ function AppContent() {
                   src={work.imageUrl} 
                   alt={work.title}
                   className="w-full h-full group-hover:scale-105 transition-transform"
+                  isOpaque={work.isOpaque}
                 />
               </div>
               <div className="flex justify-between items-end">
@@ -1758,6 +1749,7 @@ function AppContent() {
                         src={selectedCharacter.workImageUrl} 
                         alt={selectedCharacter.source}
                         className="w-full h-full group-hover:scale-105 transition-transform"
+                        isOpaque={selectedCharacter.isWorkArtOpaque}
                       />
                     </button>
                     <div>

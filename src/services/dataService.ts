@@ -50,18 +50,20 @@ export async function fetchCharacters(): Promise<Character[]> {
             // 26: isPublished
             // 27: publishedDate
             // 28: editedDate
-            // 29+: Motifs (96 values)
+            // 29: isWorkArtOpaque
+            // 30+: Motifs (96 values)
 
             const name = row[4] || '';
             const type = row[6] || '';
             
-            // Extract motif values starting from index 29
-            const motifValues = row.slice(29, 29 + 96).map((val: any) => {
+            // Extract motif values starting from index 30
+            const motifValues = row.slice(30, 30 + 96).map((val: any) => {
               const sVal = String(val).trim().toUpperCase();
               return sVal === 'TRUE' || sVal === '1' || sVal === 'YES';
             });
 
             const isPublished = String(row[26]).trim().toUpperCase() === 'TRUE';
+            const isWorkArtOpaque = String(row[29]).trim().toUpperCase() === 'TRUE';
 
             return {
               id: `char-${index}`,
@@ -94,6 +96,7 @@ export async function fetchCharacters(): Promise<Character[]> {
               isPublished,
               publishedDate: row[27] || '',
               editedDate: row[28] || '',
+              isWorkArtOpaque,
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
           }).filter((char: any) => char.name && char.type && char.name.toLowerCase() !== 'name');
