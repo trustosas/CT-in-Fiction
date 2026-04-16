@@ -454,6 +454,41 @@ export function getAllMotifs(): { id: number; label: string; function: string }[
   return all;
 }
 
+export interface FilterState {
+  quadra: string | null;
+  judgmentAxis: string | null;
+  perceptionAxis: string | null;
+  leadEnergetic: string | null;
+  auxEnergetic: string | null;
+  development: string | null;
+  behaviourQualia: string | null;
+  subtype: string | null;
+  emotionalAttitude: string | null;
+  motifs: number[];
+}
+
+export function matchesFilters(char: any, filters: Partial<FilterState>): boolean {
+  if (filters.quadra && char.quadra.toLowerCase() !== filters.quadra.toLowerCase()) return false;
+  if (filters.judgmentAxis && char.judgmentAxis.toLowerCase() !== filters.judgmentAxis.toLowerCase()) return false;
+  if (filters.perceptionAxis && char.perceptionAxis.toLowerCase() !== filters.perceptionAxis.toLowerCase()) return false;
+  if (filters.leadEnergetic && char.leadEnergetic.toLowerCase() !== filters.leadEnergetic.toLowerCase()) return false;
+  if (filters.auxEnergetic && char.auxiliaryEnergetic.toLowerCase() !== filters.auxEnergetic.toLowerCase()) return false;
+  
+  const charDev = (char.finalDevelopment || char.initialDevelopment).toLowerCase();
+  if (filters.development && charDev !== filters.development.toLowerCase()) return false;
+  
+  if (filters.behaviourQualia && char.behaviourQualia !== filters.behaviourQualia) return false;
+  if (filters.subtype && char.subtype !== filters.subtype) return false;
+  
+  if (filters.emotionalAttitude && !checkEmotionalMatch(char.emotionalAttitude, char.judgmentAxis, filters.emotionalAttitude)) return false;
+  
+  if (filters.motifs && filters.motifs.length > 0) {
+    if (!char.motifValues || !filters.motifs.every((idx: number) => char.motifValues![idx])) return false;
+  }
+  
+  return true;
+}
+
 export function slugify(text: string): string {
   return text
     .toString()

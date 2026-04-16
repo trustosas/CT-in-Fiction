@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs } from './lib/ct-logic';
+import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
@@ -404,171 +404,84 @@ function AppContent() {
     });
   }, [publishedCharacters, currentView, activeWork, activeMedium]);
 
+  const currentFilters = useMemo(() => ({
+    quadra: selectedQuadra,
+    judgmentAxis: selectedJudgmentAxis,
+    perceptionAxis: selectedPerceptionAxis,
+    leadEnergetic: selectedLeadEnergetic,
+    auxEnergetic: selectedAuxEnergetic,
+    development: selectedDevelopment,
+    behaviourQualia: selectedBehaviourQualia,
+    subtype: selectedSubtype,
+    emotionalAttitude: selectedEmotionalAttitude,
+    motifs: selectedMotifs
+  }), [selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+
   const developments = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesAuxEnergetic && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, development: null })
+    );
     return Array.from(new Set(filtered.map(c => c.finalDevelopment || c.initialDevelopment))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
   
   const quadras = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, quadra: null })
+    );
     const items = filtered.map(c => c.quadra).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const judgmentAxes = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesLeadEnergetic && matchesAuxEnergetic && matchesPerceptionAxis && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, judgmentAxis: null })
+    );
     const items = filtered.map(c => c.judgmentAxis).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedLeadEnergetic, selectedAuxEnergetic, selectedPerceptionAxis, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const energetics = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, leadEnergetic: null })
+    );
     const items = filtered.map(c => c.leadEnergetic).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const perceptionAxes = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesLeadEnergetic && matchesAuxEnergetic && matchesJudgmentAxis && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, perceptionAxis: null })
+    );
     const items = filtered.map(c => c.perceptionAxis).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedAuxEnergetic, selectedLeadEnergetic, selectedJudgmentAxis, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const auxEnergetics = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, auxEnergetic: null })
+    );
     const items = filtered.map(c => c.auxiliaryEnergetic).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i && i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const behaviourQualias = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, behaviourQualia: null })
+    );
     return Array.from(new Set(filtered.map(c => c.behaviourQualia))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const subtypes = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesEmotionalAttitude = checkEmotionalMatch(c.emotionalAttitude, c.judgmentAxis, selectedEmotionalAttitude);
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesEmotionalAttitude && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, subtype: null })
+    );
     return Array.from(new Set(filtered.map(c => c.subtype))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedEmotionalAttitude, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const availableMotifs = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(char => {
-      const matchesQuadra = !selectedQuadra || char.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || char.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || char.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || char.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || char.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (char.finalDevelopment || char.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || char.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || char.subtype === selectedSubtype;
-      const matchesEmotionalAttitude = checkEmotionalMatch(char.emotionalAttitude, char.judgmentAxis, selectedEmotionalAttitude);
-
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && 
-             matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && 
-             matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude;
-    });
+    const filtered = viewFilteredCharacters.filter(char => 
+      matchesFilters(char, { ...currentFilters, motifs: [] })
+    );
 
     const all = getAllMotifs();
     const availableIds = new Set<number>();
@@ -583,23 +496,12 @@ function AppContent() {
 
     // Filter motifs that are present in the filtered set of characters
     return all.filter(opt => availableIds.has(opt.id));
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   const emotionalAttitudes = useMemo(() => {
-    const filtered = viewFilteredCharacters.filter(c => {
-      const matchesQuadra = !selectedQuadra || c.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-      const matchesJudgmentAxis = !selectedJudgmentAxis || c.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-      const matchesPerceptionAxis = !selectedPerceptionAxis || c.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-      const matchesLeadEnergetic = !selectedLeadEnergetic || c.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-      const matchesAuxEnergetic = !selectedAuxEnergetic || c.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-      const matchesDevelopment = !selectedDevelopment || (c.finalDevelopment || c.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase();
-      const matchesBehaviourQualia = !selectedBehaviourQualia || c.behaviourQualia === selectedBehaviourQualia;
-      const matchesSubtype = !selectedSubtype || c.subtype === selectedSubtype;
-      const matchesMotifs = selectedMotifs.length === 0 || 
-                           (c.motifValues && selectedMotifs.every(idx => c.motifValues![idx]));
-      
-      return matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && matchesBehaviourQualia && matchesSubtype && matchesMotifs;
-    });
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, emotionalAttitude: null })
+    );
     
     const items = new Set<string>();
     
@@ -617,52 +519,26 @@ function AppContent() {
       if (indexB !== -1) return 1;
       return a.localeCompare(b);
     });
-  }, [viewFilteredCharacters, selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedMotifs]);
+  }, [viewFilteredCharacters, currentFilters]);
 
   // Reset dependent filters if they become invalid
   useEffect(() => {
     if (selectedJudgmentAxis && !judgmentAxes.includes(selectedJudgmentAxis)) setSelectedJudgmentAxis(null);
-  }, [judgmentAxes]);
-
-  useEffect(() => {
     if (selectedLeadEnergetic && !energetics.includes(selectedLeadEnergetic)) setSelectedLeadEnergetic(null);
-  }, [energetics]);
-
-  useEffect(() => {
     if (selectedPerceptionAxis && !perceptionAxes.includes(selectedPerceptionAxis)) setSelectedPerceptionAxis(null);
-  }, [perceptionAxes]);
-
-  useEffect(() => {
     if (selectedAuxEnergetic && !auxEnergetics.includes(selectedAuxEnergetic)) setSelectedAuxEnergetic(null);
-  }, [auxEnergetics]);
-
-  useEffect(() => {
     if (selectedDevelopment && !developments.includes(selectedDevelopment)) setSelectedDevelopment(null);
-  }, [developments]);
-
-  useEffect(() => {
     if (selectedBehaviourQualia && !behaviourQualias.includes(selectedBehaviourQualia)) setSelectedBehaviourQualia(null);
-  }, [behaviourQualias]);
-
-  useEffect(() => {
     if (selectedSubtype && !subtypes.includes(selectedSubtype)) setSelectedSubtype(null);
-  }, [subtypes]);
-
-  useEffect(() => {
     if (selectedEmotionalAttitude && !emotionalAttitudes.includes(selectedEmotionalAttitude)) setSelectedEmotionalAttitude(null);
-  }, [emotionalAttitudes]);
-
-  useEffect(() => {
     if (selectedQuadra && !quadras.includes(selectedQuadra)) setSelectedQuadra(null);
-  }, [quadras]);
 
-  useEffect(() => {
     const availableIds = availableMotifs.map(m => m.id);
     const validMotifs = selectedMotifs.filter(id => availableIds.includes(id));
     if (validMotifs.length !== selectedMotifs.length) {
       setSelectedMotifs(validMotifs);
     }
-  }, [availableMotifs, selectedMotifs]);
+  }, [judgmentAxes, energetics, perceptionAxes, auxEnergetics, developments, behaviourQualias, subtypes, emotionalAttitudes, quadras, availableMotifs, selectedMotifs]);
 
   const filteredCharacters = useMemo(() => {
     return publishedCharacters
@@ -674,25 +550,7 @@ function AppContent() {
         const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              char.source.toLowerCase().includes(searchQuery.toLowerCase());
         
-        const matchesQuadra = !selectedQuadra || char.quadra.toLowerCase() === selectedQuadra.toLowerCase();
-        const matchesJudgmentAxis = !selectedJudgmentAxis || char.judgmentAxis.toLowerCase() === selectedJudgmentAxis.toLowerCase();
-        const matchesPerceptionAxis = !selectedPerceptionAxis || char.perceptionAxis.toLowerCase() === selectedPerceptionAxis.toLowerCase();
-        const matchesLeadEnergetic = !selectedLeadEnergetic || char.leadEnergetic.toLowerCase() === selectedLeadEnergetic.toLowerCase();
-        const matchesAuxEnergetic = !selectedAuxEnergetic || char.auxiliaryEnergetic.toLowerCase() === selectedAuxEnergetic.toLowerCase();
-        
-        const matchesDevelopment = !selectedDevelopment || 
-                               ((char.finalDevelopment || char.initialDevelopment) && (char.finalDevelopment || char.initialDevelopment).toLowerCase() === selectedDevelopment.toLowerCase());
-        const matchesBehaviourQualia = !selectedBehaviourQualia || char.behaviourQualia === selectedBehaviourQualia;
-        const matchesSubtype = !selectedSubtype || char.subtype === selectedSubtype;
-        
-        const matchesEmotionalAttitude = checkEmotionalMatch(char.emotionalAttitude, char.judgmentAxis, selectedEmotionalAttitude);
-
-        const matchesMotifs = selectedMotifs.length === 0 || 
-                             (char.motifValues && selectedMotifs.every(idx => char.motifValues![idx]));
-        
-        return matchesSearch && matchesQuadra && matchesJudgmentAxis && matchesPerceptionAxis && 
-               matchesLeadEnergetic && matchesAuxEnergetic && matchesDevelopment && 
-               matchesBehaviourQualia && matchesSubtype && matchesEmotionalAttitude && matchesMotifs;
+        return matchesSearch && matchesFilters(char, currentFilters);
       })
       .sort((a, b) => {
         // Sort by publishedDate descending (newest first)
@@ -700,7 +558,7 @@ function AppContent() {
         const dateB = b.publishedDate || '';
         return dateB.localeCompare(dateA);
       });
-  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, selectedQuadra, selectedLeadEnergetic, selectedAuxEnergetic, selectedJudgmentAxis, selectedPerceptionAxis, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters]);
 
   const hasActiveFilters = useMemo(() => {
     return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || 
