@@ -938,7 +938,7 @@ function AppContent() {
               </nav>
 
               <div className="pt-6 mt-auto border-t border-white/5 font-mono text-[8px] uppercase tracking-widest opacity-20">
-                CT in Fiction v1.0
+                CT in Fiction v1.5
               </div>
             </motion.div>
           </>
@@ -992,7 +992,7 @@ function AppContent() {
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
                 {currentView === 'feed' ? 'Media Library' : 
                  currentView === 'medium' ? `Medium: ${activeMedium}` :
-                 currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.0'}
+                 currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.5'}
               </span>
               {error && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/5 text-red-500 rounded-full">
