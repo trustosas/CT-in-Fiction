@@ -97,11 +97,21 @@ export default function App() {
 }
 
 function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: string, className?: string, isOpaque?: boolean }) {
+  const [orientation, setOrientation] = useState<'landscape' | 'portrait' | null>(null);
+
   return (
     <img 
       src={src} 
       alt={alt}
-      className={`${className} ${isOpaque === true ? 'object-cover p-0' : 'object-contain p-6'}`}
+      onLoad={(e) => {
+        const img = e.currentTarget;
+        setOrientation(img.naturalWidth >= img.naturalHeight ? 'landscape' : 'portrait');
+      }}
+      className={`${className} ${
+        isOpaque === true 
+          ? (orientation === 'portrait' ? 'object-contain p-0' : 'object-cover p-0') 
+          : 'object-contain p-6'
+      }`}
       referrerPolicy="no-referrer"
     />
   );
