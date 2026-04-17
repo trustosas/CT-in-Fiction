@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
+import { useNavigate, useParams, Routes, Route, useLocation } from 'react-router-dom';
 import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -9,7 +9,7 @@ import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
 import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
-type View = 'medium' | 'work' | 'feed';
+type View = 'medium' | 'work' | 'feed' | 'all-works';
 
 const parseDatabaseDate = (dateStr: string) => {
   if (!dateStr) return null;
@@ -89,6 +89,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppContent />} />
+      <Route path="/all-works" element={<AppContent />} />
+      <Route path="/works" element={<AppContent />} />
       <Route path="/:mediumSlug" element={<AppContent />} />
       <Route path="/:mediumSlug/:workSlug" element={<AppContent />} />
       <Route path="/:mediumSlug/:workSlug/:subjectSlug" element={<AppContent />} />
@@ -169,6 +171,7 @@ function PaginationControls({
 
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { mediumSlug, workSlug, subjectSlug } = useParams();
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +181,7 @@ function AppContent() {
   const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [workSortOrder, setWorkSortOrder] = useState<'default' | 'az' | 'year' | 'subjects'>('default');
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(null);
   const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(null);
   const [selectedJudgmentAxis, setSelectedJudgmentAxis] = useState<string | null>(null);
@@ -470,10 +474,11 @@ function AppContent() {
   }, [activeMotifId, publishedCharacters, selectedCharacter]);
 
   const currentView = useMemo(() => {
+    if (location.pathname === '/all-works' || location.pathname === '/works') return 'all-works';
     if (workSlug) return 'work';
     if (mediumSlug) return 'medium';
     return 'feed';
-  }, [mediumSlug, workSlug]);
+  }, [mediumSlug, workSlug, location.pathname]);
 
   const navigateToWork = (workTitle: string) => {
     const char = publishedCharacters.find(c => c.source === workTitle);
@@ -491,6 +496,12 @@ function AppContent() {
 
   const navigateToHome = () => {
     navigate('/');
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToAllWorks = () => {
+    navigate('/all-works');
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -739,12 +750,6 @@ function AppContent() {
         return dateB.localeCompare(dateA);
       });
   }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters]);
-
-  const hasActiveFilters = useMemo(() => {
-    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || 
-           selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || 
-           selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0 || searchQuery);
-  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs, searchQuery]);
 
   const currentWorkData = activeWork ? works.find(w => w.title === activeWork) : null;
 
@@ -996,33 +1001,55 @@ function AppContent() {
   };
 
   const worksInMedium = useMemo(() => {
-    if (!activeMedium) return [];
-    const workMap = new Map<string, { title: string; imageUrl: string; year: string; isOpaque: boolean }>();
-    publishedCharacters
-      .filter(c => c.medium === activeMedium)
-      .forEach(char => {
-        const existing = workMap.get(char.source);
-        if (!existing) {
-          workMap.set(char.source, { 
-            title: char.source, 
-            imageUrl: char.workImageUrl, 
-            year: char.year,
-            isOpaque: !!char.isWorkArtOpaque
-          });
-        } else if (char.isWorkArtOpaque) {
-          existing.isOpaque = true;
-        }
+    let list = currentView === 'all-works' ? works : works.filter(w => {
+      if (!activeMedium) return false;
+      const char = publishedCharacters.find(c => c.source === w.title);
+      return char?.medium === activeMedium;
+    });
+
+    if (searchQuery && !(currentFilters.quadra || currentFilters.judgmentAxis || currentFilters.perceptionAxis || currentFilters.leadEnergetic || currentFilters.auxEnergetic || currentFilters.development || currentFilters.behaviourQualia || currentFilters.subtype || currentFilters.emotionalAttitude || currentFilters.motifs.length > 0)) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter(w => {
+        const char = publishedCharacters.find(c => c.source === w.title);
+        return (
+          w.title.toLowerCase().includes(query) || 
+          w.year.toLowerCase().includes(query) ||
+          (char?.medium.toLowerCase().includes(query))
+        );
       });
-    return Array.from(workMap.values());
-  }, [publishedCharacters, activeMedium]);
+    }
+
+    // Apply Sorting
+    const sorted = [...list].sort((a, b) => {
+      if (workSortOrder === 'az') return a.title.localeCompare(b.title);
+      if (workSortOrder === 'year') return b.year.localeCompare(a.year);
+      if (workSortOrder === 'subjects') {
+        const countA = publishedCharacters.filter(c => c.source === a.title).length;
+        const countB = publishedCharacters.filter(c => c.source === b.title).length;
+        return countB - countA;
+      }
+      return 0; // Default order
+    });
+
+    return sorted;
+  }, [publishedCharacters, activeMedium, works, currentView, searchQuery, currentFilters, workSortOrder]);
 
   const isNotFound = useMemo(() => {
     if (isLoading) return false;
+    if (currentView === 'all-works') return false;
     if (mediumSlug && !activeMedium) return true;
     if (workSlug && !activeWork) return true;
     if (subjectSlug && !selectedCharacter) return true;
     return false;
-  }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter]);
+  }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
+
+  const hasActiveFilters = useMemo(() => {
+    if (currentView === 'all-works' || (currentView === 'medium' && !searchQuery)) {
+       // In these views, search filters WORKS, not switching to subject list unless advanced filters are used
+       return selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0;
+    }
+    return searchQuery || selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0;
+  }, [searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs, currentView]);
 
   const paginatedCharacters = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -1096,6 +1123,13 @@ function AppContent() {
                   Home
                 </button>
                 
+                <button 
+                  onClick={navigateToAllWorks}
+                  className="block font-serif text-2xl hover:italic transition-all text-left w-full font-extralight tracking-tight opacity-70"
+                >
+                  All
+                </button>
+                
                 <div className="pt-6 border-t border-white/10">
                   <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">{pluralize(media.length, 'Medium', 'Media')}</span>
                   <div className="space-y-2">
@@ -1135,6 +1169,13 @@ function AppContent() {
           >
             Home
           </button>
+          
+          <button 
+            onClick={navigateToAllWorks}
+            className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'all-works' ? 'opacity-100 font-medium' : 'opacity-30 hover:opacity-80 font-extralight'}`}
+          >
+            All
+          </button>
           {activeMedium && (
             <>
               <span className="opacity-20">/</span>
@@ -1165,8 +1206,9 @@ function AppContent() {
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
-                {currentView === 'feed' ? 'Home' : 
-                 currentView === 'medium' ? `Medium: ${activeMedium}` :
+                {currentView === 'feed' ? 'Archive Feed' : 
+                 currentView === 'all-works' ? 'All Media Collection' :
+                 currentView === 'medium' ? `Medium Collection` :
                  currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.5'}
               </span>
               <AnimatePresence>
@@ -1198,6 +1240,15 @@ function AppContent() {
                 </h1>
                 <p className="text-base opacity-70 leading-relaxed text-balance">
                   A specialized database exploring the Cognitive Types of fictional subjects.
+                </p>
+              </>
+            ) : currentView === 'all-works' ? (
+              <>
+                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3 uppercase">
+                  All <span className="italic">Media</span>
+                </h1>
+                <p className="text-base opacity-70 leading-relaxed">
+                  Exploring all {works.length} indexed {pluralize(works.length, 'work')} across all media types.
                 </p>
               </>
             ) : currentView === 'medium' ? (
@@ -1236,14 +1287,52 @@ function AppContent() {
             )}
           </div>
           
-          {(currentView === 'feed' || currentView === 'work') && (
+          {currentView === 'all-works' ? (
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                   <input 
                     type="text"
-                    placeholder="Search subjects..."
+                    placeholder="Search works..."
+                    className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full md:w-80"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 hidden xs:block whitespace-nowrap">Sort By</span>
+                  <div className="flex items-center gap-2">
+                    {[
+                      { label: 'Default', value: 'default' },
+                      { label: 'A-Z', value: 'az' },
+                      { label: 'Year', value: 'year' },
+                      { label: 'Scale', value: 'subjects' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setWorkSortOrder(opt.value as any)}
+                        className={`px-3 py-1.5 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
+                          workSortOrder === opt.value 
+                            ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
+                            : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (currentView === 'feed' || currentView === 'work' || currentView === 'medium') && (
+            <div className="flex flex-col gap-4 w-full md:w-auto">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                  <input 
+                    type="text"
+                    placeholder={currentView === 'medium' && !hasActiveFilters ? "Search works..." : "Search subjects..."}
                     className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full md:w-80"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -1374,7 +1463,7 @@ function AppContent() {
       {/* Grid */}
       <main className="editorial-grid">
         <AnimatePresence mode="popLayout">
-          {currentView === 'medium' && !hasActiveFilters && paginatedWorks.map((work) => (
+          {(currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
             <motion.div
               key={work.title}
               initial={{ opacity: 0, y: 20 }}
@@ -1393,6 +1482,9 @@ function AppContent() {
               </div>
               <div className="flex justify-between items-end gap-4">
                 <div className="min-w-0">
+                  <span className="font-mono text-[7px] uppercase tracking-widest opacity-30 mb-1 block">
+                    {publishedCharacters.find(c => c.source === work.title)?.medium}
+                  </span>
                   <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all truncate leading-tight">{work.title}</h3>
                   <p className="font-mono text-[10px] uppercase tracking-widest opacity-40 truncate">
                     {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} {pluralize(publishedCharacters.filter(c => c.source === work.title).length, 'Subject')}
@@ -1403,7 +1495,7 @@ function AppContent() {
             </motion.div>
           ))}
 
-          {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && filteredCharacters.length === 0 && !isLoading && (
+          {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && filteredCharacters.length === 0 && !isLoading ? (
             <div className="col-span-full py-32 text-center">
               <div className="max-w-md mx-auto">
                 <AlertCircle className="w-12 h-12 mx-auto mb-6 opacity-20" />
@@ -1417,8 +1509,7 @@ function AppContent() {
                 </p>
               </div>
             </div>
-          )}
-          {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && paginatedCharacters.map((char) => {
+          ) : (currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && paginatedCharacters.map((char) => {
             return (
               <motion.div
                 layout
@@ -1474,7 +1565,7 @@ function AppContent() {
       </main>
 
       {/* Pagination */}
-      {currentView === 'medium' && !hasActiveFilters && (
+      {(currentView === 'medium' || currentView === 'all-works') && !hasActiveFilters && (
         <PaginationControls 
           total={worksInMedium.length} 
           current={currentPage} 
@@ -1482,7 +1573,7 @@ function AppContent() {
           itemsPerPage={ITEMS_PER_PAGE} 
         />
       )}
-      {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && (
+      {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && (
         <PaginationControls 
           total={filteredCharacters.length} 
           current={currentPage} 
