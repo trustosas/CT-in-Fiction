@@ -471,7 +471,12 @@ export interface FilterState {
 }
 
 export function matchesFilters(char: any, filters: Partial<FilterState>): boolean {
-  if (filters.quadra && char.quadra.toLowerCase() !== filters.quadra.toLowerCase()) return false;
+  if (filters.quadra) {
+    const quadra = char.quadra?.toLowerCase();
+    const rawQuadra = char.rawQuadra?.toLowerCase();
+    const filterQuadra = filters.quadra.toLowerCase();
+    if (quadra !== filterQuadra && rawQuadra !== filterQuadra) return false;
+  }
   if (filters.judgmentAxis && char.judgmentAxis.toLowerCase() !== filters.judgmentAxis.toLowerCase()) return false;
   if (filters.perceptionAxis && char.perceptionAxis.toLowerCase() !== filters.perceptionAxis.toLowerCase()) return false;
   if (filters.leadEnergetic && char.leadEnergetic.toLowerCase() !== filters.leadEnergetic.toLowerCase()) return false;

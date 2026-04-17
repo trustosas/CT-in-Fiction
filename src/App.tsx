@@ -497,7 +497,7 @@ function AppContent() {
     const filtered = viewFilteredCharacters.filter(c => 
       matchesFilters(c, { ...currentFilters, quadra: null })
     );
-    const items = filtered.map(c => c.quadra).filter(Boolean);
+    const items = filtered.map(c => c.quadra || c.rawQuadra).filter(Boolean);
     return Array.from(new Set(items as string[])).filter(i => i.toLowerCase() !== 'all').sort();
   }, [viewFilteredCharacters, currentFilters]);
 
@@ -617,7 +617,8 @@ function AppContent() {
         if (currentView === 'medium' && activeMedium && char.medium !== activeMedium) return false;
 
         const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             char.source.toLowerCase().includes(searchQuery.toLowerCase());
+                             char.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                             formatTypeDisplay(char.type, char.rawQuadra).toLowerCase().includes(searchQuery.toLowerCase());
         
         return matchesSearch && matchesFilters(char, currentFilters);
       })

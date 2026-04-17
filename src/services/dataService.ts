@@ -101,7 +101,7 @@ export async function fetchCharacters(): Promise<Character[]> {
               isWorkArtOpaque,
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
-          }).filter((char: any) => char.name && char.type && char.name.toLowerCase() !== 'name');
+          }).filter((char: any) => char.name && (char.type || char.rawQuadra) && char.name.toLowerCase() !== 'name');
 
           console.log(`Successfully parsed ${characters.length} characters from spreadsheet.`);
           resolve(characters);
