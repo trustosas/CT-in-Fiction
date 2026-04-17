@@ -107,12 +107,65 @@ function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: s
   );
 }
 
+function PaginationControls({ 
+  total, 
+  current, 
+  onChange, 
+  itemsPerPage 
+}: { 
+  total: number, 
+  current: number, 
+  onChange: (val: number) => void,
+  itemsPerPage: number
+}) {
+  const totalPages = Math.ceil(total / itemsPerPage);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-4 sm:gap-6 mt-12 py-8 border-t border-[#1a1a1a]/5">
+      <button 
+        onClick={() => {
+          onChange(Math.max(1, current - 1));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        disabled={current === 1}
+        className="group flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] px-3 sm:px-5 py-2.5 border border-[#1a1a1a]/20 rounded-full disabled:opacity-10 hover:bg-[#1a1a1a] hover:text-[#f5f2ed] transition-all"
+      >
+        <ChevronLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
+        <span className="hidden sm:inline">Previous</span>
+      </button>
+      
+      <div className="flex items-center gap-2 sm:gap-3 font-mono text-[10px] uppercase tracking-[0.1em]">
+        <span className="opacity-30 hidden xs:inline">Page</span>
+        <span className="font-bold">{current}</span>
+        <span className="opacity-30">/</span>
+        <span className="opacity-30">{totalPages}</span>
+      </div>
+
+      <button 
+        onClick={() => {
+          onChange(Math.min(totalPages, current + 1));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        disabled={current === totalPages}
+        className="group flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] px-3 sm:px-5 py-2.5 border border-[#1a1a1a]/20 rounded-full disabled:opacity-10 hover:bg-[#1a1a1a] hover:text-[#f5f2ed] transition-all"
+      >
+        <span className="hidden sm:inline">Next</span>
+        <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+    </div>
+  );
+}
+
 function AppContent() {
   const navigate = useNavigate();
   const { mediumSlug, workSlug, subjectSlug } = useParams();
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(null);
@@ -193,9 +246,13 @@ function AppContent() {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [mediumSlug, workSlug, searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
   const loadData = async (isSilent = false) => {
     try {
       if (!isSilent) setIsLoading(true);
+      setIsSyncing(true);
       if (subjectSlug) setAnalysisMarkdown('');
       
       // Fetch both characters and the latest commit SHA in parallel
@@ -228,6 +285,7 @@ function AppContent() {
       setError('Sync Failed. Ensure Spreadsheet is "Published to Web" as CSV.');
     } finally {
       if (!isSilent) setIsLoading(false);
+      setIsSyncing(false);
     }
   };
 
@@ -320,12 +378,6 @@ function AppContent() {
   };
 
   const navigateToHome = () => {
-    navigate('/');
-    setIsMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const navigateToFeed = () => {
     navigate('/');
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -859,6 +911,16 @@ function AppContent() {
     return false;
   }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter]);
 
+  const paginatedCharacters = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCharacters.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCharacters, currentPage, ITEMS_PER_PAGE]);
+
+  const paginatedWorks = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return worksInMedium.slice(start, start + ITEMS_PER_PAGE);
+  }, [worksInMedium, currentPage, ITEMS_PER_PAGE]);
+
   if (isLoading && (mediumSlug || workSlug || subjectSlug)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed]">
@@ -877,14 +939,14 @@ function AppContent() {
           onClick={navigateToHome}
           className="px-8 py-3 bg-[#1a1a1a] text-white font-mono text-xs uppercase tracking-widest rounded-full hover:bg-black transition-colors"
         >
-          Return to Feed
+          Return to Home
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-6 py-12 md:px-12 lg:px-24">
+    <div className="min-h-screen px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto overflow-x-hidden">
       {/* Hamburger Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -915,10 +977,10 @@ function AppContent() {
 
               <nav className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
                 <button 
-                  onClick={navigateToFeed}
+                  onClick={navigateToHome}
                   className="block font-serif text-2xl hover:italic transition-all text-left w-full"
                 >
-                  Feed
+                  Home
                 </button>
                 
                 <div className="pt-6 border-t border-white/10">
@@ -955,10 +1017,10 @@ function AppContent() {
             <Menu className="w-5 h-5" />
           </button>
           <button 
-            onClick={navigateToFeed}
+            onClick={navigateToHome}
             className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'feed' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
           >
-            Feed
+            Home
           </button>
           {activeMedium && (
             <>
@@ -985,15 +1047,28 @@ function AppContent() {
       </nav>
 
       {/* Header */}
-      <header className="mb-20 border-b border-[#1a1a1a]/10 pb-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+      <header className="mb-8 border-b border-[#1a1a1a]/10 pb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
-                {currentView === 'feed' ? 'Media Library' : 
+                {currentView === 'feed' ? 'Home' : 
                  currentView === 'medium' ? `Medium: ${activeMedium}` :
                  currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.5'}
               </span>
+              <AnimatePresence>
+                {isSyncing && !error && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex items-center gap-1.5 px-2 py-0.5 bg-[#1a1a1a]/5 text-[#1a1a1a] rounded-full border border-[#1a1a1a]/10"
+                  >
+                    <Loader2 className="w-2.5 h-2.5 animate-spin opacity-40" />
+                    <span className="font-mono text-[8px] uppercase tracking-tighter opacity-60">Syncing...</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {error && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/5 text-red-500 rounded-full">
                   <AlertCircle className="w-2.5 h-2.5" />
@@ -1004,20 +1079,20 @@ function AppContent() {
             
             {currentView === 'feed' ? (
               <>
-                <h1 className="font-serif text-6xl md:text-8xl leading-none tracking-tight mb-6">
+                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3">
                   Fictional <br />
                   <span className="italic">Archetypes</span>
                 </h1>
-                <p className="text-lg opacity-70 leading-relaxed">
-                  A specialized database exploring the cognitive architectures of fictional subjects. 
+                <p className="text-base opacity-70 leading-relaxed text-balance">
+                  A specialized database exploring the Cognitive Types of fictional subjects.
                 </p>
               </>
             ) : currentView === 'medium' ? (
               <>
-                <h1 className="font-serif text-6xl md:text-8xl leading-none tracking-tight mb-6 uppercase">
+                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3 uppercase truncate">
                   {activeMedium}
                 </h1>
-                <p className="text-lg opacity-70 leading-relaxed">
+                <p className="text-base opacity-70 leading-relaxed">
                   {hasActiveFilters 
                     ? `Found ${filteredCharacters.length} ${pluralize(filteredCharacters.length, 'subject')} matching your criteria in ${activeMedium}.`
                     : `Exploring ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} within the ${activeMedium} medium.`
@@ -1037,7 +1112,7 @@ function AppContent() {
                   </div>
                 )}
                 <div>
-                  <h1 className="font-serif text-5xl md:text-7xl leading-none tracking-tight mb-4">
+                  <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-2">
                     {activeWork}
                   </h1>
                   <p className="font-mono text-xs uppercase tracking-widest opacity-50">
@@ -1049,7 +1124,7 @@ function AppContent() {
           </div>
           
           {(currentView === 'feed' || currentView === 'work') && (
-            <div className="flex flex-col gap-6 w-full md:w-auto">
+            <div className="flex flex-col gap-4 w-full md:w-auto">
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
@@ -1080,7 +1155,7 @@ function AppContent() {
                     exit={{ height: 0, opacity: 0 }}
                     className="z-50"
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 pt-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-4 gap-y-6 pt-4">
                       <CustomSelect 
                         label="Quadra"
                         value={selectedQuadra}
@@ -1186,7 +1261,7 @@ function AppContent() {
       {/* Grid */}
       <main className="editorial-grid">
         <AnimatePresence mode="popLayout">
-          {currentView === 'medium' && !hasActiveFilters && worksInMedium.map((work) => (
+          {currentView === 'medium' && !hasActiveFilters && paginatedWorks.map((work) => (
             <motion.div
               key={work.title}
               initial={{ opacity: 0, y: 20 }}
@@ -1195,7 +1270,7 @@ function AppContent() {
               className="character-card group cursor-pointer"
               onClick={() => navigateToWork(work.title)}
             >
-              <div className="character-image-container aspect-[4/3] mb-6 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+              <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
                 <SmartWorkImage 
                   src={work.imageUrl} 
                   alt={work.title}
@@ -1203,14 +1278,14 @@ function AppContent() {
                   isOpaque={work.isOpaque}
                 />
               </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all">{work.title}</h3>
-                  <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
+              <div className="flex justify-between items-end gap-4">
+                <div className="min-w-0">
+                  <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all truncate leading-tight">{work.title}</h3>
+                  <p className="font-mono text-[10px] uppercase tracking-widest opacity-40 truncate">
                     {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} {pluralize(publishedCharacters.filter(c => c.source === work.title).length, 'Subject')}
                   </p>
                 </div>
-                <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" />
               </div>
             </motion.div>
           ))}
@@ -1226,7 +1301,7 @@ function AppContent() {
               </div>
             </div>
           )}
-          {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && filteredCharacters.map((char) => {
+          {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && paginatedCharacters.map((char) => {
             return (
               <motion.div
                 layout
@@ -1245,26 +1320,31 @@ function AppContent() {
                     className="character-image object-cover group-hover:scale-105"
                   />
                 </div>
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-serif text-2xl group-hover:italic transition-all">{char.name}</h3>
+                <div className="flex justify-between items-start mb-2 gap-4">
+                  <div className="min-w-0">
+                    <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1">{char.name}</h3>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         navigateToWork(char.source);
                       }}
-                      className="font-mono text-[10px] uppercase tracking-widest opacity-50 hover:opacity-100 hover:underline transition-all"
+                      className="font-mono text-[11px] uppercase tracking-widest opacity-50 hover:opacity-100 hover:underline transition-all block truncate"
                     >
                       {char.source} ({char.year})
                     </button>
                   </div>
-                  <div className="flex flex-col items-end gap-0.5">
+                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type)}</span>
                     <span className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.finalDevelopment || char.initialDevelopment}
                     </span>
-                    <span className="font-mono text-[9px] opacity-40 tracking-tighter">
-                      {[char.subtype?.trim(), char.behaviourQualia?.trim()].filter(s => s && s.length > 0).join(' • ')}
+                    <span className="font-mono text-[10px] opacity-40 tracking-tighter">
+                      {[
+                        char.subtype?.trim(), 
+                        (char.emotionalAttitude && char.judgmentAxis) 
+                          ? (getEmotionalDescriptor(char.emotionalAttitude, char.judgmentAxis) || char.emotionalAttitude) 
+                          : char.emotionalAttitude?.trim()
+                      ].filter(s => s && s.length > 0).join(' • ')}
                     </span>
                   </div>
                 </div>
@@ -1273,6 +1353,24 @@ function AppContent() {
           })}
         </AnimatePresence>
       </main>
+
+      {/* Pagination */}
+      {currentView === 'medium' && !hasActiveFilters && (
+        <PaginationControls 
+          total={worksInMedium.length} 
+          current={currentPage} 
+          onChange={setCurrentPage} 
+          itemsPerPage={ITEMS_PER_PAGE} 
+        />
+      )}
+      {(currentView === 'feed' || currentView === 'work' || (currentView === 'medium' && hasActiveFilters)) && (
+        <PaginationControls 
+          total={filteredCharacters.length} 
+          current={currentPage} 
+          onChange={setCurrentPage} 
+          itemsPerPage={ITEMS_PER_PAGE} 
+        />
+      )}
 
       {/* Modal / Detail View */}
       <AnimatePresence>
@@ -1326,7 +1424,7 @@ function AppContent() {
                 </div>
 
                 <div className="mb-12">
-                  <h2 className="font-serif text-5xl md:text-7xl leading-tight mb-4">
+                  <h2 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words">
                     {selectedCharacter.name}
                   </h2>
                   <div className="flex gap-4 items-center">
@@ -1765,7 +1863,7 @@ function AppContent() {
         })()}
       </AnimatePresence>
 
-      <footer className="mt-32 pt-12 border-t border-[#1a1a1a]/10 flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="mt-16 pt-8 border-t border-[#1a1a1a]/10 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
           © 2026 CT in Fiction. All rights reserved.
         </p>
