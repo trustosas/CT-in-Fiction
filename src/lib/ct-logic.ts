@@ -329,7 +329,10 @@ export function getDevelopmentName(symbol: string, leadEnergetic: string, behavi
   return mapping[symbol] || symbol;
 }
 
-export function formatTypeDisplay(type: string): string {
+export function formatTypeDisplay(type: string, rawQuadra?: string): string {
+  if (rawQuadra && rawQuadra.trim().length > 0) {
+    return `${rawQuadra.trim()}-type`;
+  }
   if (!type) return '';
   const lead = type.substring(0, 2);
   const aux = type.substring(2, 4);
@@ -487,6 +490,21 @@ export function matchesFilters(char: any, filters: Partial<FilterState>): boolea
   }
   
   return true;
+}
+
+export function deriveQuadra(judgmentAxis: string, perceptionAxis: string): string {
+  const j = judgmentAxis?.trim();
+  const p = perceptionAxis?.trim();
+
+  if (j === 'Fe-Ti') {
+    if (p === 'Ne-Si') return 'Alpha';
+    if (p === 'Se-Ni') return 'Beta';
+  }
+  if (j === 'Te-Fi') {
+    if (p === 'Se-Ni') return 'Gamma';
+    if (p === 'Ne-Si') return 'Delta';
+  }
+  return '';
 }
 
 export function slugify(text: string): string {

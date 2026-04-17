@@ -18,6 +18,7 @@ export interface Character {
   judgmentAxis: string;
   perceptionAxis: string;
   quadra: string;
+  rawQuadra: string;
   alternateType?: string;
   subtype: string;
   behaviourQualia: string;

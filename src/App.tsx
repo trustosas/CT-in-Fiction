@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
+import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed';
@@ -1336,7 +1336,7 @@ function AppContent() {
                     </button>
                   </div>
                   <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type)}</span>
+                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
                     <span className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.finalDevelopment || char.initialDevelopment}
                     </span>
@@ -1394,7 +1394,7 @@ function AppContent() {
               judgment: selectedCharacter.judgmentAxis,
               perception: selectedCharacter.perceptionAxis
             },
-            quadra: selectedCharacter.quadra
+            quadra: deriveQuadra(selectedCharacter.judgmentAxis, selectedCharacter.perceptionAxis) || selectedCharacter.quadra
           };
           return (
             <>
@@ -1438,7 +1438,7 @@ function AppContent() {
                     </button>
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="font-mono text-sm font-bold mb-1">{formatTypeDisplay(selectedCharacter.type)}</span>
+                      <span className="font-mono text-sm font-bold mb-1">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
                       <span className={`font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
                         {selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}
                       </span>
@@ -1507,7 +1507,7 @@ function AppContent() {
                   {selectedCharacter.alternateType && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Alternate Type</p>
-                      <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType)}</p>
+                      <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}</p>
                     </div>
                   )}
                 </div>

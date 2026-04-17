@@ -40,30 +40,31 @@ export async function fetchCharacters(): Promise<Character[]> {
             // 16: Polar Function
             // 17: Judgment Axis
             // 18: Perception Axis
-            // 19: Quadra
-            // 20: Behaviour Qualia
-            // 21: Initial Development
-            // 22: Final Development
-            // 23: Emotional Attitude
-            // 24: Analysis
-            // 25: Notes
-            // 26: isPublished
-            // 27: publishedDate
-            // 28: editedDate
-            // 29: isWorkArtOpaque
-            // 30+: Motifs (96 values)
+            // 19: Behaviour Qualia
+            // 20: Quadra
+            // 21: Raw Quadra
+            // 22: Initial Development
+            // 23: Final Development
+            // 24: Emotional Attitude
+            // 25: Analysis
+            // 26: Notes
+            // 27: isPublished
+            // 28: publishedDate
+            // 29: editedDate
+            // 30: isWorkArtOpaque
+            // 31+: Motifs (96 values)
 
             const name = row[4] || '';
             const type = row[6] || '';
             
-            // Extract motif values starting from index 30
-            const motifValues = row.slice(30, 30 + 96).map((val: any) => {
+            // Extract motif values starting from index 31
+            const motifValues = row.slice(31, 31 + 96).map((val: any) => {
               const sVal = String(val).trim().toUpperCase();
               return sVal === 'TRUE' || sVal === '1' || sVal === 'YES';
             });
 
-            const isPublished = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[26]).trim().toUpperCase());
-            const isWorkArtOpaque = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[29]).trim().toUpperCase());
+            const isPublished = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[27]).trim().toUpperCase());
+            const isWorkArtOpaque = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[30]).trim().toUpperCase());
 
             return {
               id: `char-${index}`,
@@ -84,18 +85,19 @@ export async function fetchCharacters(): Promise<Character[]> {
               polarFunction: row[16] || '',
               judgmentAxis: row[17] || '',
               perceptionAxis: row[18] || '',
-              quadra: row[19] || '',
+              behaviourQualia: row[19] || '',
+              quadra: row[20] || '',
+              rawQuadra: row[21] || '',
               alternateType: row[7] || '',
               subtype: row[8] || '',
-              behaviourQualia: row[20] || '',
-              initialDevelopment: row[21] || '',
-              finalDevelopment: row[22] || '',
-              emotionalAttitude: row[23] || '',
-              analysis: row[24] || '',
-              notes: row[25] || '',
+              initialDevelopment: row[22] || '',
+              finalDevelopment: row[23] || '',
+              emotionalAttitude: row[24] || '',
+              analysis: row[25] || '',
+              notes: row[26] || '',
               isPublished,
-              publishedDate: row[27] || '',
-              editedDate: row[28] || '',
+              publishedDate: row[28] || '',
+              editedDate: row[29] || '',
               isWorkArtOpaque,
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
