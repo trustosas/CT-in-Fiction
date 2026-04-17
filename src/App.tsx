@@ -197,7 +197,7 @@ function AppContent() {
   const [wasOnFeed, setWasOnFeed] = useState(false);
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [isFetchingAnalysis, setIsFetchingAnalysis] = useState(false);
-  const [analysisError, setAnalysisError] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'notFound' | 'empty' | 'available'>('idle');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
@@ -352,7 +352,7 @@ function AppContent() {
       setIsSyncing(true);
       if (subjectSlug) {
         setAnalysisMarkdown('');
-        setAnalysisError(false);
+        setAnalysisStatus('idle');
         setIsFetchingAnalysis(true);
       }
       
@@ -373,14 +373,17 @@ function AppContent() {
           const char = data.find(c => slugify(c.name) === subjectSlug);
           if (char && char.analysis) {
             const markdown = await fetchAnalysisMarkdown(char.analysis, sha);
-            if (markdown) {
-              setAnalysisMarkdown(markdown);
-              setAnalysisError(false);
+            if (markdown === null) {
+              setAnalysisStatus('notFound');
+            } else if (markdown.trim() === '') {
+              setAnalysisStatus('empty');
+              setAnalysisMarkdown('');
             } else {
-              setAnalysisError(true);
+              setAnalysisMarkdown(markdown);
+              setAnalysisStatus('available');
             }
           } else {
-            setAnalysisError(true);
+            setAnalysisStatus('notFound');
           }
           setIsFetchingAnalysis(false);
         }
@@ -1742,7 +1745,7 @@ function AppContent() {
                               <span className="font-mono text-[7px] uppercase tracking-tighter opacity-60">Fetching</span>
                             </motion.div>
                           )}
-                          {analysisError && !isFetchingAnalysis && (
+                          {analysisStatus === 'notFound' && !isFetchingAnalysis && (
                             <motion.div 
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
@@ -1750,6 +1753,16 @@ function AppContent() {
                             >
                               <AlertCircle className="w-2 h-2" />
                               <span className="font-mono text-[7px] uppercase tracking-tighter">Not Found</span>
+                            </motion.div>
+                          )}
+                          {analysisStatus === 'empty' && !isFetchingAnalysis && (
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="flex items-center gap-1 px-2 py-0.5 bg-[#1a1a1a]/5 text-[#1a1a1a] rounded-full border border-[#1a1a1a]/10"
+                            >
+                              <Info className="w-2 h-2 opacity-40" />
+                              <span className="font-mono text-[7px] uppercase tracking-tighter opacity-60">Empty</span>
                             </motion.div>
                           )}
                         </AnimatePresence>
