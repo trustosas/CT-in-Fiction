@@ -1095,7 +1095,7 @@ function AppContent() {
           onClick={navigateToHome}
           className="px-8 py-3 bg-[#1a1a1a] text-white font-mono text-xs uppercase tracking-widest rounded-full hover:bg-black transition-colors"
         >
-          Return to Home
+          Return to Gallery
         </button>
       </div>
     );
@@ -1136,7 +1136,7 @@ function AppContent() {
                   onClick={navigateToHome}
                   className="block font-serif text-2xl hover:italic transition-all text-left w-full"
                 >
-                  Home
+                  Gallery
                 </button>
                 
                 <div className="pt-6 border-t border-white/10">
@@ -1185,7 +1185,7 @@ function AppContent() {
               onClick={navigateToHome}
               className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold"
             >
-              Home
+              Gallery
             </button>
           )}
 
@@ -1232,7 +1232,7 @@ function AppContent() {
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
-                {currentView === 'feed' ? 'Archive Feed' : 
+                {currentView === 'feed' ? 'Gallery' : 
                  currentView === 'all-works' ? 'All Media Collection' :
                  currentView === 'medium' ? `Medium Collection` :
                  currentView === 'work' ? 'Work Profile' : 'CT in Fiction v1.5'}
