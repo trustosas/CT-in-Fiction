@@ -1060,8 +1060,8 @@ function AppContent() {
   }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
 
   const hasActiveFilters = useMemo(() => {
-    if (currentView === 'all-works' || (currentView === 'medium' && !searchQuery)) {
-       // In these views, search filters WORKS, not switching to subject list unless advanced filters are used
+    if (currentView === 'all-works' || currentView === 'medium') {
+       // In these views, search filters WORKS, not switching to subject list
        return selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0;
     }
     return searchQuery || selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0;
@@ -1313,7 +1313,7 @@ function AppContent() {
             )}
           </div>
           
-          {currentView === 'all-works' ? (
+          {currentView === 'all-works' || currentView === 'medium' ? (
             <div className="flex flex-col gap-4 w-full">
               <div className="relative w-full max-w-2xl">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
@@ -1348,14 +1348,14 @@ function AppContent() {
                 </div>
               </div>
             </div>
-          ) : (currentView === 'feed' || currentView === 'work' || currentView === 'medium') && (
+          ) : (currentView === 'feed' || currentView === 'work') && (
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                   <input 
                     type="text"
-                    placeholder={currentView === 'medium' && !hasActiveFilters ? "Search works..." : "Search subjects..."}
+                    placeholder="Search subjects..."
                     className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full md:w-80"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
