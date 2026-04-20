@@ -189,7 +189,8 @@ function AppContent() {
   const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects'>('az');
+  const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects' | 'published' | 'edited'>('published');
+  const [subjectSortOrder, setSubjectSortOrder] = useState<'published' | 'edited'>('published');
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(null);
   const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(null);
   const [selectedJudgmentAxis, setSelectedJudgmentAxis] = useState<string | null>(null);
@@ -769,12 +770,17 @@ function AppContent() {
         return matchesSearch && matchesFilters(char, currentFilters);
       })
       .sort((a, b) => {
-        // Sort by publishedDate descending (newest first)
+        if (subjectSortOrder === 'edited') {
+          const dateA = a.editedDate || '';
+          const dateB = b.editedDate || '';
+          return dateB.localeCompare(dateA);
+        }
+        // Default: Sort by publishedDate descending (newest first)
         const dateA = a.publishedDate || '';
         const dateB = b.publishedDate || '';
         return dateB.localeCompare(dateA);
       });
-  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters]);
+  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters, subjectSortOrder]);
 
   const currentWorkData = activeWork ? works.find(w => w.title === activeWork) : null;
 
@@ -1046,6 +1052,20 @@ function AppContent() {
 
     // Apply Sorting
     const sorted = [...list].sort((a, b) => {
+      if (workSortOrder === 'published') {
+        const charA = publishedCharacters.filter(c => c.source === a.title);
+        const charB = publishedCharacters.filter(c => c.source === b.title);
+        const dateA = charA.reduce((max, c) => c.publishedDate && c.publishedDate > max ? c.publishedDate : max, '');
+        const dateB = charB.reduce((max, c) => c.publishedDate && c.publishedDate > max ? c.publishedDate : max, '');
+        return dateB.localeCompare(dateA);
+      }
+      if (workSortOrder === 'edited') {
+        const charA = publishedCharacters.filter(c => c.source === a.title);
+        const charB = publishedCharacters.filter(c => c.source === b.title);
+        const dateA = charA.reduce((max, c) => c.editedDate && c.editedDate > max ? c.editedDate : max, '');
+        const dateB = charB.reduce((max, c) => c.editedDate && c.editedDate > max ? c.editedDate : max, '');
+        return dateB.localeCompare(dateA);
+      }
       if (workSortOrder === 'year') return b.year.localeCompare(a.year);
       if (workSortOrder === 'subjects') {
         const countA = publishedCharacters.filter(c => c.source === a.title).length;
@@ -1339,7 +1359,9 @@ function AppContent() {
                   {[
                     { label: 'A-Z', value: 'az' },
                     { label: 'Year', value: 'year' },
-                    { label: 'Scale', value: 'subjects' }
+                    { label: 'Scale', value: 'subjects' },
+                    { label: 'Last Published', value: 'published' },
+                    { label: 'Last Edited', value: 'edited' }
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -1378,6 +1400,29 @@ function AppContent() {
                   <Compass className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                   {showFilters ? 'Hide Filters' : 'Show Filters'}
                 </button>
+              </div>
+
+              {/* Sort Bar for Subjects */}
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { label: 'Last Published', value: 'published' },
+                    { label: 'Last Edited', value: 'edited' }
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSubjectSortOrder(opt.value as any)}
+                      className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
+                        subjectSortOrder === opt.value 
+                          ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
+                          : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               <AnimatePresence>
