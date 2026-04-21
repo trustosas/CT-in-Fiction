@@ -226,7 +226,7 @@ function AppContent() {
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [isFetchingAnalysis, setIsFetchingAnalysis] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'notFound' | 'empty' | 'available'>('idle');
-  const [copyStatus, setCopyStatus] = useState<'discord' | 'loading' | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'discord' | 'loading' | 'image' | 'imageError' | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
@@ -627,6 +627,18 @@ function AppContent() {
     }
     document.title = title;
   }, [currentView, activeWork, activeMedium, selectedCharacter]);
+
+  const handleCopyImage = async (url: string) => {
+    if (!url) return;
+    setCopyStatus('loading');
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyStatus('image');
+    } catch (err) {
+      setCopyStatus('imageError');
+    }
+    setTimeout(() => setCopyStatus(null), 2000);
+  };
 
   const viewFilteredCharacters = useMemo(() => {
     return publishedCharacters.filter(char => {
@@ -1795,26 +1807,10 @@ function AppContent() {
                         `-# Shared from [CT in Fiction](${baseOriginUrl})`
                       ].filter(item => typeof item === 'string').join('\n');
                       
-                      const performCopy = async () => {
-                        try {
-                          // Step 1: Copy image URL if it exists
-                          if (selectedCharacter.imageUrl) {
-                            await navigator.clipboard.writeText(selectedCharacter.imageUrl);
-                            // Brief delay to ensure clipboard history picks it up as a separate entry
-                            await new Promise(resolve => setTimeout(resolve, 50));
-                          }
-                          
-                          // Step 2: Copy the Discord export text
-                          await navigator.clipboard.writeText(shareText);
-                          
-                          setCopyStatus('discord');
-                          setTimeout(() => setCopyStatus(null), 2000);
-                        } catch (err) {
-                          console.error('Failed to copy to clipboard:', err);
-                        }
-                      };
-
-                      performCopy();
+                      navigator.clipboard.writeText(shareText).then(() => {
+                        setCopyStatus('discord');
+                        setTimeout(() => setCopyStatus(null), 2000);
+                      });
                     }}
                     className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words cursor-pointer hover:opacity-80 transition-opacity active:scale-[0.98] select-none"
                   >
@@ -1852,7 +1848,10 @@ function AppContent() {
                   </div>
                 </div>
 
-                <div className="aspect-[16/9] rounded-sm overflow-hidden mb-12 relative group bg-[#1a1a1a]/5 flex items-center justify-center">
+                <div 
+                  onClick={() => selectedCharacter.imageUrl && handleCopyImage(selectedCharacter.imageUrl)}
+                  className="aspect-[16/9] rounded-sm overflow-hidden mb-12 relative group bg-[#1a1a1a]/5 flex items-center justify-center cursor-pointer active:scale-[0.99] transition-transform select-none"
+                >
                   {selectedCharacter.imageUrl ? (
                     <>
                       <img 
@@ -1862,8 +1861,29 @@ function AppContent() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                        <p className="text-white font-mono text-[10px] uppercase tracking-widest">Subject Visual Reference</p>
+                        <p className="text-white font-mono text-[10px] uppercase tracking-widest">
+                          {copyStatus === 'image' ? 'Link Copied' : 
+                           copyStatus === 'loading' ? 'Copying...' : 
+                           copyStatus === 'imageError' ? 'Failed to Copy' : 
+                           'Tapping Copies Image Link'}
+                        </p>
                       </div>
+                      
+                      <AnimatePresence>
+                        {copyStatus === 'image' && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-[2px]"
+                          >
+                            <div className="bg-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span className="font-mono text-[10px] uppercase tracking-widest text-black">Link Copied</span>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-4">
