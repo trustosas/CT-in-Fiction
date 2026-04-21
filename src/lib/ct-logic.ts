@@ -525,6 +525,28 @@ export function deriveAxesFromQuadra(quadra: string): { judgment: string; percep
   return { judgment: '', perception: '' };
 }
 
+export function formatAnalysisForDiscord(markdown: string): string {
+  if (!markdown) return '';
+
+  let transformed = markdown;
+
+  // 1. Spoilers: <details><summary>...</summary>content</details> -> ||content||
+  transformed = transformed.replace(/<details><summary>.*?<\/summary>(.*?)<\/details>/gs, '||$1||');
+
+  // 2. Underlines: <u>text</u> -> __text__
+  transformed = transformed.replace(/<u>(.*?)<\/u>/g, '__$1__');
+
+  // 3. Subtext: <small>text</small> -> -# text
+  // Discord's -# must be at the start of the line.
+  // We'll replace the tag and ensure it has a newline prefix if it's mid-line (simplified approach)
+  transformed = transformed.replace(/<small>(.*?)<\/small>/g, '-# $1');
+
+  // 4. Blockquotes: Scrap multi-line >>> in favor of > on every line (traditional markdown)
+  // We preserve existing standard markdown blockquotes as-is.
+
+  return transformed;
+}
+
 export function slugify(text: string): string {
   return text
     .toString()

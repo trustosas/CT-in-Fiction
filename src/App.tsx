@@ -8,7 +8,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
+import { slugify, formatAnalysisForDiscord, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed' | 'all-works';
@@ -226,7 +226,7 @@ function AppContent() {
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [isFetchingAnalysis, setIsFetchingAnalysis] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'notFound' | 'empty' | 'available'>('idle');
-  const [copyStatus, setCopyStatus] = useState<'discord' | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'discord' | 'loading' | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
@@ -1741,18 +1741,62 @@ function AppContent() {
                 <div className="mb-12 relative">
                   <h2 
                     onClick={() => {
+                      if (analysisStatus !== 'available' && isFetchingAnalysis) {
+                        setCopyStatus('loading');
+                        setTimeout(() => setCopyStatus(null), 2000);
+                        return;
+                      }
+
+                      if (analysisStatus !== 'available') return;
+
+                      const motifsList = selectedCharacter.motifValues 
+                        ? getStructuredMotifs(selectedCharacter.motifValues)
+                            .flatMap(group => 
+                              group.motifs
+                                .filter(m => m.value)
+                                .map(m => `\`${group.function} ${m.label.split(':')[0].trim()}\``)
+                            ).join(', ')
+                        : null;
+
                       const shareText = [
                         `# ${selectedCharacter.name}`,
                         `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}`,
                         "",
                         `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
-                        `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude}`,
+                        selectedCharacter.subtype && `> **Inter-Function Dynamics:** ${selectedCharacter.subtype} (${getSubtypeName(selectedCharacter.subtype)})`,
+                        selectedCharacter.behaviourQualia && `> **Qualia:** ${selectedCharacter.behaviourQualia}`,
+                        `> **Development:** ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment} (${getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)})`,
+                        selectedCharacter.emotionalAttitude && `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude} (${getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) || getEmotionalCategory(selectedCharacter.emotionalAttitude)})`,
+                        selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
                         "",
+                        "### Energetics",
+                        `- **Lead:** ${ct.energetics.lead} (${ENERGETIC_NAMES[ct.energetics.lead] || ''})`,
+                        `- **Auxiliary:** ${ct.energetics.auxiliary} (${ENERGETIC_NAMES[ct.energetics.auxiliary] || ''})`,
+                        `- **Tertiary:** ${ct.energetics.tertiary} (${ENERGETIC_NAMES[ct.energetics.tertiary] || ''})`,
+                        `- **Polar:** ${ct.energetics.polar} (${ENERGETIC_NAMES[ct.energetics.polar] || ''})`,
+                        "",
+                        "### Function Hierarchy",
+                        `- **Lead:** ${ct.functions.lead} (${FUNCTION_NAMES[ct.functions.lead as string] || ''})`,
+                        `- **Auxiliary:** ${ct.functions.auxiliary} (${FUNCTION_NAMES[ct.functions.auxiliary as string] || ''})`,
+                        `- **Tertiary:** ${ct.functions.tertiary} (${FUNCTION_NAMES[ct.functions.tertiary as string] || ''})`,
+                        `- **Polar:** ${ct.functions.polar} (${FUNCTION_NAMES[ct.functions.polar as string] || ''})`,
+                        "",
+                        "### Axes & Quadra",
+                        `- **Judgment:** ${ct.axes.judgment}`,
+                        `- **Perception:** ${ct.axes.perception}`,
+                        `- **Quadra:** ${ct.quadra}`,
+                        "",
+                        motifsList && "### Observed Motif Profile",
+                        motifsList && `- ${motifsList}`,
+                        motifsList && "",
                         "### Analysis",
-                        analysisStatus === 'available' ? analysisMarkdown : "_Analysis pending or missing._",
+                        formatAnalysisForDiscord(analysisMarkdown),
                         "",
+                        selectedCharacter.notes && "### Analyst Notes",
+                        selectedCharacter.notes && selectedCharacter.notes.split('\n').map(line => `> ${line}`).join('\n'),
+                        selectedCharacter.notes && "",
                         `-# Shared from CT in Fiction | ${window.location.origin}${window.location.pathname}`
-                      ].join('\n');
+                      ].filter(Boolean).join('\n');
                       
                       navigator.clipboard.writeText(shareText).then(() => {
                         setCopyStatus('discord');
@@ -1762,15 +1806,16 @@ function AppContent() {
                     className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words cursor-pointer hover:opacity-80 transition-opacity active:scale-[0.98] select-none"
                   >
                     {selectedCharacter.name}
-                    <AnimatePresence>
-                      {copyStatus === 'discord' && (
+                    <AnimatePresence mode="wait">
+                      {copyStatus && (
                         <motion.span
+                          key={copyStatus}
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
                           className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
                         >
-                          Formatted for Discord
+                          {copyStatus === 'discord' ? 'Formatted for Discord' : 'Loading analysis...'}
                         </motion.span>
                       )}
                     </AnimatePresence>
