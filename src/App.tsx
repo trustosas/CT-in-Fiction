@@ -1754,12 +1754,15 @@ function AppContent() {
                             .flatMap(group => 
                               group.motifs
                                 .filter(m => m.value)
-                                .map(m => `\`${group.function} ${m.label.split(':')[0].trim()}\``)
+                                .map(m => `**${group.function}** *${m.label.split(':')[0].trim()}*`)
                             ).join(', ')
                         : null;
 
+                      const currentPageUrl = window.location.href;
+                      const baseOriginUrl = window.location.origin;
+
                       const shareText = [
-                        `# ${selectedCharacter.name}`,
+                        `# [${selectedCharacter.name}](${currentPageUrl})`,
                         `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}`,
                         "",
                         `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
@@ -1770,16 +1773,10 @@ function AppContent() {
                         selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
                         "",
                         "### Energetics",
-                        `- **Lead:** ${ct.energetics.lead} (${ENERGETIC_NAMES[ct.energetics.lead] || ''})`,
-                        `- **Auxiliary:** ${ct.energetics.auxiliary} (${ENERGETIC_NAMES[ct.energetics.auxiliary] || ''})`,
-                        `- **Tertiary:** ${ct.energetics.tertiary} (${ENERGETIC_NAMES[ct.energetics.tertiary] || ''})`,
-                        `- **Polar:** ${ct.energetics.polar} (${ENERGETIC_NAMES[ct.energetics.polar] || ''})`,
+                        `**Lead:** ${ct.energetics.lead} • **Auxiliary:** ${ct.energetics.auxiliary} • **Tertiary:** ${ct.energetics.tertiary} • **Polar:** ${ct.energetics.polar}`,
                         "",
                         "### Function Hierarchy",
-                        `- **Lead:** ${ct.functions.lead} (${FUNCTION_NAMES[ct.functions.lead as string] || ''})`,
-                        `- **Auxiliary:** ${ct.functions.auxiliary} (${FUNCTION_NAMES[ct.functions.auxiliary as string] || ''})`,
-                        `- **Tertiary:** ${ct.functions.tertiary} (${FUNCTION_NAMES[ct.functions.tertiary as string] || ''})`,
-                        `- **Polar:** ${ct.functions.polar} (${FUNCTION_NAMES[ct.functions.polar as string] || ''})`,
+                        `**Lead:** ${ct.functions.lead} • **Auxiliary:** ${ct.functions.auxiliary} • **Tertiary:** ${ct.functions.tertiary} • **Polar:** ${ct.functions.polar}`,
                         "",
                         "### Axes & Quadra",
                         `- **Judgment:** ${ct.axes.judgment}`,
@@ -1787,16 +1784,16 @@ function AppContent() {
                         `- **Quadra:** ${ct.quadra}`,
                         "",
                         motifsList && "### Observed Motif Profile",
-                        motifsList && `- ${motifsList}`,
+                        motifsList && motifsList,
                         motifsList && "",
                         "### Analysis",
                         formatAnalysisForDiscord(analysisMarkdown),
                         "",
                         selectedCharacter.notes && "### Analyst Notes",
                         selectedCharacter.notes && selectedCharacter.notes.split('\n').map(line => `> ${line}`).join('\n'),
-                        selectedCharacter.notes && "",
-                        `-# Shared from CT in Fiction | ${window.location.origin}${window.location.pathname}`
-                      ].filter(Boolean).join('\n');
+                        "",
+                        `-# Shared from CT in Fiction | ${baseOriginUrl}`
+                      ].filter(item => typeof item === 'string').join('\n');
                       
                       navigator.clipboard.writeText(shareText).then(() => {
                         setCopyStatus('discord');
