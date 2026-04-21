@@ -594,7 +594,7 @@ function AppContent() {
     };
   }, [activeMotifId]);
 
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['analysis']));
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -1927,10 +1927,18 @@ function AppContent() {
                         )}
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 flex items-center gap-2">
+                {/* Analysis Section (Full-width) */}
+                <div className="border-b border-[#1a1a1a]/5 pb-8 mb-16">
+                  <div className="border-t border-[#1a1a1a]/10 pt-8 mt-12">
+                    <button 
+                      onClick={() => toggleSection('analysis')}
+                      className="w-full flex items-center justify-between group py-2"
+                    >
+                      <div className="flex items-center gap-4">
+                        <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 flex items-center gap-2 group-hover:opacity-100 transition-opacity">
                           <Activity className="w-3 h-3" /> Analysis
                         </h4>
                         <AnimatePresence>
@@ -1939,7 +1947,7 @@ function AppContent() {
                               initial={{ opacity: 0.5, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
-                              className="flex items-center gap-1 px-2 py-0.5 bg-[#1a1a1a]/5 text-[#1a1a1a] rounded-full border border-[#1a1a1a]/10"
+                              className="flex items-center gap-1.5 px-2 py-0.5 bg-[#1a1a1a]/5 text-[#1a1a1a] rounded-full border border-[#1a1a1a]/10"
                             >
                               <Loader2 className="w-2 h-2 animate-spin opacity-40" />
                               <span className="font-mono text-[7px] uppercase tracking-tighter opacity-60">Fetching</span>
@@ -1966,37 +1974,80 @@ function AppContent() {
                             </motion.div>
                           )}
                         </AnimatePresence>
-                      </div>
-                      <MarkdownAnalysis markdown={analysisMarkdown} />
-                      
-                      <div className="flex flex-col gap-6 pt-6 border-t border-[#1a1a1a]/10">
-                        {selectedCharacter.publishedDate && (
-                          <div className="flex flex-col gap-1">
-                            <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Published</p>
-                            <div className="flex flex-col">
-                              <p className="font-mono text-[10px] font-bold">
-                                {formatDate(selectedCharacter.publishedDate)}
-                              </p>
-                              <p className="font-mono text-[9px] opacity-40 italic">
-                                {getRelativeTime(selectedCharacter.publishedDate)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {selectedCharacter.editedDate && selectedCharacter.editedDate !== selectedCharacter.publishedDate && (
-                          <div className="flex flex-col gap-1">
-                            <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Last Edited</p>
-                            <div className="flex flex-col">
-                              <p className="font-mono text-[10px] font-bold">
-                                {formatDate(selectedCharacter.editedDate)}
-                              </p>
-                              <p className="font-mono text-[9px] opacity-40 italic">
-                                {getRelativeTime(selectedCharacter.editedDate)}
-                              </p>
-                            </div>
+                        {!expandedSections.has('analysis') && !isFetchingAnalysis && (
+                          <div className="hidden sm:block flex-1 text-right pr-6">
+                            {analysisStatus === 'empty' && (
+                              <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40 italic">
+                                Analysis Pending
+                              </span>
+                            )}
+                            {analysisStatus === 'notFound' && (
+                              <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40 italic">
+                                Entry Missing
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
+                      <ChevronDown className={`w-4 h-4 opacity-20 group-hover:opacity-100 transition-all ${expandedSections.has('analysis') ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {expandedSections.has('analysis') && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-8 pb-4">
+                            {analysisStatus === 'available' ? (
+                              <MarkdownAnalysis markdown={analysisMarkdown} />
+                            ) : !isFetchingAnalysis ? (
+                              <div className="opacity-40">
+                                <p className="font-serif italic text-lg mb-1">
+                                  {analysisStatus === 'empty' ? "Analysis pending" : "Entry missing"}
+                                </p>
+                                <p className="font-mono text-[9px] uppercase tracking-widest">
+                                  {analysisStatus === 'empty' 
+                                    ? "Finalizing subject breakdown." 
+                                    : "Subject not yet indexed."}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Metadata Footer */}
+                    <div className="flex flex-col sm:flex-row gap-8 pt-8 border-t border-[#1a1a1a]/5 opacity-60 mt-8">
+                      {selectedCharacter.publishedDate && (
+                        <div className="flex flex-col gap-1">
+                          <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Published</p>
+                          <div className="flex flex-col">
+                            <p className="font-mono text-[10px] font-bold">
+                              {formatDate(selectedCharacter.publishedDate)}
+                            </p>
+                            <p className="font-mono text-[9px] opacity-40 italic">
+                              {getRelativeTime(selectedCharacter.publishedDate)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {selectedCharacter.editedDate && selectedCharacter.editedDate !== selectedCharacter.publishedDate && (
+                        <div className="flex flex-col gap-1">
+                          <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Last Edited</p>
+                          <div className="flex flex-col">
+                            <p className="font-mono text-[10px] font-bold">
+                              {formatDate(selectedCharacter.editedDate)}
+                            </p>
+                            <p className="font-mono text-[9px] opacity-40 italic">
+                              {getRelativeTime(selectedCharacter.editedDate)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
