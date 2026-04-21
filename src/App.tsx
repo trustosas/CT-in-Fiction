@@ -1753,13 +1753,17 @@ function AppContent() {
                 <div className="mb-12 relative">
                   <h2 
                     onClick={() => {
-                      if (analysisStatus !== 'available' && isFetchingAnalysis) {
+                      // Only block if we are actually in the middle of a fetch
+                      if (isFetchingAnalysis) {
                         setCopyStatus('loading');
                         setTimeout(() => setCopyStatus(null), 2000);
                         return;
                       }
 
-                      if (analysisStatus !== 'available') return;
+                      // If we are idle but have no data, don't allow (shouldn't really happen if detail is open)
+                      if (analysisStatus === 'idle' && !selectedCharacter.analysis) {
+                        // proceed anyway with missing analysis
+                      }
 
                       const motifsList = selectedCharacter.motifValues 
                         ? getStructuredMotifs(selectedCharacter.motifValues)
@@ -1799,7 +1803,7 @@ function AppContent() {
                         motifsList && motifsList,
                         motifsList && "",
                         "### Analysis",
-                        formatAnalysisForDiscord(analysisMarkdown),
+                        analysisStatus === 'available' ? formatAnalysisForDiscord(analysisMarkdown) : "_Analysis pending or missing._",
                         "",
                         selectedCharacter.notes && "### Analyst Notes",
                         selectedCharacter.notes && selectedCharacter.notes.split('\n').map(line => `> ${line}`).join('\n'),
