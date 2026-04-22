@@ -104,6 +104,7 @@ export async function fetchCharacters(): Promise<Character[]> {
               publishedDate: row[30] || '',
               editedDate: row[31] || '',
               isWorkArtOpaque,
+              author: row[33] || '',
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
           }).filter((char: any) => char.name && (char.type || char.rawQuadra) && char.name.toLowerCase() !== 'name');

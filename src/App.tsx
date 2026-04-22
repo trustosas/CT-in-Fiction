@@ -1823,6 +1823,7 @@ function AppContent() {
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
                                 selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
+                                selectedCharacter.author && `> **Author:** ${selectedCharacter.author}`,
                                 analysisStatus === 'available' && `[Analysis](${currentPageUrl}#analysis)`,
                                 `-# Shared from [CT in Fiction](${baseOriginUrl})`
                               ].filter(item => typeof item === 'string').join('\n').replace(/\n\s*\n/g, '\n');
@@ -1868,6 +1869,7 @@ function AppContent() {
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
                                 selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
+                                selectedCharacter.author && `> **Author:** ${selectedCharacter.author}`,
                                 "### Energetics",
                                 `**Lead:** ${ct.energetics.lead} • **Auxiliary:** ${ct.energetics.auxiliary} • **Tertiary:** ${ct.energetics.tertiary} • **Polar:** ${ct.energetics.polar}`,
                                 "### Function Hierarchy",
@@ -2202,6 +2204,14 @@ function AppContent() {
 
                     {/* Metadata Footer */}
                     <div className="flex flex-col sm:flex-row gap-8 pt-6 border-t border-[#1a1a1a]/5 opacity-60 mt-4">
+                      {selectedCharacter.author && (
+                        <div className="flex flex-col gap-1">
+                          <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Author</p>
+                          <p className="font-mono text-[10px] font-bold">
+                            {selectedCharacter.author}
+                          </p>
+                        </div>
+                      )}
                       {selectedCharacter.publishedDate && (
                         <div className="flex flex-col gap-1">
                           <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Published</p>
