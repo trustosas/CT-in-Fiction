@@ -2214,7 +2214,7 @@ function AppContent() {
                 </div>
 
                 {/* Analysis Section (Full-width) */}
-                <div id="analysis" className="border-t border-[#1a1a1a]/10 pt-4 mt-4 scroll-mt-24">
+                <div id="analysis" className="border-t border-[#1a1a1a]/10 pt-4 mt-12 scroll-mt-24">
                     <button 
                       onClick={() => toggleSection('analysis')}
                       className="w-full flex items-center justify-between group py-2"
@@ -2285,7 +2285,7 @@ function AppContent() {
                     </AnimatePresence>
 
                     {/* Metadata Footer */}
-                    <div className="flex flex-col sm:flex-row gap-8 pt-6 border-t border-[#1a1a1a]/5 opacity-60 mt-4">
+                    <div className="flex flex-col sm:flex-row gap-8 pt-6 border-t border-[#1a1a1a]/5 opacity-60 mt-12">
                       {selectedCharacter.author && (
                         <div className="flex flex-col gap-1">
                           <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Author</p>
@@ -2339,7 +2339,7 @@ function AppContent() {
                   if (activeMotifs.length === 0) return null;
 
                   return (
-                    <div className="mb-16 mt-4 relative">
+                    <div className="mb-12 mt-12 relative">
                       <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
                         <Layers className="w-3 h-3" /> Observed Motif Profile
                       </h4>
@@ -2505,7 +2505,7 @@ function AppContent() {
                 })()}
 
                 {selectedCharacter.notes && (
-                  <div className="mb-16 p-6 bg-[#1a1a1a]/5 rounded-sm border-l-2 border-[#1a1a1a]/20">
+                  <div className="mb-12 mt-12 p-6 bg-[#1a1a1a]/5 rounded-sm border-l-2 border-[#1a1a1a]/20">
                     <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-2 flex items-center gap-2">
                       <Info className="w-3 h-3" /> Analyst Notes
                     </h4>
