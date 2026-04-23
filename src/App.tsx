@@ -348,9 +348,11 @@ function AppContent() {
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [isFetchingAnalysis, setIsFetchingAnalysis] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'notFound' | 'empty' | 'available'>('idle');
-  const [copyStatus, setCopyStatus] = useState<'macro' | 'mini' | 'loading' | 'image' | 'imageError' | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'macro' | 'mini' | 'loading' | 'image' | 'imageError' | 'work-mini' | 'work-macro' | null>(null);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [showWorkShareOptions, setShowWorkShareOptions] = useState(false);
   const shareOptionsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const workShareOptionsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
@@ -1495,18 +1497,124 @@ function AppContent() {
             ) : (
               <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
                 {currentWorkData && (
-                  <div className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center">
+                  <div 
+                    onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
+                    className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                    title="Click to copy image link"
+                  >
                     <SmartWorkImage 
                       src={currentWorkData.imageUrl} 
                       alt={currentWorkData.title}
-                      className="w-full h-full"
+                      className="w-full h-full group-hover/work-img:scale-105 transition-transform"
                       isOpaque={currentWorkData.isOpaque}
                     />
+                    <AnimatePresence>
+                      {copyStatus === 'image' && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none"
+                        >
+                          <span className="font-mono text-[8px] uppercase tracking-widest text-[#1a1a1a]">Link Copied</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
                 <div>
-                  <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-2">
+                  <h1 
+                    onClick={() => {
+                      if (showWorkShareOptions) {
+                        setShowWorkShareOptions(false);
+                        if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                      } else {
+                        setShowWorkShareOptions(true);
+                        if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                        workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                      }
+                    }}
+                    onMouseEnter={() => {
+                      setShowWorkShareOptions(true);
+                      if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                    }}
+                    onMouseLeave={() => {
+                      workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                    }}
+                    className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-2 select-none relative cursor-pointer"
+                  >
                     {activeWork}
+                    <AnimatePresence mode="wait">
+                      {copyStatus && (copyStatus === 'work-mini' || copyStatus === 'work-macro') ? (
+                        <motion.span
+                          key={copyStatus}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
+                        >
+                          {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
+                        </motion.span>
+                      ) : showWorkShareOptions && (
+                        <motion.div
+                          key="work-share-options"
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          onMouseEnter={() => {
+                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                          }}
+                          onMouseLeave={() => {
+                            workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                          }}
+                          className="absolute -top-6 left-0 flex items-center gap-4 py-1"
+                        >
+                          <button 
+                            onClick={() => {
+                              const currentPageUrl = window.location.href.split('#')[0];
+                              const baseOriginUrl = window.location.origin;
+                              
+                              const limit = 15;
+                              const firstChars = filteredCharacters.slice(0, limit);
+                              const remainingCount = filteredCharacters.length - limit;
+
+                              const charList = firstChars.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}**`).join(' • ');
+                              const suffix = remainingCount > 0 ? ` ...and ${remainingCount} more` : '';
+
+                              const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                              
+                              navigator.clipboard.writeText(shareText).then(() => {
+                                setCopyStatus('work-mini');
+                                setShowWorkShareOptions(false);
+                                setTimeout(() => setCopyStatus(null), 2000);
+                              });
+                            }}
+                            className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                          >
+                            Mini
+                          </button>
+                          <button 
+                            onClick={() => {
+                              const currentPageUrl = window.location.href.split('#')[0];
+                              const baseOriginUrl = window.location.origin;
+
+                              const charList = filteredCharacters.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}**`).join(' • ');
+
+                              const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                              
+                              navigator.clipboard.writeText(shareText).then(() => {
+                                setCopyStatus('work-macro');
+                                setShowWorkShareOptions(false);
+                                setTimeout(() => setCopyStatus(null), 2000);
+                              });
+                            }}
+                            className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                          >
+                            Macro
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </h1>
                   <p className="font-mono text-xs uppercase tracking-widest opacity-50">
                     Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed {pluralize(filteredCharacters.length, 'Subject')}
@@ -1952,7 +2060,7 @@ function AppContent() {
                         >
                           <button 
                             onClick={() => {
-                              const currentPageUrl = window.location.href;
+                              const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
                               const shareText = [
@@ -1998,7 +2106,7 @@ function AppContent() {
                                     ).join(', ')
                                 : null;
 
-                              const currentPageUrl = window.location.href;
+                               const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
                               const shareText = [
