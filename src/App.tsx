@@ -583,15 +583,25 @@ function AppContent() {
   const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
 
   const works = useMemo(() => {
-    const workMap = new Map<string, { title: string; imageUrl: string; year: string; isOpaque: boolean }>();
+    const workMap = new Map<string, { id: string; title: string; imageUrl: string; year: string; isOpaque: boolean; medium: string }>();
     publishedCharacters.forEach(char => {
-      const existing = workMap.get(char.source);
+      const title = char.source?.trim() || 'Unknown';
+      const year = char.year?.trim() || '';
+      const medium = char.medium?.trim() || '';
+      const workImageUrl = char.workImageUrl?.trim() || '';
+      
+      // Identity is defined by Title + Medium + Year + Image to allow distinct editions/remakes
+      const key = `${title}|${medium}|${year}|${workImageUrl}`.toLowerCase();
+      
+      const existing = workMap.get(key);
       if (!existing) {
-        workMap.set(char.source, { 
-          title: char.source, 
-          imageUrl: char.workImageUrl, 
-          year: char.year,
-          isOpaque: !!char.isWorkArtOpaque
+        workMap.set(key, { 
+          id: key,
+          title, 
+          imageUrl: workImageUrl, 
+          year,
+          isOpaque: !!char.isWorkArtOpaque,
+          medium
         });
       } else if (char.isWorkArtOpaque) {
         existing.isOpaque = true;
@@ -638,16 +648,13 @@ function AppContent() {
     return 'feed';
   }, [mediumSlug, workSlug, location.pathname]);
 
-  const navigateToWork = (workTitle: string) => {
-    const char = publishedCharacters.find(c => c.source === workTitle);
-    if (char) {
-      if (currentView === 'all-works') {
-        setAccessedViaAll(true);
-      } else if (currentView === 'feed') {
-        setAccessedViaAll(false);
-      }
-      navigate(`/${slugify(char.medium)}/${slugify(workTitle)}`);
+  const navigateToWork = (work: { title: string; medium: string }) => {
+    if (currentView === 'all-works') {
+      setAccessedViaAll(true);
+    } else if (currentView === 'feed') {
+      setAccessedViaAll(false);
     }
+    navigate(`/${slugify(work.medium)}/${slugify(work.title)}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1580,8 +1587,8 @@ function AppContent() {
 
       {/* Header */}
       <header className="mb-8 border-b border-[#1a1a1a]/10 pb-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="max-w-2xl">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="max-w-2xl min-w-0">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs uppercase tracking-widest opacity-50">
                 {currentView === 'feed' ? 'Gallery' : 
@@ -1809,26 +1816,27 @@ function AppContent() {
               </div>
             </div>
           ) : (currentView === 'feed' || currentView === 'work') && (
-            <div className="flex flex-col gap-4 w-full md:w-auto">
-              <div className="flex items-center gap-4">
-                <div className="relative flex-1">
+            <div className="flex flex-col gap-4 w-full lg:w-auto">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                   <input 
                     type="text"
                     placeholder="Search subjects..."
-                    className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full md:w-80"
+                    className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full sm:w-64 md:w-80"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest ${
+                  className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
                     showFilters ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
                   }`}
+                  title={showFilters ? 'Hide Filters' : 'Show Filters'}
                 >
                   <Compass className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                  {showFilters ? 'Hide Filters' : 'Show Filters'}
+                  <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                 </button>
               </div>
 
@@ -1979,12 +1987,12 @@ function AppContent() {
         <AnimatePresence mode="popLayout">
           {(currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
             <motion.div
-              key={work.title}
+              key={work.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="character-card group cursor-pointer"
-              onClick={() => navigateToWork(work.title)}
+              onClick={() => navigateToWork(work)}
             >
               <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
                 <SmartWorkImage 
@@ -2001,7 +2009,7 @@ function AppContent() {
                   </span>
                   <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all truncate leading-tight">{work.title}</h3>
                   <p className="font-mono text-[10px] uppercase tracking-widest opacity-40 truncate">
-                    {work.year} • {publishedCharacters.filter(c => c.source === work.title).length} {pluralize(publishedCharacters.filter(c => c.source === work.title).length, 'Subject')}
+                    {work.year} • {publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length} {pluralize(publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length, 'Subject')}
                   </p>
                 </div>
                 <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" />
@@ -2053,7 +2061,7 @@ function AppContent() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigateToWork(char.source);
+                        navigateToWork({ title: char.source, medium: char.medium });
                       }}
                       className="font-mono text-[11px] uppercase tracking-widest opacity-50 hover:opacity-100 hover:underline transition-all flex items-center gap-1.5 w-full min-w-0"
                       title={`${char.source} (${char.year})`}
@@ -2301,7 +2309,7 @@ function AppContent() {
                   </h2>
                   <div className="flex gap-4 items-center w-full min-w-0">
                     <button 
-                      onClick={() => navigateToWork(selectedCharacter.source)}
+                      onClick={() => navigateToWork({ title: selectedCharacter.source, medium: selectedCharacter.medium })}
                       className="font-serif italic text-xl opacity-60 hover:opacity-100 hover:underline transition-all text-left flex items-center gap-2 min-w-0 shrink flex-shrink"
                       title={`${selectedCharacter.source} (${selectedCharacter.year})`}
                     >
@@ -2833,7 +2841,7 @@ function AppContent() {
                   <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-6">Work Reference</h4>
                   <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     <button 
-                      onClick={() => navigateToWork(selectedCharacter.source)}
+                      onClick={() => navigateToWork({ title: selectedCharacter.source, medium: selectedCharacter.medium })}
                       className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
                     >
                       <SmartWorkImage 
