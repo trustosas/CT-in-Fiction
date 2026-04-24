@@ -36,30 +36,32 @@ async function fetchCsv() {
   isFetching = true;
 
   try {
-    console.log(`[ISR] Revalidating data from: ${csvUrl}`);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-    const response = await fetch(csvUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    console.log(`[ISR] Fetching data: ${csvUrl}`);
+    const response = await fetch(csvUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Node.js)'
+      }
+    });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
     const text = await response.text();
-    if (!text || text.length < 100) throw new Error('Received suspiciously small or empty CSV');
+    if (!text || text.trim().length === 0) throw new Error('Received empty CSV');
 
     cachedCsv = text;
     lastFetchTime = Date.now();
     
-    // Save to disk for persistence across restarts
     await fs.writeFile(CACHE_FILE, text, 'utf-8');
-    console.log(`[ISR] Cache updated and persisted at ${new Date(lastFetchTime).toISOString()}`);
+    console.log(`[ISR] Cache updated: ${text.length} chars at ${new Date().toISOString()}`);
     
     return cachedCsv;
   } catch (error) {
-    console.error('[ISR] Fetch failed:', error);
-    if (!cachedCsv) throw error;
-    return cachedCsv; // return stale on failure
+    console.error('[ISR] Fetch system error:', error.message);
+    if (cachedCsv) {
+      console.log('[ISR] Using stale cache due to fetch error.');
+      return cachedCsv;
+    }
+    throw error;
   } finally {
     isFetching = false;
   }
@@ -69,36 +71,40 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Initialize cache
+  // 1. Initial Load from disk
   await loadCacheFromDisk();
+  
+  // 2. Unconditional initial fetch at startup
+  console.log('[ISR] Initial startup fetch...');
+  fetchCsv().catch(e => console.error('[ISR] Initial fetch failed:', e.message));
+
+  // Regular revalidation loop every 60s (optional background refresh)
+  setInterval(() => {
+    fetchCsv().catch(() => {});
+  }, REVALIDATE_MS);
 
   // API Route for CSV Data with ISR (Stale-While-Revalidate)
   app.get('/api/data', async (req, res) => {
-    const now = Date.now();
-    const isExpired = !cachedCsv || (now - lastFetchTime) > REVALIDATE_MS;
+    const isExpired = !cachedCsv || (Date.now() - lastFetchTime) > REVALIDATE_MS;
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Cache-Control', `public, s-maxage=${REVALIDATE_MS / 1000}, stale-while-revalidate=3600`);
+    res.setHeader('Cache-Control', 'no-cache'); // Let server handle expiration
 
-    if (isExpired) {
-      if (!cachedCsv) {
-        // Hard wait for first-time fetch
-        try {
-          const data = await fetchCsv();
-          res.setHeader('X-Cache-Status', 'MISS');
-          return res.send(data);
-        } catch (error) {
-          return res.status(503).send('Data service temporarily unavailable');
-        }
-      } else {
-        // Background revalidation, serve stale
-        fetchCsv().catch(() => {});
-        res.setHeader('X-Cache-Status', 'STALE');
-        return res.send(cachedCsv);
+    if (!cachedCsv) {
+      try {
+        const data = await fetchCsv();
+        res.setHeader('X-Cache-Status', 'MISS');
+        return res.send(data);
+      } catch (error) {
+        return res.status(503).send('Data unavailable');
       }
     }
 
-    res.setHeader('X-Cache-Status', 'HIT');
+    if (isExpired && !isFetching) {
+      fetchCsv().catch(() => {});
+    }
+
+    res.setHeader('X-Cache-Status', isExpired ? 'STALE' : 'HIT');
     res.send(cachedCsv);
   });
 

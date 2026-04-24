@@ -9,64 +9,30 @@ export async function fetchCharacters(): Promise<Character[]> {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const csvText = await response.text();
     
-    // Split into lines and skip the first 6 metadata/header rows
-    const lines = csvText.split('\n');
-    const dataLines = lines.slice(6).join('\n');
-    
     return new Promise((resolve, reject) => {
-      Papa.parse(dataLines, {
-        header: false, // We'll map manually by index
-        skipEmptyLines: 'greedy',
+      Papa.parse(csvText, {
+        header: false,
+        skipEmptyLines: false, // Don't skip yet, we need to count rows exactly
         complete: (results) => {
-          const characters: Character[] = results.data.map((row: any, index: number) => {
-            // Mapping based on the updated spreadsheet structure:
-            // 0: Medium
-            // 1: Work Title
-            // 2: Year
-            // 3: Work Image URL
-            // 4: Name
-            // 5: Subject Image URL
-            // 6: Type
-            // 7: Alternate Type
-            // 8: Subtype (Inter-Function Dynamics)
-            // 9: Lead Energetic
-            // 10: Auxiliary Energetic
-            // 11: Tertiary Energetic
-            // 12: Polar Energetic
-            // 13: Lead Function
-            // 14: Auxiliary Function
-            // 15: Tertiary Function
-            // 16: Polar Function
-            // 17: Judgment Axis
-            // 18: Perception Axis
-            // 19: Behaviour Qualia
-            // 20: Quadra
-            // 21: Emotional Attitude
-            // 22: Unguardedness
-            // 23: Guardedness
-            // 24: Raw Quadra
-            // 25: Initial Development
-            // 26: Final Development
-            // 27: Analysis
-            // 28: Notes
-            // 29: isPublished
-            // 30: publishedDate
-            // 31: editedDate
-            // 32: isWorkArtOpaque
-            // 33: Author
-            // 34+: Motifs
-
+          // Skip first 6 metadata/header rows (indices 0-5)
+          const dataRows = results.data.slice(6);
+          
+          const characters: Character[] = dataRows.map((row: any, index: number) => {
+            if (!row || row.length < 31) return null;
+            
             const name = row[4] || '';
             const type = row[6] || '';
             
-            // Extract motif values starting from index 34
-            const motifValues = row.slice(34).map((val: any) => {
+            // isPublished is index 30 based on test-fetch logs
+            const isPublished = String(row[30] || '').trim().toUpperCase() === 'TRUE';
+            const isWorkArtOpaque = String(row[33] || '').trim().toUpperCase() === 'TRUE';
+            const author = row[34] || '';
+
+            // Motifs start from 35+
+            const motifValues = row.slice(35).map((val: any) => {
               const sVal = String(val).trim().toUpperCase();
               return sVal === 'TRUE' || sVal === '1' || sVal === 'YES';
             });
-
-            const isPublished = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[29]).trim().toUpperCase());
-            const isWorkArtOpaque = ['TRUE', '1', 'YES', 'T', 'Y'].includes(String(row[32]).trim().toUpperCase());
 
             return {
               id: `char-${index}`,
@@ -100,15 +66,15 @@ export async function fetchCharacters(): Promise<Character[]> {
               analysis: row[27] || '',
               notes: row[28] || '',
               isPublished,
-              publishedDate: row[30] || '',
-              editedDate: row[31] || '',
+              publishedDate: row[31] || '',
+              editedDate: row[32] || '',
               isWorkArtOpaque,
-              author: row[33] || '',
+              author,
               motifValues: motifValues.length > 0 ? motifValues : undefined
             };
-          }).filter((char: any) => char.name && (char.type || char.rawQuadra) && char.name.toLowerCase() !== 'name');
+          }).filter((char: any) => char && char.name && char.name.toLowerCase() !== 'name');
 
-          console.log(`Successfully parsed ${characters.length} characters from spreadsheet.`);
+          console.log(`Successfully parsed ${characters.length} characters.`);
           resolve(characters);
         },
         error: (error: any) => {
