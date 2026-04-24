@@ -2,23 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
-import vercel from 'vite-plugin-vercel/vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    plugins: [
-      react(), 
-      tailwindcss(),
-      vercel(),
-    ],
-    vercel: {
-      isr: {
-        '/api/data': {
-          expiration: 60,
-        },
-      },
-    },
+    plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
