@@ -1,13 +1,12 @@
 import Papa from 'papaparse';
 import { type Character } from '../data';
 
-const CSV_URL = import.meta.env.VITE_DATABASE_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhyird8EfAwfyJx4tyy7stnR10wzr8k3kyhZ1tSH9JZGmcKkD2e_Q0JmAGJrl1y15PCyghiRS1zRlT/pub?output=csv';
+const CSV_URL = '/api/data';
 
 export async function fetchCharacters(): Promise<Character[]> {
   try {
-    const response = await fetch(CSV_URL, {
-      cache: 'no-store'
-    });
+    const response = await fetch(CSV_URL);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const csvText = await response.text();
     
     // Split into lines and skip the first 6 metadata/header rows
