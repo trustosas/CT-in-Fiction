@@ -1354,7 +1354,7 @@ function AppContent() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#1a1a1a]/10 shadow-2xl rounded-lg z-[100] overflow-hidden"
+              className="absolute top-full left-0 right-0 mt-2 bg-[#f5f2ed] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
             >
               <div className="p-2 border-b border-[#1a1a1a]/5">
                 <div className="relative">
