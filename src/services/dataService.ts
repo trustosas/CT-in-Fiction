@@ -86,7 +86,14 @@ export async function fetchCharacters(): Promise<Character[]> {
                 author: row[33] || '',
                 motifValues: motifValues.length > 0 ? motifValues : undefined
               };
-            }).filter((char: any) => char.name && (char.type || char.rawQuadra) && char.name.toLowerCase() !== 'name');
+            }).filter((char: any) => 
+              char.name && 
+              (char.type || char.rawQuadra) && 
+              char.name.toLowerCase() !== 'name' &&
+              char.isPublished &&
+              char.author &&
+              char.author.trim() !== ''
+            );
 
             console.log(`Successfully parsed ${parsedCharacters.length} characters from spreadsheet.`);
             resolve(parsedCharacters);
