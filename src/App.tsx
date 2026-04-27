@@ -1710,7 +1710,7 @@ function AppContent() {
                   <span className="italic">Archetypes</span>
                 </h1>
                 <p className="text-base opacity-70 leading-relaxed text-balance">
-                  A specialized database exploring the Cognitive Types of fictional subjects.
+                  A community-driven database exploring the personalities of fictional subjects, through a Cognitive Typology lens.
                 </p>
               </>
             ) : currentView === 'all-works' ? (
