@@ -15,10 +15,13 @@ async function startServer() {
   const PORT = 3000;
 
   // Cache configuration
-  const CSV_URL = process.env.VITE_DATABASE_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhyird8EfAwfyJx4tyy7stnR10wzr8k3kyhZ1tSH9JZGmcKkD2e_Q0JmAGJrl1y15PCyghiRS1zRlT/pub?output=csv';
+  const CSV_URL = process.env.VITE_DATABASE_URL;
 
   // API route for characters
   app.get("/api/characters", async (req, res) => {
+    if (!CSV_URL) {
+      return res.status(500).json({ error: 'Config Error: VITE_DATABASE_URL is not set.' });
+    }
     try {
       const isForce = !!req.query.t;
       

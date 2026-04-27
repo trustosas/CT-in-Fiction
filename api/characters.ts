@@ -1,11 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Papa from 'papaparse';
 
-const CSV_URL = process.env.VITE_DATABASE_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhyird8EfAwfyJx4tyy7stnR10wzr8k3kyhZ1tSH9JZGmcKkD2e_Q0JmAGJrl1y15PCyghiRS1zRlT/pub?output=csv';
+const CSV_URL = process.env.VITE_DATABASE_URL;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (!CSV_URL) {
+    return res.status(500).json({ error: 'Config Error: VITE_DATABASE_URL is not set in environment variables.' });
+  }
+
   try {
-    const response = await fetch(CSV_URL);
+    const isForce = !!req.query.t;
+    const targetUrl = isForce 
+      ? `${CSV_URL}${CSV_URL.includes('?') ? '&' : '?'}_t=${Date.now()}` 
+      : CSV_URL;
+
+    const response = await fetch(targetUrl, {
+      cache: isForce ? 'no-store' : 'default',
+      headers: isForce ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : {}
+    });
+
     if (!response.ok) throw new Error('Failed to fetch from Google');
     
     const csvText = await response.text();
@@ -77,11 +90,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     });
 
-    // Edge Network Caching Headers
-    // public: cache is public
-    // s-maxage=86400: cache on Vercel's global network for 24 hours
-    // stale-while-revalidate: allow serving stale data while fetching fresh in background
-    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=3600');
+    if (isForce) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
+    }
     res.status(200).json(characters);
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });

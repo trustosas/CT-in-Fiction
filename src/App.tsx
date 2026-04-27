@@ -423,7 +423,8 @@ function AppContent() {
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
   const fetchLatestCommitSha = async () => {
-    const repo = import.meta.env.VITE_ANALYSES_REPO || 'trustosas/CT-in-Fiction-Analyses';
+    const repo = import.meta.env.VITE_ANALYSES_REPO;
+    if (!repo) return null;
     const branches = ['main', 'master'];
     
     for (const branch of branches) {
@@ -449,7 +450,7 @@ function AppContent() {
 
     // Helper to extract "owner/repo" from any GitHub URL or string
     const getRepoParts = (str: string): string => {
-      if (!str) return 'trustosas/CT-in-Fiction-Analyses';
+      if (!str) return import.meta.env.VITE_ANALYSES_REPO || '';
       if (str.includes('github.com')) {
         try {
           const u = new URL(str.startsWith('http') ? str : `https://${str}`);
@@ -496,7 +497,12 @@ function AppContent() {
     };
 
     const envRepo = import.meta.env.VITE_ANALYSES_REPO;
-    const repoDefault = (envRepo && envRepo.trim().length > 0) ? envRepo.trim() : 'trustosas/CT-in-Fiction-Analyses';
+    const repoDefault = (envRepo && envRepo.trim().length > 0) ? envRepo.trim() : '';
+    
+    if (!repoDefault && !trimmed.startsWith('http')) {
+      console.warn('VITE_ANALYSES_REPO is not defined and content is not an absolute URL');
+      return '';
+    }
     
     let targetRepo = '';
     let targetFilePath = '';
