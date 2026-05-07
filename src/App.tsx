@@ -163,7 +163,7 @@ export default function App() {
   );
 }
 
-function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: string, className?: string, isOpaque?: boolean }) {
+function SmartWorkImage({ src, alt, className, isOpaque, medium }: { src: string, alt: string, className?: string, isOpaque?: boolean, medium?: string }) {
   const [orientation, setOrientation] = useState<'landscape' | 'portrait' | null>(null);
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -175,6 +175,8 @@ function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: s
       </div>
     );
   }
+
+  const isBookMedium = medium?.toLowerCase() === 'comic' || medium?.toLowerCase() === 'literature';
 
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -190,7 +192,13 @@ function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: s
           setIsLoaded(true);
         }}
         onError={() => setHasError(true)}
-        className={`${className} object-contain p-0`}
+        className={`${className} ${
+          isBookMedium
+            ? 'object-contain p-0'
+            : isOpaque === true 
+              ? (orientation === 'portrait' ? 'object-contain p-0' : 'object-cover p-0') 
+              : 'object-contain p-6'
+        }`}
         referrerPolicy="no-referrer"
       />
       {!isLoaded && (
@@ -1740,7 +1748,7 @@ function AppContent() {
                 {currentWorkData && (
                   <div 
                     onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
-                    className="w-48 aspect-[3/2] bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                    className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
                     title="Click to copy image link"
                   >
                     <SmartWorkImage 
@@ -1748,6 +1756,7 @@ function AppContent() {
                       alt={currentWorkData.title}
                       className="w-full h-full group-hover/work-img:scale-105 transition-transform"
                       isOpaque={currentWorkData.isOpaque}
+                      medium={currentWorkData.medium}
                     />
                     <AnimatePresence>
                       {copyStatus === 'image' && (
@@ -2081,12 +2090,13 @@ function AppContent() {
               className="character-card group cursor-pointer"
               onClick={() => navigateToWork(work)}
             >
-              <div className="character-image-container aspect-[3/2] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+              <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
                 <SmartWorkImage 
                   src={work.imageUrl} 
                   alt={work.title}
                   className="w-full h-full group-hover:scale-105 transition-transform"
                   isOpaque={work.isOpaque}
+                  medium={work.medium}
                 />
               </div>
               <div className="flex justify-between items-end gap-4">
@@ -2919,13 +2929,14 @@ function AppContent() {
                   <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     <button 
                       onClick={() => navigateToWork({ title: selectedCharacter.source, medium: selectedCharacter.medium })}
-                      className="w-full md:w-64 aspect-[3/2] bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
+                      className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
                     >
                       <SmartWorkImage 
                         src={selectedCharacter.workImageUrl} 
                         alt={selectedCharacter.source}
                         className="w-full h-full group-hover:scale-105 transition-transform"
                         isOpaque={currentWorkData?.isOpaque ?? selectedCharacter.isWorkArtOpaque}
+                        medium={selectedCharacter.medium}
                       />
                     </button>
                     <div>
