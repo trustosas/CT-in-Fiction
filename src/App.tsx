@@ -1493,13 +1493,17 @@ function AppContent() {
     return false;
   }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
 
+  const hasArchetypeFilters = useMemo(() => {
+    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedAuthors.length > 0 || selectedMotifs.length > 0);
+  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedAuthors, selectedMotifs]);
+
   const hasActiveFilters = useMemo(() => {
     if (currentView === 'all-works' || currentView === 'medium') {
        // Media pages and All Media collection are NOT affected by archetype filters
-       return false;
+       return !!searchQuery;
     }
-    return searchQuery || selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedAuthors.length > 0 || selectedMotifs.length > 0;
-  }, [searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedAuthors, selectedMotifs, currentView]);
+    return searchQuery || hasArchetypeFilters;
+  }, [searchQuery, hasArchetypeFilters, currentView]);
 
   const paginatedCharacters = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -1927,7 +1931,7 @@ function AppContent() {
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
-                    showFilters ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
+                    (showFilters || hasArchetypeFilters) ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
                   }`}
                   title={showFilters ? 'Hide Filters' : 'Show Filters'}
                 >
@@ -1935,6 +1939,63 @@ function AppContent() {
                   <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                 </button>
               </div>
+
+              <AnimatePresence>
+                {hasArchetypeFilters && !showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2"
+                  >
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                      {[
+                        { label: 'Quadra', value: selectedQuadra },
+                        { label: 'Dev', value: selectedDevelopment },
+                        { label: 'J-Axis', value: selectedJudgmentAxis },
+                        { label: 'P-Axis', value: selectedPerceptionAxis },
+                        { label: 'Lead', value: selectedLeadEnergetic },
+                        { label: 'Aux', value: selectedAuxEnergetic },
+                        { label: 'Qualia', value: selectedBehaviourQualia },
+                        { label: 'Subtype', value: selectedSubtype },
+                        { label: 'Attitude', value: selectedEmotionalAttitude }
+                      ].filter(f => f.value).map((f) => (
+                        <span key={f.label} className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                          {f.label}: {f.value}
+                        </span>
+                      ))}
+                      {selectedAuthors.length > 0 && (
+                        <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                          Authors: {selectedAuthors.length}
+                        </span>
+                      )}
+                      {selectedMotifs.length > 0 && (
+                        <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                          Motifs: {selectedMotifs.length}
+                        </span>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setSelectedQuadra(null);
+                        setSelectedDevelopment(null);
+                        setSelectedJudgmentAxis(null);
+                        setSelectedPerceptionAxis(null);
+                        setSelectedLeadEnergetic(null);
+                        setSelectedAuxEnergetic(null);
+                        setSelectedBehaviourQualia(null);
+                        setSelectedSubtype(null);
+                        setSelectedEmotionalAttitude(null);
+                        setSelectedAuthors([]);
+                        setSelectedMotifs([]);
+                      }}
+                      className="font-mono text-[8px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1 transition-opacity border-b border-transparent hover:border-black/20"
+                    >
+                      <X className="w-2.5 h-2.5" /> Clear filters
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Sort Bar for Subjects */}
               <div className="flex items-center gap-3">
