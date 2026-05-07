@@ -190,11 +190,7 @@ function SmartWorkImage({ src, alt, className, isOpaque }: { src: string, alt: s
           setIsLoaded(true);
         }}
         onError={() => setHasError(true)}
-        className={`${className} ${
-          isOpaque === true 
-            ? (orientation === 'portrait' ? 'object-contain p-0' : 'object-cover p-0') 
-            : 'object-contain p-6'
-        }`}
+        className={`${className} object-contain p-0`}
         referrerPolicy="no-referrer"
       />
       {!isLoaded && (
@@ -1744,7 +1740,7 @@ function AppContent() {
                 {currentWorkData && (
                   <div 
                     onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
-                    className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                    className="w-48 aspect-[3/2] bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
                     title="Click to copy image link"
                   >
                     <SmartWorkImage 
@@ -1823,8 +1819,8 @@ function AppContent() {
                               const firstChars = filteredCharacters.slice(0, limit);
                               const remainingCount = filteredCharacters.length - limit;
 
-                              const charList = firstChars.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}**`).join(' • ');
-                              const suffix = remainingCount > 0 ? ` ...and ${remainingCount} more` : '';
+                              const charList = firstChars.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${c.finalDevelopment || c.initialDevelopment}`).join(' • ');
+                              const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
 
                               const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
                               
@@ -1843,7 +1839,7 @@ function AppContent() {
                               const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
-                              const charList = filteredCharacters.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}**`).join(' • ');
+                              const charList = filteredCharacters.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${c.finalDevelopment || c.initialDevelopment}`).join(' • ');
 
                               const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
                               
@@ -2085,7 +2081,7 @@ function AppContent() {
               className="character-card group cursor-pointer"
               onClick={() => navigateToWork(work)}
             >
-              <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+              <div className="character-image-container aspect-[3/2] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
                 <SmartWorkImage 
                   src={work.imageUrl} 
                   alt={work.title}
@@ -2923,7 +2919,7 @@ function AppContent() {
                   <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     <button 
                       onClick={() => navigateToWork({ title: selectedCharacter.source, medium: selectedCharacter.medium })}
-                      className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
+                      className="w-full md:w-64 aspect-[3/2] bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
                     >
                       <SmartWorkImage 
                         src={selectedCharacter.workImageUrl} 
