@@ -1173,7 +1173,7 @@ function AppContent() {
                     <div className="flex flex-col gap-0.5">
                         {label === 'Development' ? (
                           <>
-                            <span className="font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap">{opt}</span>
+                            <span className="font-sans text-sm font-bold tracking-[0.05em] whitespace-nowrap">{opt}</span>
                             <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(opt, '', selectedBehaviourQualia || undefined)}</span>
                           </>
                         ) : label === 'Inter-Function Dynamics' ? (
@@ -1832,7 +1832,12 @@ function AppContent() {
                               const firstChars = filteredCharacters.slice(0, limit);
                               const remainingCount = filteredCharacters.length - limit;
 
-                              const charList = firstChars.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${c.finalDevelopment || c.initialDevelopment}`).join(' • ');
+                              const charList = firstChars.map(c => {
+                                const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                  ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                  : (c.finalDevelopment || c.initialDevelopment);
+                                return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                              }).join(' • ');
                               const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
 
                               const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
@@ -1852,7 +1857,12 @@ function AppContent() {
                               const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
-                              const charList = filteredCharacters.map(c => `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${c.finalDevelopment || c.initialDevelopment}`).join(' • ');
+                               const charList = filteredCharacters.map(c => {
+                                const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                  ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                  : (c.finalDevelopment || c.initialDevelopment);
+                                return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                              }).join(' • ');
 
                               const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
                               
@@ -2225,7 +2235,7 @@ function AppContent() {
                   </div>
                   <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
-                    <div className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
+                    <div className={`font-sans text-sm font-bold tracking-[0.05em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
                         <div className="flex items-center gap-1 justify-end">
                           <span className="opacity-40">{char.initialDevelopment}</span>
@@ -2379,13 +2389,17 @@ function AppContent() {
                               const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
+                              const devTicker = selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment
+                                ? `${selectedCharacter.initialDevelopment} › ${selectedCharacter.finalDevelopment}`
+                                : (selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment);
+
                               const shareText = [
                                 `# [${selectedCharacter.name}](${currentPageUrl})`,
-                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}`,
+                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${devTicker}`,
                                 `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
                                 selectedCharacter.subtype && `> **Inter-Function Dynamics:** ${selectedCharacter.subtype} (${getSubtypeName(selectedCharacter.subtype)})`,
                                 selectedCharacter.behaviourQualia && `> **Qualia:** ${selectedCharacter.behaviourQualia}`,
-                                `> **Development:** ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment} (${getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)})`,
+                                `> **Development:** ${devTicker}`,
                                 selectedCharacter.emotionalAttitude && `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude} (${getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) || getEmotionalCategory(selectedCharacter.emotionalAttitude)})`,
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
@@ -2425,13 +2439,17 @@ function AppContent() {
                                const currentPageUrl = window.location.href.split('#')[0];
                               const baseOriginUrl = window.location.origin;
 
+                              const devTicker = selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment
+                                ? `${selectedCharacter.initialDevelopment} › ${selectedCharacter.finalDevelopment}`
+                                : (selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment);
+
                               const shareText = [
                                 `# [${selectedCharacter.name}](${currentPageUrl})`,
-                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}`,
+                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${devTicker}`,
                                 `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
                                 selectedCharacter.subtype && `> **Inter-Function Dynamics:** ${selectedCharacter.subtype} (${getSubtypeName(selectedCharacter.subtype)})`,
                                 selectedCharacter.behaviourQualia && `> **Qualia:** ${selectedCharacter.behaviourQualia}`,
-                                `> **Development:** ${selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment} (${getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)})`,
+                                `> **Development:** ${devTicker}`,
                                 selectedCharacter.emotionalAttitude && `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude} (${getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) || getEmotionalCategory(selectedCharacter.emotionalAttitude)})`,
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
@@ -2480,7 +2498,7 @@ function AppContent() {
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                       <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
-                      <div className={`font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
+                      <div className={`font-sans text-lg font-bold tracking-[0.05em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
                         {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                           <div className="grid grid-cols-[1fr_24px_1fr] items-center">
                             <span className="opacity-40 text-right">{selectedCharacter.initialDevelopment}</span>
@@ -2558,11 +2576,11 @@ function AppContent() {
                       {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                         <div className="grid grid-cols-[auto_24px_1fr] gap-x-1 items-baseline">
                           {/* Top Row: Notations */}
-                          <span className="font-sans text-xl font-bold tracking-[0.2em] leading-none opacity-40 whitespace-nowrap">{selectedCharacter.initialDevelopment}</span>
+                          <span className="font-sans text-xl font-bold tracking-[0.05em] leading-none opacity-40 whitespace-nowrap">{selectedCharacter.initialDevelopment}</span>
                           <div className="flex justify-center">
                             <ChevronRight className="w-4 h-4 opacity-20" />
                           </div>
-                          <span className="font-sans text-xl font-bold tracking-[0.2em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
+                          <span className="font-sans text-xl font-bold tracking-[0.05em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
                           
                           {/* Bottom Row: Names */}
                           <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1 whitespace-nowrap">
@@ -2575,7 +2593,7 @@ function AppContent() {
                         </div>
                       ) : (
                         <div>
-                          <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
+                          <span className="font-sans text-xl font-bold tracking-[0.05em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
                           <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40">
                             {getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </span>
