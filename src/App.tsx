@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Routes, Route, useLocation } from 'react-router-dom';
-import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash } from 'lucide-react';
+import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -2225,9 +2225,17 @@ function AppContent() {
                   </div>
                   <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
-                    <span className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
-                      {char.finalDevelopment || char.initialDevelopment}
-                    </span>
+                    <div className={`font-sans text-sm font-bold tracking-[0.2em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
+                      {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
+                        <div className="flex items-center gap-1 justify-end">
+                          <span className="opacity-40">{char.initialDevelopment}</span>
+                          <ChevronRight className="w-3 h-3 opacity-20" />
+                          <span>{char.finalDevelopment}</span>
+                        </div>
+                      ) : (
+                        <span>{char.finalDevelopment || char.initialDevelopment}</span>
+                      )}
+                    </div>
                     <span className="font-mono text-[10px] opacity-40 tracking-tighter">
                       {(() => {
                         const effectiveJAxis = char.judgmentAxis || deriveAxesFromQuadra(char.rawQuadra || char.quadra).judgment;
@@ -2472,9 +2480,19 @@ function AppContent() {
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                       <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
-                      <span className={`font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
-                        {selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}
-                      </span>
+                      <div className={`font-sans text-lg font-bold tracking-[0.2em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
+                        {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
+                          <div className="grid grid-cols-[1fr_24px_1fr] items-center">
+                            <span className="opacity-40 text-right">{selectedCharacter.initialDevelopment}</span>
+                            <div className="flex justify-center">
+                              <ChevronRight className="w-3.5 h-3.5 opacity-20" />
+                            </div>
+                            <span className="text-left">{selectedCharacter.finalDevelopment}</span>
+                          </div>
+                        ) : (
+                          <span>{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2534,18 +2552,35 @@ function AppContent() {
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
                     </div>
                   )}
-                  {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
-                      <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Initial Dev</p>
-                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.initialDevelopment}</span>
-                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}</p>
-                    </div>
-                  )}
                   {(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment) && (
                     <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Development</p>
-                      <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
-                      <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}</p>
+                      {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
+                        <div className="grid grid-cols-[auto_24px_1fr] gap-x-1 items-baseline">
+                          {/* Top Row: Notations */}
+                          <span className="font-sans text-xl font-bold tracking-[0.2em] leading-none opacity-40 whitespace-nowrap">{selectedCharacter.initialDevelopment}</span>
+                          <div className="flex justify-center">
+                            <ChevronRight className="w-4 h-4 opacity-20" />
+                          </div>
+                          <span className="font-sans text-xl font-bold tracking-[0.2em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
+                          
+                          {/* Bottom Row: Names */}
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1 whitespace-nowrap">
+                            {getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
+                          </div>
+                          <div />
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-60 mt-1 whitespace-nowrap">
+                            {getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="font-sans text-xl font-bold tracking-[0.2em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
+                          <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40">
+                            {getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                   {selectedCharacter.emotionalAttitude && (
