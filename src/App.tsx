@@ -2235,7 +2235,7 @@ function AppContent() {
                   </div>
                   <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                     <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
-                    <div className={`font-sans text-sm font-bold tracking-[0.05em] whitespace-nowrap ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
+                    <div className={`font-sans text-sm font-bold tracking-[0.05em] ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                       {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
                         <div className="flex items-center gap-1 justify-end">
                           <span className="opacity-40">{char.initialDevelopment}</span>
@@ -2498,7 +2498,7 @@ function AppContent() {
                     <div className="h-px flex-1 bg-[#1a1a1a]/10" />
                     <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                       <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
-                      <div className={`font-sans text-lg font-bold tracking-[0.05em] leading-none whitespace-nowrap ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
+                      <div className={`font-sans text-lg font-bold tracking-[0.05em] leading-none ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
                         {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                           <div className="grid grid-cols-[1fr_24px_1fr] items-center">
                             <span className="opacity-40 text-right">{selectedCharacter.initialDevelopment}</span>
@@ -2583,11 +2583,11 @@ function AppContent() {
                           <span className="font-sans text-xl font-bold tracking-[0.05em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
                           
                           {/* Bottom Row: Names */}
-                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1 whitespace-nowrap">
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1">
                             {getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </div>
                           <div />
-                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-60 mt-1 whitespace-nowrap">
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-60 mt-1">
                             {getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </div>
                         </div>

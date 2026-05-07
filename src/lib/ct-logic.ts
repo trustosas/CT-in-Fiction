@@ -320,7 +320,7 @@ export function getDevelopmentName(symbol: string, leadEnergetic: string, behavi
     'II--': isConductor ? 'Full Conductor' : 'Full Reviser',
     'I-I-': (leadEnergetic === 'Je' || leadEnergetic === 'Pe') ? 'Double-Extroverted' : 'Double-Introverted',
     'I--I': isJLead ? 'Judgement Polarized' : 'Perception Polarized',
-    'III-': isJLead ? 'Judgement Heavy' : 'Perception Heavy',
+    'III-': isJLead ? 'Perception Heavy' : 'Judgement Heavy',
     'II-I': 'Energy Inverted',
     'I-II': 'Antithetical',
     'IIII': 'Fully Conscious'
