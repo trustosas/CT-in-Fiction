@@ -56,9 +56,9 @@ const parseDatabaseDate = (dateStr: string) => {
         m = p1.padStart(2, '0');
         d = p2.padStart(2, '0');
       } else {
-        // Ambiguous - default to Lagos/International preference (D/M/Y)
-        d = p1.padStart(2, '0');
-        m = p2.padStart(2, '0');
+        // Ambiguous - default to M/D/Y (requested by user)
+        m = p1.padStart(2, '0');
+        d = p2.padStart(2, '0');
       }
     } else {
       const isoMatch = datePart.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
@@ -113,8 +113,8 @@ const formatDate = (dateStr: string) => {
   const hasTime = dateStr.includes(' ') || dateStr.includes('T');
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    month: '2-digit',
+    day: '2-digit'
   };
 
   if (hasTime) {
@@ -124,7 +124,7 @@ const formatDate = (dateStr: string) => {
     options.hour12 = true;
   }
 
-  return new Intl.DateTimeFormat(undefined, options).format(date);
+  return new Intl.DateTimeFormat('en-US', options).format(date);
 };
 
 const getRelativeTime = (dateStr: string) => {
