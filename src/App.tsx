@@ -1956,7 +1956,7 @@ function AppContent() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-2"
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"
                   >
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                       {[
@@ -1985,24 +1985,6 @@ function AppContent() {
                         </span>
                       )}
                     </div>
-                    <button 
-                      onClick={() => {
-                        setSelectedQuadra(null);
-                        setSelectedDevelopment(null);
-                        setSelectedJudgmentAxis(null);
-                        setSelectedPerceptionAxis(null);
-                        setSelectedLeadEnergetic(null);
-                        setSelectedAuxEnergetic(null);
-                        setSelectedBehaviourQualia(null);
-                        setSelectedSubtype(null);
-                        setSelectedEmotionalAttitude(null);
-                        setSelectedAuthors([]);
-                        setSelectedMotifs([]);
-                      }}
-                      className="font-mono text-[8px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1 transition-opacity border-b border-transparent hover:border-black/20"
-                    >
-                      <X className="w-2.5 h-2.5" /> Clear filters
-                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2121,7 +2103,7 @@ function AppContent() {
                 )}
               </AnimatePresence>
 
-              {(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedMotifs.length > 0) && (
+              {(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedAuthors.length > 0 || selectedMotifs.length > 0) && (
                 <div className="pt-2">
                   <button 
                     onClick={(e) => {
