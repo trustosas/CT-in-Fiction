@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Routes, Route, useLocation } from 'react-router-dom';
-import { Search, ArrowRight, X, Zap, Activity, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash } from 'lucide-react';
+import { Search, ArrowRight, X, Zap, Activity, Filter, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -1945,7 +1945,7 @@ function AppContent() {
                   }`}
                   title={showFilters ? 'Hide Filters' : 'Show Filters'}
                 >
-                  <Compass className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                  <Filter className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                 </button>
               </div>
