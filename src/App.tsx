@@ -609,8 +609,12 @@ function AppContent() {
         }
 
         // If we are on a subject page, fetch the analysis too
-        if (subjectSlug) {
-          const char = data.find(c => slugify(c.name) === subjectSlug);
+        if (subjectSlug && workSlug) {
+          const char = data.find(c => 
+            slugify(c.name) === subjectSlug && 
+            slugify(c.source) === workSlug &&
+            (!mediumSlug || slugify(c.medium) === mediumSlug)
+          );
           if (char && char.analysis) {
             const markdown = await fetchAnalysisMarkdown(char.analysis, sha);
             if (markdown === null) {
@@ -700,9 +704,13 @@ function AppContent() {
   }, [workSlug, works]);
 
   const selectedCharacter = useMemo(() => {
-    if (!subjectSlug) return null;
-    return publishedCharacters.find(c => slugify(c.name) === subjectSlug) || null;
-  }, [subjectSlug, publishedCharacters]);
+    if (!subjectSlug || !workSlug) return null;
+    return publishedCharacters.find(c => 
+      slugify(c.name) === subjectSlug && 
+      slugify(c.source) === workSlug &&
+      (!mediumSlug || slugify(c.medium) === mediumSlug)
+    ) || null;
+  }, [subjectSlug, workSlug, mediumSlug, publishedCharacters]);
 
   const similarByActiveMotif = useMemo(() => {
     if (!activeMotifId) return { currentWork: [], allMedia: [] };
@@ -1115,27 +1123,27 @@ function AppContent() {
         >
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {label === 'Development' && value ? (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="font-sans tracking-[0.2em] whitespace-nowrap">{value}</span>
-                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getDevelopmentName(value, '', selectedBehaviourQualia || undefined)}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{getDevelopmentName(value, '', selectedBehaviourQualia || undefined)}</span>
               </span>
             ) : label === 'Inter-Function Dynamics' && value ? (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
-                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{getSubtypeName(value)}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{getSubtypeName(value)}</span>
               </span>
             ) : (label === 'Lead Energetic' || label === 'Auxiliary Energetic') && value ? (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
-                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{ENERGETIC_NAMES[value]}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{ENERGETIC_NAMES[value]}</span>
               </span>
             ) : (label === 'Lead Function' || label === 'Auxiliary Function') && value ? (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
-                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal">{FUNCTION_NAMES[value]}</span>
+                <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{FUNCTION_NAMES[value]}</span>
               </span>
             ) : label === 'Emotional Attitude' && value ? (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
               </span>
             ) : (value || placeholder)}
@@ -2103,29 +2111,7 @@ function AppContent() {
                 )}
               </AnimatePresence>
 
-              {(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedAuthors.length > 0 || selectedMotifs.length > 0) && (
-                <div className="pt-2">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedQuadra(null);
-                      setSelectedDevelopment(null);
-                      setSelectedJudgmentAxis(null);
-                      setSelectedPerceptionAxis(null);
-                      setSelectedLeadEnergetic(null);
-                      setSelectedAuxEnergetic(null);
-                      setSelectedBehaviourQualia(null);
-                      setSelectedSubtype(null);
-                      setSelectedEmotionalAttitude(null);
-                      setSelectedAuthors([]);
-                      setSelectedMotifs([]);
-                    }}
-                    className="w-fit font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center gap-1.5 transition-opacity"
-                  >
-                    <X className="w-3 h-3" /> Clear All Filters
-                  </button>
-                </div>
-              )}
+
             </div>
           )}
         </div>
@@ -2565,18 +2551,18 @@ function AppContent() {
                           <span className="font-sans text-xl font-bold tracking-[0.05em] leading-none whitespace-nowrap">{selectedCharacter.finalDevelopment}</span>
                           
                           {/* Bottom Row: Names */}
-                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1">
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-40 mt-1 leading-tight break-words">
                             {getDevelopmentName(selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </div>
                           <div />
-                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-60 mt-1">
+                          <div className="font-mono text-[9px] uppercase tracking-tighter opacity-60 mt-1 leading-tight break-words">
                             {getDevelopmentName(selectedCharacter.finalDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </div>
                         </div>
                       ) : (
                         <div>
                           <span className="font-sans text-xl font-bold tracking-[0.05em] block leading-none mb-1">{selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment}</span>
-                          <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40">
+                          <span className="font-mono text-[9px] uppercase tracking-tighter opacity-40 block mt-1 leading-tight break-words">
                             {getDevelopmentName(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment, selectedCharacter.leadEnergetic, selectedCharacter.behaviourQualia || undefined)}
                           </span>
                         </div>
