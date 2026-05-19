@@ -423,7 +423,7 @@ function SettingsModal({
                       className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
                         isSelected 
                           ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
-                          : 'bg-white border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
+                          : 'bg-[#f5f2ed] border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
                       }`}
                     >
                       {isSelected && (
@@ -478,13 +478,6 @@ function SettingsModal({
           </section>
         </div>
 
-        <div className="pt-4 sm:pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30 shrink-0">
-          <span className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
-          <div className="flex gap-4">
-            <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
-            <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
-          </div>
-        </div>
       </motion.div>
     </motion.div>
   );
