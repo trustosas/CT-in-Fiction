@@ -1576,50 +1576,49 @@ function AppContent() {
       exit={{ opacity: 0, y: 10 }}
       className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
     >
-      <div className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-12 border-b border-[#1a1a1a]/10 pb-6 shrink-0">
-          <div className="mb-4 sm:mb-0">
-            <h2 className="font-serif text-3xl sm:text-4xl mb-1 sm:mb-2">Settings</h2>
-            <p className="font-mono text-[9px] uppercase tracking-widest opacity-40">Configure Your Gallery Experience</p>
+      <div className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex items-center justify-between mb-6 sm:mb-10 border-b border-[#1a1a1a]/10 pb-4 shrink-0">
+          <div>
+            <h2 className="font-serif text-2xl sm:text-4xl mb-1">Settings</h2>
+            <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest opacity-40">Gallery Configuration</p>
           </div>
           <button 
             onClick={() => {
               setShowSettings(false);
               setAuthorSearch('');
             }}
-            className="p-2 sm:p-3 hover:bg-[#1a1a1a]/5 rounded-full transition-colors -ml-2 sm:mr-0"
+            className="p-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-8 sm:space-y-12 pb-12">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 sm:space-y-12 pb-12">
           <section>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div className="flex flex-col gap-4 sm:gap-6 mb-8">
               <div className="max-w-xl">
-                <h3 className="font-serif text-2xl mb-2 flex items-center gap-3">
-                  <User className="w-6 h-6" />
-                  Authors
+                <h3 className="font-serif text-xl sm:text-2xl mb-1 sm:mb-2 flex items-center gap-2">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
+                  Analysts
                 </h3>
-                <p className="text-sm opacity-60 leading-relaxed">
-                  Select the authors you would like to follow. The gallery will only display data from authors you have explicitly enabled. 
-                  You can search for authors by their name or by the works they've analyzed.
+                <p className="text-[10px] sm:text-sm opacity-60 leading-relaxed max-w-[90%] sm:max-w-none">
+                  Select analysts to follow. The gallery will only display subjects reviewed by people you have explicitly enabled.
                 </p>
               </div>
               
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                 <input 
                   type="text"
-                  placeholder="Search authors or works..."
-                  className="w-full bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-9 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors text-sm"
+                  placeholder="Search analysts or titles..."
+                  className="w-full bg-[#1a1a1a]/5 border-none py-3 sm:py-4 pl-12 pr-4 rounded-sm focus:bg-[#1a1a1a]/10 transition-colors text-sm placeholder:opacity-30"
                   value={authorSearch}
                   onChange={(e) => setAuthorSearch(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {allAvailableAuthors
                 .filter(author => {
                   const query = authorSearch.toLowerCase();
@@ -1714,42 +1713,6 @@ function AppContent() {
       </div>
     </motion.div>
   );
-
-  if (!isLoading && selectedAuthors.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed] p-8 text-center overscroll-none">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full py-12"
-        >
-           <div className="mb-8 sm:mb-12 relative">
-             <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
-             <User className="w-16 h-16 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
-           </div>
-           
-           <h1 className="font-serif text-3xl sm:text-5xl mb-6 tracking-tight leading-tight">Galleries require <span className="italic">authorship</span>.</h1>
-           <p className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-10 sm:mb-12 leading-relaxed max-w-sm mx-auto">
-             Nothing is displayed here by default. Follow your preferred analysts to curate your browsing experience.
-           </p>
-           
-           <div className="flex flex-col gap-4 px-4 sm:px-0">
-            <button 
-              onClick={() => setShowSettings(true)}
-              className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:shadow-[#1a1a1a]/20 hover:scale-105 active:scale-95 group"
-            >
-              Configure Authors
-            </button>
-            <p className="font-mono text-[8px] uppercase tracking-widest opacity-20">or browse public repositories in Settings</p>
-           </div>
-        </motion.div>
-
-        <AnimatePresence>
-          {showSettings && <SettingsModal />}
-        </AnimatePresence>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto overflow-x-hidden">
@@ -2340,7 +2303,35 @@ function AppContent() {
       {/* Grid */}
       <main className="editorial-grid">
         <AnimatePresence mode="popLayout">
-          {(currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
+          {selectedAuthors.length === 0 && !isLoading ? (
+            <div className="col-span-full py-12 sm:py-32 flex flex-col items-center justify-center text-center">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-md w-full"
+              >
+                <div className="mb-8 relative">
+                  <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
+                  <User className="w-12 h-12 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
+                </div>
+                
+                <h1 className="font-serif text-3xl sm:text-5xl mb-4 sm:mb-6 tracking-tight leading-tight px-4">Galleries require <span className="italic">authorship</span>.</h1>
+                <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 mb-8 sm:mb-12 leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
+                  Nothing is displayed by default. Follow analysts to curate your experience.
+                </p>
+                
+                <div className="flex flex-col gap-4 px-6 sm:px-0">
+                  <button 
+                    onClick={() => setShowSettings(true)}
+                    className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-xl hover:scale-105 active:scale-95"
+                  >
+                    Configure Authors
+                  </button>
+                  <p className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest opacity-20">Browse analysts in Settings</p>
+                </div>
+              </motion.div>
+            </div>
+          ) : (currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
             <motion.div
               key={work.id}
               initial={{ opacity: 0, y: 20 }}
