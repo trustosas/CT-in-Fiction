@@ -8,7 +8,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
-import { slugify, formatAnalysisForDiscord, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState } from './lib/ct-logic';
+import { slugify, formatAnalysisForDiscord, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState, getInterEnergeticDynamics } from './lib/ct-logic';
 import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed' | 'all-works';
@@ -508,8 +508,14 @@ function AppContent() {
   const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects' | 'published' | 'edited'>(() => {
     return (localStorage.getItem('workSortOrder') as any) || 'published';
   });
+  const [workSortDirection, setWorkSortDirection] = useState<'asc' | 'desc'>(() => {
+    return (localStorage.getItem('workSortDirection') as any) || 'desc';
+  });
   const [subjectSortOrder, setSubjectSortOrder] = useState<'published' | 'edited'>(() => {
     return (localStorage.getItem('subjectSortOrder') as any) || 'published';
+  });
+  const [subjectSortDirection, setSubjectSortDirection] = useState<'asc' | 'desc'>(() => {
+    return (localStorage.getItem('subjectSortDirection') as any) || 'desc';
   });
 
   useEffect(() => {
@@ -521,8 +527,16 @@ function AppContent() {
   }, [workSortOrder]);
 
   useEffect(() => {
+    localStorage.setItem('workSortDirection', workSortDirection);
+  }, [workSortDirection]);
+
+  useEffect(() => {
     localStorage.setItem('subjectSortOrder', subjectSortOrder);
   }, [subjectSortOrder]);
+
+  useEffect(() => {
+    localStorage.setItem('subjectSortDirection', subjectSortDirection);
+  }, [subjectSortDirection]);
 
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(() => localStorage.getItem('selectedQuadra'));
   const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(() => localStorage.getItem('selectedDevelopment'));
@@ -532,6 +546,7 @@ function AppContent() {
   const [selectedAuxEnergetic, setSelectedAuxEnergetic] = useState<string | null>(() => localStorage.getItem('selectedAuxEnergetic'));
   const [selectedBehaviourQualia, setSelectedBehaviourQualia] = useState<string | null>(() => localStorage.getItem('selectedBehaviourQualia'));
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(() => localStorage.getItem('selectedSubtype'));
+  const [selectedInterEnergetic, setSelectedInterEnergetic] = useState<string | null>(() => localStorage.getItem('selectedInterEnergetic'));
   const [selectedEmotionalAttitude, setSelectedEmotionalAttitude] = useState<string | null>(() => localStorage.getItem('selectedEmotionalAttitude'));
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null); // Legacy, will replace with authors
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>(() => {
@@ -596,6 +611,11 @@ function AppContent() {
     if (selectedSubtype) localStorage.setItem('selectedSubtype', selectedSubtype);
     else localStorage.removeItem('selectedSubtype');
   }, [selectedSubtype]);
+
+  useEffect(() => {
+    if (selectedInterEnergetic) localStorage.setItem('selectedInterEnergetic', selectedInterEnergetic);
+    else localStorage.removeItem('selectedInterEnergetic');
+  }, [selectedInterEnergetic]);
 
   useEffect(() => {
     if (selectedEmotionalAttitude) localStorage.setItem('selectedEmotionalAttitude', selectedEmotionalAttitude);
@@ -782,7 +802,7 @@ function AppContent() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [mediumSlug, workSlug, searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedMotifs]);
+  }, [mediumSlug, workSlug, searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedInterEnergetic, selectedEmotionalAttitude, selectedMotifs]);
   const loadData = async (isSilent = false, force = false) => {
     try {
       if (!isSilent) setIsLoading(true);
@@ -1099,10 +1119,11 @@ function AppContent() {
     development: selectedDevelopment,
     behaviourQualia: selectedBehaviourQualia,
     subtype: selectedSubtype,
+    interEnergetic: selectedInterEnergetic,
     emotionalAttitude: selectedEmotionalAttitude,
     authors: filterAuthors,
     motifs: selectedMotifs
-  }), [selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
+  }), [selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedInterEnergetic, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
 
   const developments = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => 
@@ -1156,6 +1177,13 @@ function AppContent() {
       matchesFilters(c, { ...currentFilters, behaviourQualia: null })
     );
     return Array.from(new Set(filtered.map(c => c.behaviourQualia))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
+  }, [viewFilteredCharacters, currentFilters]);
+
+  const interEnergetics = useMemo(() => {
+    const filtered = viewFilteredCharacters.filter(c => 
+      matchesFilters(c, { ...currentFilters, interEnergetic: null })
+    );
+    return Array.from(new Set(filtered.map(c => getInterEnergeticDynamics(c)))).filter(Boolean).filter(i => i.toLowerCase() !== 'all').sort();
   }, [viewFilteredCharacters, currentFilters]);
 
   const subtypes = useMemo(() => {
@@ -1251,6 +1279,7 @@ function AppContent() {
     if (selectedAuxEnergetic && !auxEnergetics.includes(selectedAuxEnergetic)) setSelectedAuxEnergetic(null);
     if (selectedDevelopment && !developments.includes(selectedDevelopment)) setSelectedDevelopment(null);
     if (selectedBehaviourQualia && !behaviourQualias.includes(selectedBehaviourQualia)) setSelectedBehaviourQualia(null);
+    if (selectedInterEnergetic && !interEnergetics.includes(selectedInterEnergetic)) setSelectedInterEnergetic(null);
     if (selectedSubtype && !subtypes.includes(selectedSubtype)) setSelectedSubtype(null);
     if (selectedEmotionalAttitude && !emotionalAttitudes.includes(selectedEmotionalAttitude)) setSelectedEmotionalAttitude(null);
     
@@ -1266,7 +1295,7 @@ function AppContent() {
     if (validMotifs.length !== selectedMotifs.length) {
       setSelectedMotifs(validMotifs);
     }
-  }, [isLoading, publishedCharacters.length, judgmentAxes, energetics, perceptionAxes, auxEnergetics, developments, behaviourQualias, subtypes, emotionalAttitudes, authors, quadras, availableMotifs, selectedMotifs, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors]);
+  }, [isLoading, publishedCharacters.length, judgmentAxes, energetics, perceptionAxes, auxEnergetics, developments, behaviourQualias, subtypes, interEnergetics, emotionalAttitudes, authors, quadras, availableMotifs, selectedMotifs, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedInterEnergetic, selectedEmotionalAttitude, filterAuthors]);
 
   const filteredCharacters = useMemo(() => {
     return publishedCharacters
@@ -1288,12 +1317,13 @@ function AppContent() {
           return d ? d.getTime() : 0;
         };
 
-        if (subjectSortOrder === 'edited') {
-          return getTime(b, true) - getTime(a, true);
-        }
-        return getTime(b, false) - getTime(a, false);
+        const result = subjectSortOrder === 'edited'
+          ? getTime(a, true) - getTime(b, true)
+          : getTime(a, false) - getTime(b, false);
+        
+        return subjectSortDirection === 'asc' ? result : -result;
       });
-  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters, subjectSortOrder]);
+  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters, subjectSortOrder, subjectSortDirection]);
 
   const currentWorkData = activeWork ? works.find(w => w.title === activeWork) : null;
 
@@ -1696,23 +1726,26 @@ function AppContent() {
         }));
       };
 
+      let result = 0;
       if (workSortOrder === 'published') {
-        return getWorkTime(b.title, false) - getWorkTime(a.title, false);
-      }
-      if (workSortOrder === 'edited') {
-        return getWorkTime(b.title, true) - getWorkTime(a.title, true);
-      }
-      if (workSortOrder === 'year') return b.year.localeCompare(a.year);
-      if (workSortOrder === 'subjects') {
+        result = getWorkTime(a.title, false) - getWorkTime(b.title, false);
+      } else if (workSortOrder === 'edited') {
+        result = getWorkTime(a.title, true) - getWorkTime(b.title, true);
+      } else if (workSortOrder === 'year') {
+        result = a.year.localeCompare(b.year);
+      } else if (workSortOrder === 'subjects') {
         const countA = publishedCharacters.filter(c => c.source === a.title).length;
         const countB = publishedCharacters.filter(c => c.source === b.title).length;
-        return countB - countA;
+        result = countA - countB;
+      } else {
+        result = a.title.localeCompare(b.title); // Default to A-Z
       }
-      return a.title.localeCompare(b.title); // Default to A-Z
+
+      return workSortDirection === 'asc' ? result : -result;
     });
 
     return sorted;
-  }, [publishedCharacters, activeMedium, works, currentView, searchQuery, currentFilters, workSortOrder]);
+  }, [publishedCharacters, activeMedium, works, currentView, searchQuery, currentFilters, workSortOrder, workSortDirection]);
 
   const isNotFound = useMemo(() => {
     if (isLoading) return false;
@@ -1724,8 +1757,8 @@ function AppContent() {
   }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
 
   const hasArchetypeFilters = useMemo(() => {
-    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || filterAuthors.length > 0 || selectedMotifs.length > 0);
-  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
+    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedInterEnergetic || selectedEmotionalAttitude || filterAuthors.length > 0 || selectedMotifs.length > 0);
+  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedInterEnergetic, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
 
   const hasActiveFilters = useMemo(() => {
     if (currentView === 'all-works' || currentView === 'medium') {
@@ -2192,14 +2225,28 @@ function AppContent() {
                       ].map((opt) => (
                         <button
                           key={opt.value}
-                          onClick={() => setWorkSortOrder(opt.value as any)}
+                          onClick={() => {
+                            if (workSortOrder === opt.value) {
+                              setWorkSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setWorkSortOrder(opt.value as any);
+                              setWorkSortDirection(opt.value === 'az' ? 'asc' : 'desc');
+                            }
+                          }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
                             workSortOrder === opt.value 
                               ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
                               : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
                           }`}
                         >
-                          {opt.label}
+                          <span className="inline-flex items-center gap-1">
+                            {opt.label}
+                            {workSortOrder === opt.value && (
+                              <span className="text-[8px] leading-none select-none ml-0.5">
+                                {workSortDirection === 'asc' ? '▲' : '▼'}
+                              </span>
+                            )}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -2247,6 +2294,7 @@ function AppContent() {
                             { label: 'Lead', value: selectedLeadEnergetic },
                             { label: 'Aux', value: selectedAuxEnergetic },
                             { label: 'Qualia', value: selectedBehaviourQualia },
+                            { label: 'E-Dyn', value: selectedInterEnergetic },
                             { label: 'Subtype', value: selectedSubtype },
                             { label: 'Attitude', value: selectedEmotionalAttitude }
                           ].filter(f => f.value).map((f) => (
@@ -2279,14 +2327,28 @@ function AppContent() {
                       ].map((opt) => (
                         <button
                           key={opt.value}
-                          onClick={() => setSubjectSortOrder(opt.value as any)}
+                          onClick={() => {
+                            if (subjectSortOrder === opt.value) {
+                              setSubjectSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSubjectSortOrder(opt.value as any);
+                              setSubjectSortDirection('desc');
+                            }
+                          }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
                             subjectSortOrder === opt.value 
                               ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
                               : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
                           }`}
                         >
-                          {opt.label}
+                          <span className="inline-flex items-center gap-1">
+                            {opt.label}
+                            {subjectSortOrder === opt.value && (
+                              <span className="text-[8px] leading-none select-none ml-0.5">
+                                {subjectSortDirection === 'asc' ? '▲' : '▼'}
+                              </span>
+                            )}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -2348,6 +2410,13 @@ function AppContent() {
                             value={selectedDevelopment}
                             options={developments}
                             onChange={setSelectedDevelopment}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Inter-Energetic Dynamics"
+                            value={selectedInterEnergetic}
+                            options={interEnergetics}
+                            onChange={setSelectedInterEnergetic}
                             placeholder="All"
                           />
                           <CustomSelect 
@@ -3205,6 +3274,7 @@ function AppContent() {
                                       setSelectedLeadEnergetic(null);
                                       setSelectedAuxEnergetic(null);
                                       setSelectedBehaviourQualia(null);
+                                      setSelectedInterEnergetic(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
                                       setFilterAuthors([]);
@@ -3229,6 +3299,7 @@ function AppContent() {
                                       setSelectedLeadEnergetic(null);
                                       setSelectedAuxEnergetic(null);
                                       setSelectedBehaviourQualia(null);
+                                      setSelectedInterEnergetic(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
                                       setFilterAuthors([]);
@@ -3253,6 +3324,7 @@ function AppContent() {
                                       setSelectedLeadEnergetic(null);
                                       setSelectedAuxEnergetic(null);
                                       setSelectedBehaviourQualia(null);
+                                      setSelectedInterEnergetic(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
                                       setFilterAuthors([]);

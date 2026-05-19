@@ -466,6 +466,7 @@ export interface FilterState {
   development: string | null;
   behaviourQualia: string | null;
   subtype: string | null;
+  interEnergetic: string | null;
   emotionalAttitude: string | null;
   authors: string[];
   motifs: number[];
@@ -495,6 +496,8 @@ export function matchesFilters(char: any, filters: Partial<FilterState>): boolea
   
   if (filters.behaviourQualia && char.behaviourQualia !== filters.behaviourQualia) return false;
   if (filters.subtype && char.subtype !== filters.subtype) return false;
+  
+  if (filters.interEnergetic && getInterEnergeticDynamics(char) !== filters.interEnergetic) return false;
   
   if (filters.emotionalAttitude && !checkEmotionalMatch(char.emotionalAttitude, char.judgmentAxis, filters.emotionalAttitude)) return false;
   
@@ -561,4 +564,27 @@ export function slugify(text: string): string {
     .replace(/\s+/g, '-')
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
+}
+
+export function getInterEnergeticDynamics(char: any): string | null {
+  if (!char || !char.subtype) return null;
+  const parts = char.subtype.split('+');
+  if (parts.length !== 2) return null;
+  
+  const funcToEnergetic = (func: string): string | null => {
+    const f = func.trim().substring(0, 2);
+    if (f === 'Fi' || f === 'Ti') return 'Ji';
+    if (f === 'Fe' || f === 'Te') return 'Je';
+    if (f === 'Ni' || f === 'Si') return 'Pi';
+    if (f === 'Ne' || f === 'Se') return 'Pe';
+    return null;
+  };
+  
+  const e1 = funcToEnergetic(parts[0]);
+  const e2 = funcToEnergetic(parts[1]);
+  
+  if (e1 && e2) {
+    return `${e1}+${e2}`;
+  }
+  return null;
 }
