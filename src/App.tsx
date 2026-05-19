@@ -541,6 +541,7 @@ function AppContent() {
     const old = localStorage.getItem('selectedAuthor');
     return old ? [old] : [];
   });
+  const [filterAuthors, setFilterAuthors] = useState<string[]>([]);
   const [selectedMotifs, setSelectedMotifs] = useState<number[]>(() => {
     const saved = localStorage.getItem('selectedMotifs');
     return saved ? JSON.parse(saved) : [];
@@ -608,6 +609,10 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('selectedMotifs', JSON.stringify(selectedMotifs));
   }, [selectedMotifs]);
+
+  useEffect(() => {
+    setFilterAuthors(prev => prev.filter(a => selectedAuthors.includes(a)));
+  }, [selectedAuthors]);
   const [showFilters, setShowFilters] = useState(false);
   const [activeMotifDesc, setActiveMotifDesc] = useState<string | null>(null);
   const [activeMotifId, setActiveMotifId] = useState<string | null>(null);
@@ -1095,9 +1100,9 @@ function AppContent() {
     behaviourQualia: selectedBehaviourQualia,
     subtype: selectedSubtype,
     emotionalAttitude: selectedEmotionalAttitude,
-    authors: selectedAuthors,
+    authors: filterAuthors,
     motifs: selectedMotifs
-  }), [selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedAuthors, selectedMotifs]);
+  }), [selectedQuadra, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedDevelopment, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
 
   const developments = useMemo(() => {
     const filtered = viewFilteredCharacters.filter(c => 
@@ -1210,11 +1215,11 @@ function AppContent() {
     
     const items = new Set<string>();
     filtered.forEach(c => {
-      if (c.author) items.add(c.author);
+      if (c.author && selectedAuthors.includes(c.author)) items.add(c.author);
     });
     
     return Array.from(items).filter(Boolean).sort();
-  }, [viewFilteredCharacters, currentFilters]);
+  }, [viewFilteredCharacters, currentFilters, selectedAuthors]);
 
   // Map authors to their distinct works (for searchability and context)
   const authorToWorks = useMemo(() => {
@@ -1249,9 +1254,9 @@ function AppContent() {
     if (selectedSubtype && !subtypes.includes(selectedSubtype)) setSelectedSubtype(null);
     if (selectedEmotionalAttitude && !emotionalAttitudes.includes(selectedEmotionalAttitude)) setSelectedEmotionalAttitude(null);
     
-    const validAuthors = selectedAuthors.filter(a => authors.includes(a));
-    if (validAuthors.length !== selectedAuthors.length) {
-      setSelectedAuthors(validAuthors);
+    const validAuthors = filterAuthors.filter(a => authors.includes(a));
+    if (validAuthors.length !== filterAuthors.length) {
+      setFilterAuthors(validAuthors);
     }
 
     if (selectedQuadra && !quadras.includes(selectedQuadra)) setSelectedQuadra(null);
@@ -1261,7 +1266,7 @@ function AppContent() {
     if (validMotifs.length !== selectedMotifs.length) {
       setSelectedMotifs(validMotifs);
     }
-  }, [isLoading, publishedCharacters.length, judgmentAxes, energetics, perceptionAxes, auxEnergetics, developments, behaviourQualias, subtypes, emotionalAttitudes, authors, quadras, availableMotifs, selectedMotifs, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedAuthors]);
+  }, [isLoading, publishedCharacters.length, judgmentAxes, energetics, perceptionAxes, auxEnergetics, developments, behaviourQualias, subtypes, emotionalAttitudes, authors, quadras, availableMotifs, selectedMotifs, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors]);
 
   const filteredCharacters = useMemo(() => {
     return publishedCharacters
@@ -1719,8 +1724,8 @@ function AppContent() {
   }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
 
   const hasArchetypeFilters = useMemo(() => {
-    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || selectedAuthors.length > 0 || selectedMotifs.length > 0);
-  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, selectedAuthors, selectedMotifs]);
+    return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedEmotionalAttitude || filterAuthors.length > 0 || selectedMotifs.length > 0);
+  }, [selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedEmotionalAttitude, filterAuthors, selectedMotifs]);
 
   const hasActiveFilters = useMemo(() => {
     if (currentView === 'all-works' || currentView === 'medium') {
@@ -2238,9 +2243,9 @@ function AppContent() {
                               {f.label}: {f.value}
                             </span>
                           ))}
-                          {selectedAuthors.length > 0 && (
+                          {filterAuthors.length > 0 && (
                             <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
-                              Authors: {selectedAuthors.length}
+                              Authors: {filterAuthors.length}
                             </span>
                           )}
                           {selectedMotifs.length > 0 && (
@@ -2350,9 +2355,9 @@ function AppContent() {
                           />
                           <AuthorMultiSelect 
                             label="Authors"
-                            values={selectedAuthors}
+                            values={filterAuthors}
                             options={authors}
-                            onChange={setSelectedAuthors}
+                            onChange={(vals) => setFilterAuthors(vals as string[])}
                             placeholder="All"
                           />
                           <MultiSelect 
@@ -3191,6 +3196,7 @@ function AppContent() {
                                       setSelectedBehaviourQualia(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
+                                      setFilterAuthors([]);
                                       setSelectedMotifs([motifIdx]);
                                       setActiveMotifId(null);
                                       setActiveMotifDesc(null);
@@ -3214,6 +3220,7 @@ function AppContent() {
                                       setSelectedBehaviourQualia(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
+                                      setFilterAuthors([]);
                                       setSelectedMotifs([motifIdx]);
                                       setActiveMotifId(null);
                                       setActiveMotifDesc(null);
@@ -3237,6 +3244,7 @@ function AppContent() {
                                       setSelectedBehaviourQualia(null);
                                       setSelectedSubtype(null);
                                       setSelectedEmotionalAttitude(null);
+                                      setFilterAuthors([]);
                                       setSelectedMotifs([motifIdx]);
                                       setActiveMotifId(null);
                                       setActiveMotifDesc(null);
