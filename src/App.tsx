@@ -2098,15 +2098,20 @@ function AppContent() {
                                   const baseOriginUrl = window.location.origin;
                                   
                                   const limit = 15;
-                                  const firstChars = filteredCharacters.slice(0, limit);
+                                  const sorted = [...filteredCharacters].sort((a, b) => {
+                                    const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
+                                    const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
+                                    return da - db;
+                                  });
+                                  const firstChars = sorted.slice(0, limit);
                                   const remainingCount = filteredCharacters.length - limit;
     
                                   const charList = firstChars.map(c => {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
-                                  }).join(' • ');
+                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                  }).join('\n');
                                   const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
     
                                   const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
@@ -2126,12 +2131,18 @@ function AppContent() {
                                   const currentPageUrl = window.location.href.split('#')[0];
                                   const baseOriginUrl = window.location.origin;
     
-                                   const charList = filteredCharacters.map(c => {
+                                   const sorted = [...filteredCharacters].sort((a, b) => {
+                                     const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
+                                     const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
+                                     return da - db;
+                                   });
+
+                                   const charList = sorted.map(c => {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
-                                  }).join(' • ');
+                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                  }).join('\n');
     
                                   const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
                                   
