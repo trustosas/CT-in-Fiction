@@ -2275,6 +2275,7 @@ function AppContent() {
                       <Filter className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                     </button>
+
                   </div>
     
                   <AnimatePresence>
@@ -2283,7 +2284,7 @@ function AppContent() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"
+                        className="flex flex-col gap-1.5 mt-2"
                       >
                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                           {[
@@ -2312,6 +2313,28 @@ function AppContent() {
                               Motifs: {selectedMotifs.length}
                             </span>
                           )}
+                        </div>
+                        <div>
+                          <button
+                            onClick={() => {
+                              setSelectedQuadra(null);
+                              setSelectedDevelopment(null);
+                              setSelectedJudgmentAxis(null);
+                              setSelectedPerceptionAxis(null);
+                              setSelectedLeadEnergetic(null);
+                              setSelectedAuxEnergetic(null);
+                              setSelectedBehaviourQualia(null);
+                              setSelectedInterEnergetic(null);
+                              setSelectedSubtype(null);
+                              setSelectedEmotionalAttitude(null);
+                              setFilterAuthors([]);
+                              setSelectedMotifs([]);
+                            }}
+                            className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-[#1a1a1a]/40 hover:text-[#1a1a1a] transition-all cursor-pointer font-medium hover:underline mt-0.5"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                            Clear All Filters
+                          </button>
                         </div>
                       </motion.div>
                     )}
