@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Routes, Route, useLocation } from 'react-router-dom';
-import { Search, ArrowRight, X, Zap, Activity, Filter, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash } from 'lucide-react';
+import { Search, ArrowRight, X, Zap, Activity, Filter, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash, Settings as SettingsIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -307,6 +307,8 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
   const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [authorSearch, setAuthorSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
   const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects' | 'published' | 'edited'>(() => {
     return (localStorage.getItem('workSortOrder') as any) || 'published';
@@ -660,8 +662,8 @@ function AppContent() {
   }, [subjectSlug]);
 
   const publishedCharacters = useMemo(() => {
-    return characters.filter(c => c.isPublished && c.author);
-  }, [characters]);
+    return characters.filter(c => c.isPublished && c.author && selectedAuthors.includes(c.author));
+  }, [characters, selectedAuthors]);
 
   const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
 
@@ -1019,9 +1021,29 @@ function AppContent() {
     return Array.from(items).filter(Boolean).sort();
   }, [viewFilteredCharacters, currentFilters]);
 
+  // Map authors to their distinct works (for searchability and context)
+  const authorToWorks = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    characters.forEach(c => {
+      if (c.author && c.isPublished) {
+        if (!map.has(c.author)) map.set(c.author, new Set());
+        if (c.source) map.get(c.author)!.add(c.source);
+      }
+    });
+    return map;
+  }, [characters]);
+
+  const allAvailableAuthors = useMemo(() => {
+    return Array.from(authorToWorks.keys()).sort();
+  }, [authorToWorks]);
+
   // Reset dependent filters if they become invalid
   useEffect(() => {
-    if (isLoading || publishedCharacters.length === 0) return;
+    if (isLoading) return;
+    
+    localStorage.setItem('selectedAuthors', JSON.stringify(selectedAuthors));
+
+    if (publishedCharacters.length === 0) return;
 
     if (selectedJudgmentAxis && !judgmentAxes.includes(selectedJudgmentAxis)) setSelectedJudgmentAxis(null);
     if (selectedLeadEnergetic && !energetics.includes(selectedLeadEnergetic)) setSelectedLeadEnergetic(null);
@@ -1547,9 +1569,194 @@ function AppContent() {
     );
   }
 
+  const SettingsModal = () => (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
+    >
+      <div className="px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col">
+        <div className="flex items-center justify-between mb-12 border-b border-[#1a1a1a]/10 pb-6">
+          <div>
+            <h2 className="font-serif text-4xl mb-2">Settings</h2>
+            <p className="font-mono text-[9px] uppercase tracking-widest opacity-40">Configure Your Gallery Experience</p>
+          </div>
+          <button 
+            onClick={() => {
+              setShowSettings(false);
+              setAuthorSearch('');
+            }}
+            className="p-3 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-12 pb-12">
+          <section>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+              <div className="max-w-xl">
+                <h3 className="font-serif text-2xl mb-2 flex items-center gap-3">
+                  <User className="w-6 h-6" />
+                  Authors
+                </h3>
+                <p className="text-sm opacity-60 leading-relaxed">
+                  Select the authors you would like to follow. The gallery will only display data from authors you have explicitly enabled. 
+                  You can search for authors by their name or by the works they've analyzed.
+                </p>
+              </div>
+              
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                <input 
+                  type="text"
+                  placeholder="Search authors or works..."
+                  className="w-full bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-9 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors text-sm"
+                  value={authorSearch}
+                  onChange={(e) => setAuthorSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allAvailableAuthors
+                .filter(author => {
+                  const query = authorSearch.toLowerCase();
+                  if (author.toLowerCase().includes(query)) return true;
+                  const works = authorToWorks.get(author);
+                  if (works) {
+                    return Array.from(works).some(w => w.toLowerCase().includes(query));
+                  }
+                  return false;
+                })
+                .map(author => {
+                  const isSelected = selectedAuthors.includes(author);
+                  const works = authorToWorks.get(author);
+                  return (
+                    <button
+                      key={author}
+                      onClick={() => {
+                        setSelectedAuthors(prev => 
+                          prev.includes(author) 
+                            ? prev.filter(a => a !== author)
+                            : [...prev, author]
+                        );
+                      }}
+                      className={`group p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
+                        isSelected 
+                          ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
+                          : 'bg-white border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
+                      }`}
+                    >
+                      {isSelected && (
+                        <motion.div 
+                          layoutId="active-bg"
+                          className="absolute inset-0 bg-[#1a1a1a] z-0"
+                        />
+                      )}
+                      
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className={`font-serif text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
+                            {author}
+                          </span>
+                          {isSelected ? (
+                            <Check className="w-5 h-5 text-[#f5f2ed]" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-[#1a1a1a]/10" />
+                          )}
+                        </div>
+                        
+                        {works && (
+                          <div className="flex flex-wrap gap-1.5 mt-2 opacity-50">
+                            {Array.from(works).slice(0, 3).map(w => (
+                              <span key={w} className="font-mono text-[7px] uppercase tracking-widest border border-current px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                {w}
+                              </span>
+                            ))}
+                            {works.size > 3 && (
+                              <span className="font-mono text-[7px] uppercase tracking-widest px-1 py-0.5 opacity-50">
+                                +{works.size - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+
+            {allAvailableAuthors.length > 0 && selectedAuthors.length > 0 && (
+               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-end">
+                 <button 
+                  onClick={() => {
+                    setShowSettings(false);
+                    setAuthorSearch('');
+                  }}
+                  className="px-10 py-3 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                 >
+                   View Gallery ({selectedAuthors.length} Followed)
+                 </button>
+               </div>
+            )}
+          </section>
+        </div>
+
+        <div className="pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30">
+          <span className="font-mono text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
+          <div className="flex gap-4">
+            <User className="w-4 h-4" />
+            <Activity className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  if (!isLoading && selectedAuthors.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed] p-6 text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full"
+        >
+           <div className="mb-12 relative">
+             <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
+             <User className="w-20 h-20 mx-auto relative z-10 opacity-10" />
+           </div>
+           
+           <h1 className="font-serif text-5xl mb-6 tracking-tight">Galleries require <span className="italic">authorship</span>.</h1>
+           <p className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-12 leading-relaxed max-w-sm mx-auto">
+             Nothing is displayed here by default. Follow your preferred analysts to curate your browsing experience.
+           </p>
+           
+           <div className="flex flex-col gap-4">
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="px-12 py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:shadow-[#1a1a1a]/20 hover:scale-105 active:scale-95 group"
+            >
+              Configure Authors
+            </button>
+            <p className="font-mono text-[8px] uppercase tracking-widest opacity-20">or browse public repositories in Settings</p>
+           </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {showSettings && <SettingsModal />}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto overflow-x-hidden">
-      {/* Hamburger Menu Overlay */}
+      <AnimatePresence>
+        {showSettings && <SettingsModal />}
+      </AnimatePresence>
+      
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -1577,7 +1784,7 @@ function AppContent() {
                 </button>
               </div>
 
-              <nav className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
+              <nav className="flex flex-col flex-1 overflow-y-auto no-scrollbar gap-y-6">
                 <button 
                   onClick={navigateToHome}
                   className="block font-serif text-2xl hover:italic transition-all text-left w-full"
@@ -1605,6 +1812,19 @@ function AppContent() {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div className="pt-6 border-t border-white/10 mt-auto">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
+                  <button 
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setShowSettings(true);
+                    }}
+                    className={`flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-60 hover:opacity-100 py-0.5`}
+                  >
+                    <SettingsIcon className="w-5 h-5" />
+                    Settings
+                  </button>
                 </div>
               </nav>
 
