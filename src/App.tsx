@@ -295,6 +295,201 @@ function PaginationControls({
   );
 }
 
+function OnboardingPrompt({ onShowSettings }: { onShowSettings: () => void }) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overscroll-none">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full py-8 sm:py-12"
+      >
+         <div className="mb-8 relative">
+           <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
+           <SettingsIcon className="w-12 h-12 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
+         </div>
+         
+         <h1 className="font-serif text-3xl sm:text-5xl mb-4 sm:mb-6 tracking-tight leading-tight px-4">Galleries require <span className="italic">authorship</span>.</h1>
+         <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 mb-8 sm:mb-12 leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
+           Nothing is displayed by default. Follow analysts to curate your experience.
+         </p>
+         
+         <div className="flex flex-col gap-4 px-6 sm:px-0">
+          <button 
+            onClick={onShowSettings}
+            className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:scale-105 active:scale-95 group"
+          >
+            Configure Authors
+          </button>
+          <p className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest opacity-20">or browse repositories in Settings</p>
+         </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function SettingsModal({ 
+  onClose, 
+  authorSearch, 
+  setAuthorSearch, 
+  allAvailableAuthors, 
+  selectedAuthors, 
+  setSelectedAuthors, 
+  authorToWorks 
+}: { 
+  onClose: () => void,
+  authorSearch: string,
+  setAuthorSearch: (val: string) => void,
+  allAvailableAuthors: string[],
+  selectedAuthors: string[],
+  setSelectedAuthors: (updater: (prev: string[]) => string[]) => void,
+  authorToWorks: Map<string, Set<string>>
+}) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
+    >
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden relative"
+      >
+        <div className="flex items-center justify-between mb-8 sm:mb-12 border-b border-[#1a1a1a]/10 pb-4 shrink-0">
+          <div>
+            <h2 className="font-serif text-2xl sm:text-4xl mb-1">Settings</h2>
+            <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Gallery Configuration</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-8 sm:space-y-12 pb-12">
+          <section>
+            <div className="flex flex-col gap-6 mb-8">
+              <div className="max-w-xl">
+                <h3 className="font-serif text-xl sm:text-2xl mb-2 flex items-center gap-2">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
+                  Authors
+                </h3>
+                <p className="text-xs sm:text-sm opacity-60 leading-relaxed">
+                  Select authors to follow. Search by name or associated works.
+                </p>
+              </div>
+              
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                <input 
+                  type="text"
+                  placeholder="Search authors or works..."
+                  className="w-full bg-[#1a1a1a]/5 border-none py-3 pl-10 pr-4 rounded-sm focus:bg-[#1a1a1a]/10 transition-colors text-sm placeholder:opacity-30"
+                  value={authorSearch}
+                  onChange={(e) => setAuthorSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {allAvailableAuthors
+                .filter(author => {
+                  const query = authorSearch.toLowerCase();
+                  if (author.toLowerCase().includes(query)) return true;
+                  const works = authorToWorks.get(author);
+                  if (works) {
+                    return Array.from(works).some(w => w.toLowerCase().includes(query));
+                  }
+                  return false;
+                })
+                .map(author => {
+                  const isSelected = selectedAuthors.includes(author);
+                  const works = authorToWorks.get(author);
+                  return (
+                    <button
+                      key={author}
+                      onClick={() => {
+                        setSelectedAuthors(prev => 
+                          prev.includes(author) 
+                            ? prev.filter(a => a !== author)
+                            : [...prev, author]
+                        );
+                      }}
+                      className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
+                        isSelected 
+                          ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
+                          : 'bg-white border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
+                      }`}
+                    >
+                      {isSelected && (
+                        <motion.div 
+                          layoutId="active-bg"
+                          className="absolute inset-0 bg-[#1a1a1a] z-0"
+                        />
+                      )}
+                      
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className={`font-serif text-lg sm:text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
+                            {author}
+                          </span>
+                          {isSelected ? (
+                            <Check className="w-5 h-5 text-[#f5f2ed]" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-[#1a1a1a]/10" />
+                          )}
+                        </div>
+                        
+                        {works && (
+                          <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 opacity-50">
+                            {Array.from(works).slice(0, 3).map(w => (
+                              <span key={w} className="font-mono text-[6px] md:text-[7px] uppercase tracking-widest border border-current px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                {w}
+                              </span>
+                            ))}
+                            {works.size > 3 && (
+                              <span className="font-mono text-[7px] uppercase tracking-widest px-1 py-0.5 opacity-50">
+                                +{works.size - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+
+            {allAvailableAuthors.length > 0 && selectedAuthors.length > 0 && (
+               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-center sm:justify-end">
+                 <button 
+                  onClick={onClose}
+                  className="w-full sm:w-auto px-10 py-4 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                 >
+                   View Gallery ({selectedAuthors.length} Followed)
+                 </button>
+               </div>
+            )}
+          </section>
+        </div>
+
+        <div className="pt-4 sm:pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30 shrink-0">
+          <span className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
+          <div className="flex gap-4">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1569,897 +1764,750 @@ function AppContent() {
     );
   }
 
-  const SettingsModal = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 10 }}
-      className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
-    >
-      <div className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden relative">
-        <div className="flex items-center justify-between mb-6 sm:mb-10 border-b border-[#1a1a1a]/10 pb-4 shrink-0">
-          <div>
-            <h2 className="font-serif text-2xl sm:text-4xl mb-1">Settings</h2>
-            <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest opacity-40">Gallery Configuration</p>
-          </div>
-          <button 
-            onClick={() => {
-              setShowSettings(false);
-              setAuthorSearch('');
-            }}
-            className="p-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 sm:space-y-12 pb-12">
-          <section>
-            <div className="flex flex-col gap-4 sm:gap-6 mb-8">
-              <div className="max-w-xl">
-                <h3 className="font-serif text-xl sm:text-2xl mb-1 sm:mb-2 flex items-center gap-2">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
-                  Analysts
-                </h3>
-                <p className="text-[10px] sm:text-sm opacity-60 leading-relaxed max-w-[90%] sm:max-w-none">
-                  Select analysts to follow. The gallery will only display subjects reviewed by people you have explicitly enabled.
-                </p>
-              </div>
-              
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-                <input 
-                  type="text"
-                  placeholder="Search analysts or titles..."
-                  className="w-full bg-[#1a1a1a]/5 border-none py-3 sm:py-4 pl-12 pr-4 rounded-sm focus:bg-[#1a1a1a]/10 transition-colors text-sm placeholder:opacity-30"
-                  value={authorSearch}
-                  onChange={(e) => setAuthorSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {allAvailableAuthors
-                .filter(author => {
-                  const query = authorSearch.toLowerCase();
-                  if (author.toLowerCase().includes(query)) return true;
-                  const works = authorToWorks.get(author);
-                  if (works) {
-                    return Array.from(works).some(w => w.toLowerCase().includes(query));
-                  }
-                  return false;
-                })
-                .map(author => {
-                  const isSelected = selectedAuthors.includes(author);
-                  const works = authorToWorks.get(author);
-                  return (
-                    <button
-                      key={author}
-                      onClick={() => {
-                        setSelectedAuthors(prev => 
-                          prev.includes(author) 
-                            ? prev.filter(a => a !== author)
-                            : [...prev, author]
-                        );
-                      }}
-                      className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
-                        isSelected 
-                          ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
-                          : 'bg-white border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
-                      }`}
-                    >
-                      {isSelected && (
-                        <motion.div 
-                          layoutId="active-bg"
-                          className="absolute inset-0 bg-[#1a1a1a] z-0"
-                        />
-                      )}
-                      
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <span className={`font-serif text-lg sm:text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
-                            {author}
-                          </span>
-                          {isSelected ? (
-                            <Check className="w-5 h-5 text-[#f5f2ed]" />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border border-[#1a1a1a]/10" />
-                          )}
-                        </div>
-                        
-                        {works && (
-                          <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 opacity-50">
-                            {Array.from(works).slice(0, 3).map(w => (
-                              <span key={w} className="font-mono text-[6px] md:text-[7px] uppercase tracking-widest border border-current px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                {w}
-                              </span>
-                            ))}
-                            {works.size > 3 && (
-                              <span className="font-mono text-[7px] uppercase tracking-widest px-1 py-0.5 opacity-50">
-                                +{works.size - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-            </div>
-
-            {allAvailableAuthors.length > 0 && selectedAuthors.length > 0 && (
-               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-center sm:justify-end">
-                 <button 
-                  onClick={() => {
-                    setShowSettings(false);
-                    setAuthorSearch('');
-                  }}
-                  className="w-full sm:w-auto px-10 py-4 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                 >
-                   View Gallery ({selectedAuthors.length} Followed)
-                 </button>
-               </div>
-            )}
-          </section>
-        </div>
-
-        <div className="pt-4 sm:pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30 shrink-0">
-          <span className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
-          <div className="flex gap-4">
-            <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
-            <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-
   return (
     <div className="min-h-screen px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto overflow-x-hidden">
       <AnimatePresence>
-        {showSettings && <SettingsModal />}
-      </AnimatePresence>
-      
-      <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-[#f5f2ed]/95 backdrop-blur-md z-[60]"
-            />
-            <motion.div 
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 w-full md:w-[260px] bg-[#1a1a1a] text-white z-[70] p-6 shadow-2xl flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40">Navigation</span>
-                <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <nav className="flex flex-col flex-1 overflow-y-auto no-scrollbar gap-y-6">
-                <button 
-                  onClick={navigateToHome}
-                  className="block font-serif text-2xl hover:italic transition-all text-left w-full"
-                >
-                  Gallery
-                </button>
-                
-                <div className="pt-6 border-t border-white/10">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">{pluralize(media.length, 'Medium', 'Media')}</span>
-                  <div className="space-y-2">
-                    <button 
-                      onClick={navigateToAllWorks}
-                      className={`block font-serif text-lg hover:italic transition-all text-left w-full ${currentView === 'all-works' ? 'opacity-100 italic' : 'font-extralight opacity-50'} hover:opacity-100 py-0.5`}
-                    >
-                      All
-                    </button>
-                    {media.map(m => (
-                      <button 
-                        key={m}
-                        onClick={() => navigateToMedium(m)}
-                        className={`block font-serif text-lg hover:italic transition-all text-left w-full truncate ${activeMedium === m ? 'opacity-100 italic' : 'opacity-60'} hover:opacity-100 py-0.5`}
-                        title={m}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="pt-6 border-t border-white/10 mt-auto">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
-                  <button 
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setShowSettings(true);
-                    }}
-                    className={`flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-60 hover:opacity-100 py-0.5`}
-                  >
-                    <SettingsIcon className="w-5 h-5" />
-                    Settings
-                  </button>
-                </div>
-              </nav>
-
-              <div className="pt-6 mt-auto border-t border-white/5 font-mono text-[8px] uppercase tracking-widest opacity-20">
-                CT in Fiction v2.0
-              </div>
-            </motion.div>
-          </>
+        {showSettings && (
+          <SettingsModal 
+            onClose={() => {
+              setShowSettings(false);
+              setAuthorSearch('');
+            }}
+            authorSearch={authorSearch}
+            setAuthorSearch={setAuthorSearch}
+            allAvailableAuthors={allAvailableAuthors}
+            selectedAuthors={selectedAuthors}
+            setSelectedAuthors={setSelectedAuthors}
+            authorToWorks={authorToWorks}
+          />
         )}
       </AnimatePresence>
 
-      {/* Navigation / Breadcrumbs */}
-      <nav className="flex items-center justify-between mb-12 border-b border-[#1a1a1a]/5 pb-6">
-        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
-          <button 
-            onClick={() => setIsMenuOpen(true)}
-            className="p-2 -ml-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          
-          {currentView === 'feed' && (
-            <button 
-              onClick={navigateToHome}
-              className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold"
-            >
-              Gallery
-            </button>
-          )}
+      <AnimatePresence>
+        {selectedAuthors.length > 0 ? (
+          <>
+            <AnimatePresence>
+              {isMenuOpen && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="fixed inset-0 bg-[#f5f2ed]/95 backdrop-blur-md z-[60]"
+                  />
+                  <motion.div 
+                    initial={{ x: '-100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '-100%' }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                    className="fixed inset-y-0 left-0 w-full md:w-[260px] bg-[#1a1a1a] text-white z-[70] p-6 shadow-2xl flex flex-col"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                      <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40">Navigation</span>
+                      <button 
+                        onClick={() => setIsMenuOpen(false)}
+                        className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
 
-          {(currentView === 'all-works' || (accessedViaAll && (activeMedium || activeWork))) && (
-            <>
-              <button 
-                onClick={navigateToAllWorks}
-                className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'all-works' ? 'opacity-100 font-medium' : 'opacity-30 hover:opacity-80 font-extralight'}`}
-              >
-                All
-              </button>
-            </>
-          )}
+                    <nav className="flex flex-col flex-1 overflow-y-auto no-scrollbar gap-y-6">
+                      <button 
+                        onClick={navigateToHome}
+                        className="block font-serif text-2xl hover:italic transition-all text-left w-full"
+                      >
+                        Gallery
+                      </button>
+                      
+                      <div className="pt-6 border-t border-white/10">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">{pluralize(media.length, 'Medium', 'Media')}</span>
+                        <div className="space-y-2">
+                          <button 
+                            onClick={navigateToAllWorks}
+                            className={`block font-serif text-lg hover:italic transition-all text-left w-full ${currentView === 'all-works' ? 'opacity-100 italic' : 'font-extralight opacity-50'} hover:opacity-100 py-0.5`}
+                          >
+                            All
+                          </button>
+                          {media.map(m => (
+                            <button 
+                              key={m}
+                              onClick={() => navigateToMedium(m)}
+                              className={`block font-serif text-lg hover:italic transition-all text-left w-full truncate ${activeMedium === m ? 'opacity-100 italic' : 'opacity-60'} hover:opacity-100 py-0.5`}
+                              title={m}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="pt-6 border-t border-white/10 mt-auto">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
+                        <button 
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            setShowSettings(true);
+                          }}
+                          className={`flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-60 hover:opacity-100 py-0.5`}
+                        >
+                          <SettingsIcon className="w-5 h-5" />
+                          Settings
+                        </button>
+                      </div>
+                    </nav>
 
-          {activeMedium && (
-            <>
-              {(currentView === 'all-works' || accessedViaAll) && <span className="opacity-20 translate-y-[-1px]">/</span>}
-              <button 
-                onClick={() => navigateToMedium(activeMedium)}
-                className={`font-mono text-[10px] uppercase tracking-widest transition-all truncate max-w-[150px] sm:max-w-[300px] ${currentView === 'medium' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
-                title={activeMedium}
-              >
-                {activeMedium}
-              </button>
-            </>
-          )}
-          {activeWork && (
-            <>
-              <span className="opacity-20 translate-y-[-1px]">/</span>
-              <button 
-                className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-[400px]"
-                title={activeWork}
-              >
-                {activeWork}
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
+                    <div className="pt-6 mt-auto border-t border-white/5 font-mono text-[8px] uppercase tracking-widest opacity-20">
+                      CT in Fiction v2.0
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
+            {/* Navigation / Breadcrumbs */}
+            <nav className={`flex items-center justify-between border-b border-[#1a1a1a]/5 pb-6 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
+              <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+                <button 
+                  onClick={() => setIsMenuOpen(true)}
+                  className="p-2 -ml-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors flex items-center gap-2"
+                >
+                  <Menu className="w-5 h-5" />
+                  {selectedAuthors.length === 0 && (
+                    <span className="font-mono text-[9px] uppercase tracking-widest opacity-40 hidden sm:inline">Menu</span>
+                  )}
+                </button>
+                
+                {selectedAuthors.length > 0 && (
+                  <>
+                    {currentView === 'feed' && (
+                      <button 
+                        onClick={navigateToHome}
+                        className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold"
+                      >
+                        Gallery
+                      </button>
+                    )}
+
+                    {(currentView === 'all-works' || (accessedViaAll && (activeMedium || activeWork))) && (
+                      <>
+                        <button 
+                          onClick={navigateToAllWorks}
+                          className={`font-mono text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentView === 'all-works' ? 'opacity-100 font-medium' : 'opacity-30 hover:opacity-80 font-extralight'}`}
+                        >
+                          All
+                        </button>
+                      </>
+                    )}
+
+                    {activeMedium && (
+                      <>
+                        {(currentView === 'all-works' || accessedViaAll) && <span className="opacity-20 translate-y-[-1px]">/</span>}
+                        <button 
+                          onClick={() => navigateToMedium(activeMedium)}
+                          className={`font-mono text-[10px] uppercase tracking-widest transition-all truncate max-w-[150px] sm:max-w-[300px] ${currentView === 'medium' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
+                          title={activeMedium}
+                        >
+                          {activeMedium}
+                        </button>
+                      </>
+                    )}
+                    {activeWork && (
+                      <>
+                        <span className="opacity-20 translate-y-[-1px]">/</span>
+                        <button 
+                          className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-[400px]"
+                          title={activeWork}
+                        >
+                          {activeWork}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </nav>
 
       {/* Header */}
       <header className="mb-8 border-b border-[#1a1a1a]/10 pb-6">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="max-w-2xl min-w-0">
-            <div className="flex flex-col mb-4">
-              <div className="flex items-center gap-3">
-                <span 
-                  className={`font-mono text-xs uppercase tracking-widest transition-all ${currentView === 'feed' ? 'cursor-pointer hover:opacity-80' : 'opacity-50'}`}
-                  onClick={() => currentView === 'feed' && setShowSyncTrigger(!showSyncTrigger)}
-                >
-                  {currentView === 'feed' ? 'Gallery' : 
-                  currentView === 'all-works' ? 'All Media Collection' :
-                  currentView === 'medium' ? `Medium Collection` :
-                  currentView === 'work' ? 'Work Profile' : 'CT in Fiction v2.0'}
-                </span>
-                
-                <AnimatePresence mode="wait">
-                  {(showSyncTrigger || isSyncing) && currentView === 'feed' && (
-                    <motion.button
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isSyncing) loadData(false, true);
-                      }}
-                      disabled={isSyncing}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
-                        isSyncing 
-                        ? "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a] cursor-default" 
-                        : "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a]/60 hover:bg-[#1a1a1a]/10 hover:text-[#1a1a1a] cursor-pointer"
-                      }`}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+              <div className="max-w-2xl min-w-0">
+                <div className="flex flex-col mb-4">
+                  <div className="flex items-center gap-3">
+                    <span 
+                      className={`font-mono text-xs uppercase tracking-widest transition-all ${currentView === 'feed' ? 'cursor-pointer hover:opacity-80' : 'opacity-50'}`}
+                      onClick={() => currentView === 'feed' && setShowSyncTrigger(!showSyncTrigger)}
                     >
-                      {isSyncing && <Loader2 className="w-2.5 h-2.5 animate-spin opacity-40" />}
-                      <span className="font-mono text-[8px] uppercase tracking-tighter">
-                        {isSyncing ? "Syncing..." : "Sync"}
-                      </span>
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-                {error && (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/5 text-red-500 rounded-full">
-                    <AlertCircle className="w-2.5 h-2.5" />
-                    <span className="font-mono text-[8px] uppercase tracking-tighter">{error}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {currentView === 'feed' ? (
-              <>
-                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3">
-                  Fictional <br />
-                  <span className="italic">Archetypes</span>
-                </h1>
-                <p className="text-base opacity-70 leading-relaxed text-balance">
-                  A community-driven database exploring the personalities of fictional subjects, through a Cognitive Typology lens.
-                </p>
-              </>
-            ) : currentView === 'all-works' ? (
-              <>
-                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3">
-                  All Media
-                </h1>
-                <p className="text-base opacity-70 leading-relaxed">
-                  {searchQuery 
-                    ? `Found ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} matching "${searchQuery}" across all media.`
-                    : `Exploring all ${works.length} indexed ${pluralize(works.length, 'work')} across all media types.`
-                  }
-                </p>
-              </>
-            ) : currentView === 'medium' ? (
-              <>
-                <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-3 uppercase">
-                  {activeMedium}
-                </h1>
-                <p className="text-base opacity-70 leading-relaxed">
-                  {searchQuery 
-                    ? `Found ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} matching "${searchQuery}" in ${activeMedium}.`
-                    : `Exploring ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} within the ${activeMedium} medium.`
-                  }
-                </p>
-              </>
-            ) : (
-              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-                {currentWorkData && (
-                  <div 
-                    onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
-                    className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
-                    title="Click to copy image link"
-                  >
-                    <SmartWorkImage 
-                      src={currentWorkData.imageUrl} 
-                      alt={currentWorkData.title}
-                      className="w-full h-full group-hover/work-img:scale-105 transition-transform"
-                      isOpaque={currentWorkData.isOpaque}
-                      medium={currentWorkData.medium}
-                    />
-                    <AnimatePresence>
-                      {copyStatus === 'image' && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none"
-                        >
-                          <span className="font-mono text-[8px] uppercase tracking-widest text-[#1a1a1a]">Link Copied</span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-                <div>
-                  <h1 
-                    onClick={() => {
-                      if (showWorkShareOptions) {
-                        setShowWorkShareOptions(false);
-                        if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                      } else {
-                        setShowWorkShareOptions(true);
-                        if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                        workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                      }
-                    }}
-                    onMouseEnter={() => {
-                      setShowWorkShareOptions(true);
-                      if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                    }}
-                    onMouseLeave={() => {
-                      workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                    }}
-                    className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-2 select-none relative cursor-pointer"
-                  >
-                    {activeWork}
+                      {currentView === 'feed' ? 'Gallery' : 
+                      currentView === 'all-works' ? 'All Media Collection' :
+                      currentView === 'medium' ? `Medium Collection` :
+                      currentView === 'work' ? 'Work Profile' : 'CT in Fiction v2.0'}
+                    </span>
+                    
                     <AnimatePresence mode="wait">
-                      {copyStatus && (copyStatus === 'work-mini' || copyStatus === 'work-macro') ? (
-                        <motion.span
-                          key={copyStatus}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
-                        >
-                          {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
-                        </motion.span>
-                      ) : showWorkShareOptions && (
-                        <motion.div
-                          key="work-share-options"
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          onMouseEnter={() => {
-                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                      {(showSyncTrigger || isSyncing) && currentView === 'feed' && (
+                        <motion.button
+                          initial={{ opacity: 0, x: -5 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -5 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isSyncing) loadData(false, true);
                           }}
-                          onMouseLeave={() => {
-                            workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                          }}
-                          className="absolute -top-6 left-0 flex items-center gap-4 py-1"
+                          disabled={isSyncing}
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+                            isSyncing 
+                            ? "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a] cursor-default" 
+                            : "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a]/60 hover:bg-[#1a1a1a]/10 hover:text-[#1a1a1a] cursor-pointer"
+                          }`}
                         >
-                          <button 
-                            onClick={() => {
-                              const currentPageUrl = window.location.href.split('#')[0];
-                              const baseOriginUrl = window.location.origin;
-                              
-                              const limit = 15;
-                              const firstChars = filteredCharacters.slice(0, limit);
-                              const remainingCount = filteredCharacters.length - limit;
-
-                              const charList = firstChars.map(c => {
-                                const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
-                                  ? `${c.initialDevelopment} › ${c.finalDevelopment}`
-                                  : (c.finalDevelopment || c.initialDevelopment);
-                                return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
-                              }).join(' • ');
-                              const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
-
-                              const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
-                              
-                              navigator.clipboard.writeText(shareText).then(() => {
-                                setCopyStatus('work-mini');
-                                setShowWorkShareOptions(false);
-                                setTimeout(() => setCopyStatus(null), 2000);
-                              });
-                            }}
-                            className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
-                          >
-                            Mini
-                          </button>
-                          <button 
-                            onClick={() => {
-                              const currentPageUrl = window.location.href.split('#')[0];
-                              const baseOriginUrl = window.location.origin;
-
-                               const charList = filteredCharacters.map(c => {
-                                const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
-                                  ? `${c.initialDevelopment} › ${c.finalDevelopment}`
-                                  : (c.finalDevelopment || c.initialDevelopment);
-                                return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
-                              }).join(' • ');
-
-                              const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
-                              
-                              navigator.clipboard.writeText(shareText).then(() => {
-                                setCopyStatus('work-macro');
-                                setShowWorkShareOptions(false);
-                                setTimeout(() => setCopyStatus(null), 2000);
-                              });
-                            }}
-                            className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
-                          >
-                            Macro
-                          </button>
-                        </motion.div>
+                          {isSyncing && <Loader2 className="w-2.5 h-2.5 animate-spin opacity-40" />}
+                          <span className="font-mono text-[8px] uppercase tracking-tighter">
+                            {isSyncing ? "Syncing..." : "Sync"}
+                          </span>
+                        </motion.button>
                       )}
                     </AnimatePresence>
-                  </h1>
-                  <p className="font-mono text-xs uppercase tracking-widest opacity-50">
-                    Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed {pluralize(filteredCharacters.length, 'Subject')}
-                  </p>
+                    {error && (
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/5 text-red-500 rounded-full">
+                        <AlertCircle className="w-2.5 h-2.5" />
+                        <span className="font-mono text-[8px] uppercase tracking-tighter">{error}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-          
-          {currentView === 'all-works' || currentView === 'medium' ? (
-            <div className="flex flex-col gap-4 w-full">
-              <div className="relative w-full max-w-2xl">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-                <input 
-                  type="text"
-                  placeholder="Search works..."
-                  className="bg-transparent border-b border-[#1a1a1a]/20 py-3 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full text-lg"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { label: 'A-Z', value: 'az' },
-                    { label: 'Year', value: 'year' },
-                    { label: 'Scale', value: 'subjects' },
-                    { label: 'Last Published', value: 'published' },
-                    { label: 'Last Edited', value: 'edited' }
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setWorkSortOrder(opt.value as any)}
-                      className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
-                        workSortOrder === opt.value 
-                          ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
-                          : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (currentView === 'feed' || currentView === 'work') && (
-            <div className="flex flex-col gap-4 w-full lg:w-auto">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-                  <input 
-                    type="text"
-                    placeholder="Search subjects..."
-                    className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full sm:w-64 md:w-80"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
-                    (showFilters || hasArchetypeFilters) ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
-                  }`}
-                  title={showFilters ? 'Hide Filters' : 'Show Filters'}
-                >
-                  <Filter className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
-                </button>
-              </div>
-
-              <AnimatePresence>
-                {hasArchetypeFilters && !showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"
-                  >
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                      {[
-                        { label: 'Quadra', value: selectedQuadra },
-                        { label: 'Dev', value: selectedDevelopment },
-                        { label: 'J-Axis', value: selectedJudgmentAxis },
-                        { label: 'P-Axis', value: selectedPerceptionAxis },
-                        { label: 'Lead', value: selectedLeadEnergetic },
-                        { label: 'Aux', value: selectedAuxEnergetic },
-                        { label: 'Qualia', value: selectedBehaviourQualia },
-                        { label: 'Subtype', value: selectedSubtype },
-                        { label: 'Attitude', value: selectedEmotionalAttitude }
-                      ].filter(f => f.value).map((f) => (
-                        <span key={f.label} className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
-                          {f.label}: {f.value}
-                        </span>
-                      ))}
-                      {selectedAuthors.length > 0 && (
-                        <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
-                          Authors: {selectedAuthors.length}
-                        </span>
-                      )}
-                      {selectedMotifs.length > 0 && (
-                        <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
-                          Motifs: {selectedMotifs.length}
-                        </span>
-                      )}
+                
+                {currentView === 'feed' ? (
+                  <>
+                    <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3">
+                      Fictional <br />
+                      <span className="italic">Archetypes</span>
+                    </h1>
+                    <p className="text-base opacity-70 leading-relaxed text-balance">
+                      A community-driven database exploring the personalities of fictional subjects, through a Cognitive Typology lens.
+                    </p>
+                  </>
+                ) : currentView === 'all-works' ? (
+                  <>
+                    <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-none tracking-tight mb-3">
+                      All Media
+                    </h1>
+                    <p className="text-base opacity-70 leading-relaxed">
+                      {searchQuery 
+                        ? `Found ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} matching "${searchQuery}" across all media.`
+                        : `Exploring all ${works.length} indexed ${pluralize(works.length, 'work')} across all media types.`
+                      }
+                    </p>
+                  </>
+                ) : currentView === 'medium' ? (
+                  <>
+                    <h1 className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-3 uppercase">
+                      {activeMedium}
+                    </h1>
+                    <p className="text-base opacity-70 leading-relaxed">
+                      {searchQuery 
+                        ? `Found ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} matching "${searchQuery}" in ${activeMedium}.`
+                        : `Exploring ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} within the ${activeMedium} medium.`
+                      }
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                    {currentWorkData && (
+                      <div 
+                        onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
+                        className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                        title="Click to copy image link"
+                      >
+                        <SmartWorkImage 
+                          src={currentWorkData.imageUrl} 
+                          alt={currentWorkData.title}
+                          className="w-full h-full group-hover/work-img:scale-105 transition-transform"
+                          isOpaque={currentWorkData.isOpaque}
+                          medium={currentWorkData.medium}
+                        />
+                        <AnimatePresence>
+                          {copyStatus === 'image' && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none"
+                            >
+                              <span className="font-mono text-[8px] uppercase tracking-widest text-[#1a1a1a]">Link Copied</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                    <div>
+                      <h1 
+                        onClick={() => {
+                          if (showWorkShareOptions) {
+                            setShowWorkShareOptions(false);
+                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                          } else {
+                            setShowWorkShareOptions(true);
+                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                            workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                          }
+                        }}
+                        onMouseEnter={() => {
+                          setShowWorkShareOptions(true);
+                          if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                        }}
+                        onMouseLeave={() => {
+                          workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                        }}
+                        className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-2 select-none relative cursor-pointer"
+                      >
+                        {activeWork}
+                        <AnimatePresence mode="wait">
+                          {copyStatus && (copyStatus === 'work-mini' || copyStatus === 'work-macro') ? (
+                            <motion.span
+                              key={copyStatus}
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
+                            >
+                              {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
+                            </motion.span>
+                          ) : showWorkShareOptions && (
+                            <motion.div
+                              key="work-share-options"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              onMouseEnter={() => {
+                                if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                              }}
+                              onMouseLeave={() => {
+                                workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                              }}
+                              className="absolute -top-6 left-0 flex items-center gap-4 py-1"
+                            >
+                              <button 
+                                onClick={() => {
+                                  const currentPageUrl = window.location.href.split('#')[0];
+                                  const baseOriginUrl = window.location.origin;
+                                  
+                                  const limit = 15;
+                                  const firstChars = filteredCharacters.slice(0, limit);
+                                  const remainingCount = filteredCharacters.length - limit;
+    
+                                  const charList = firstChars.map(c => {
+                                    const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                      ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                      : (c.finalDevelopment || c.initialDevelopment);
+                                    return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                  }).join(' • ');
+                                  const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
+    
+                                  const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                                  
+                                  navigator.clipboard.writeText(shareText).then(() => {
+                                    setCopyStatus('work-mini');
+                                    setShowWorkShareOptions(false);
+                                    setTimeout(() => setCopyStatus(null), 2000);
+                                  });
+                                }}
+                                className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                              >
+                                Mini
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const currentPageUrl = window.location.href.split('#')[0];
+                                  const baseOriginUrl = window.location.origin;
+    
+                                   const charList = filteredCharacters.map(c => {
+                                    const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                      ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                      : (c.finalDevelopment || c.initialDevelopment);
+                                    return `${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                  }).join(' • ');
+    
+                                  const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                                  
+                                  navigator.clipboard.writeText(shareText).then(() => {
+                                    setCopyStatus('work-macro');
+                                    setShowWorkShareOptions(false);
+                                    setTimeout(() => setCopyStatus(null), 2000);
+                                  });
+                                }}
+                                className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                              >
+                                Macro
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </h1>
+                      <p className="font-mono text-xs uppercase tracking-widest opacity-50">
+                        Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed {pluralize(filteredCharacters.length, 'Subject')}
+                      </p>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
-
-              {/* Sort Bar for Subjects */}
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { label: 'Last Published', value: 'published' },
-                    { label: 'Last Edited', value: 'edited' }
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSubjectSortOrder(opt.value as any)}
-                      className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
-                        subjectSortOrder === opt.value 
-                          ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
-                          : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
               </div>
               
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="z-50"
-                  >
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-x-4 gap-y-6 pt-4">
-                      <CustomSelect 
-                        label="Quadra"
-                        value={selectedQuadra}
-                        options={quadras}
-                        onChange={setSelectedQuadra}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Qualia"
-                        value={selectedBehaviourQualia}
-                        options={behaviourQualias}
-                        onChange={setSelectedBehaviourQualia}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Lead Energetic"
-                        value={selectedLeadEnergetic}
-                        options={energetics}
-                        onChange={setSelectedLeadEnergetic}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Auxiliary Energetic"
-                        value={selectedAuxEnergetic}
-                        options={auxEnergetics}
-                        onChange={setSelectedAuxEnergetic}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Judgement Axis"
-                        value={selectedJudgmentAxis}
-                        options={judgmentAxes}
-                        onChange={setSelectedJudgmentAxis}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Perception Axis"
-                        value={selectedPerceptionAxis}
-                        options={perceptionAxes}
-                        onChange={setSelectedPerceptionAxis}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Development"
-                        value={selectedDevelopment}
-                        options={developments}
-                        onChange={setSelectedDevelopment}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Inter-Function Dynamics"
-                        value={selectedSubtype}
-                        options={subtypes}
-                        onChange={setSelectedSubtype}
-                        placeholder="All"
-                      />
-                      <CustomSelect 
-                        label="Emotional Attitude"
-                        value={selectedEmotionalAttitude}
-                        options={emotionalAttitudes}
-                        onChange={setSelectedEmotionalAttitude}
-                        placeholder="All"
-                      />
-                      <AuthorMultiSelect 
-                        label="Authors"
-                        values={selectedAuthors}
-                        options={authors}
-                        onChange={setSelectedAuthors}
-                        placeholder="All"
-                      />
-                      <MultiSelect 
-                        label="Motifs"
-                        values={selectedMotifs}
-                        options={availableMotifs}
-                        onChange={setSelectedMotifs}
-                        placeholder="All"
+              {currentView === 'all-works' || currentView === 'medium' ? (
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="relative w-full max-w-2xl">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                    <input 
+                      type="text"
+                      placeholder="Search works..."
+                      className="bg-transparent border-b border-[#1a1a1a]/20 py-3 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full text-lg"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[
+                        { label: 'A-Z', value: 'az' },
+                        { label: 'Year', value: 'year' },
+                        { label: 'Scale', value: 'subjects' },
+                        { label: 'Last Published', value: 'published' },
+                        { label: 'Last Edited', value: 'edited' }
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setWorkSortOrder(opt.value as any)}
+                          className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
+                            workSortOrder === opt.value 
+                              ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
+                              : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (currentView === 'feed' || currentView === 'work') && (
+                <div className="flex flex-col gap-4 w-full lg:w-auto">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="relative flex-1 min-w-0">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                      <input 
+                        type="text"
+                        placeholder="Search subjects..."
+                        className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full sm:w-64 md:w-80"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Grid */}
-      <main className="editorial-grid">
-        <AnimatePresence mode="popLayout">
-          {selectedAuthors.length === 0 && !isLoading ? (
-            <div className="col-span-full py-12 sm:py-32 flex flex-col items-center justify-center text-center">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="max-w-md w-full"
-              >
-                <div className="mb-8 relative">
-                  <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
-                  <User className="w-12 h-12 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
-                </div>
-                
-                <h1 className="font-serif text-3xl sm:text-5xl mb-4 sm:mb-6 tracking-tight leading-tight px-4">Galleries require <span className="italic">authorship</span>.</h1>
-                <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 mb-8 sm:mb-12 leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
-                  Nothing is displayed by default. Follow analysts to curate your experience.
-                </p>
-                
-                <div className="flex flex-col gap-4 px-6 sm:px-0">
-                  <button 
-                    onClick={() => setShowSettings(true)}
-                    className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-xl hover:scale-105 active:scale-95"
-                  >
-                    Configure Authors
-                  </button>
-                  <p className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest opacity-20">Browse analysts in Settings</p>
-                </div>
-              </motion.div>
-            </div>
-          ) : (currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
-            <motion.div
-              key={work.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="character-card group cursor-pointer"
-              onClick={() => navigateToWork(work)}
-            >
-              <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
-                <SmartWorkImage 
-                  src={work.imageUrl} 
-                  alt={work.title}
-                  className="w-full h-full group-hover:scale-105 transition-transform"
-                  isOpaque={work.isOpaque}
-                  medium={work.medium}
-                />
-              </div>
-              <div className="flex justify-between items-end gap-4">
-                <div className="min-w-0">
-                  <span className="font-mono text-[7px] uppercase tracking-widest opacity-30 mb-1 block">
-                    {publishedCharacters.find(c => c.source === work.title)?.medium}
-                  </span>
-                  <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all truncate leading-tight">{work.title}</h3>
-                  <p className="font-mono text-[10px] uppercase tracking-widest opacity-40 truncate">
-                    {work.year} • {publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length} {pluralize(publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length, 'Subject')}
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" />
-              </div>
-            </motion.div>
-          ))}
-
-          {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && filteredCharacters.length === 0 && !isLoading ? (
-            <div className="col-span-full py-32 text-center">
-              <div className="max-w-md mx-auto">
-                <AlertCircle className="w-12 h-12 mx-auto mb-6 opacity-20" />
-                <h2 className="font-serif text-3xl mb-4">
-                  {publishedCharacters.length === 0 ? 'Database Empty' : 'No Matches'}
-                </h2>
-                <p className="text-sm opacity-50 leading-relaxed">
-                  {publishedCharacters.length === 0 
-                    ? 'No subjects have been recorded in the database yet.'
-                    : 'Try adjusting your search or filters to see more results.'}
-                </p>
-              </div>
-            </div>
-          ) : (currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && paginatedCharacters.map((char) => {
-            return (
-              <motion.div
-                layout
-                key={char.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="character-card group cursor-pointer"
-                data-quadra={(char.quadra || char.rawQuadra || '').toLowerCase()}
-                onClick={() => handleSelectCharacter(char)}
-              >
-                <div className="character-image-container aspect-[16/9] flex items-center justify-center bg-[#1a1a1a]/5 overflow-hidden">
-                  <SmartSubjectImage 
-                    src={char.imageUrl || ''} 
-                    alt={char.name}
-                    className="character-image object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="flex justify-between items-start mb-2 gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1" title={char.name}>{char.name}</h3>
                     <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToWork({ title: char.source, medium: char.medium });
-                      }}
-                      className="font-mono text-[11px] uppercase tracking-widest opacity-50 hover:opacity-100 hover:underline transition-all flex items-center gap-1.5 w-full min-w-0"
-                      title={`${char.source} (${char.year})`}
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
+                        (showFilters || hasArchetypeFilters) ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
+                      }`}
+                      title={showFilters ? 'Hide Filters' : 'Show Filters'}
                     >
-                      <span className="truncate">{char.source}</span>
-                      <span className="flex-shrink-0">({char.year})</span>
+                      <Filter className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                     </button>
                   </div>
-                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                    <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
-                    <div className={`font-sans text-sm font-bold tracking-[0.05em] ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
-                      {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
-                        <div className="flex items-center gap-1 justify-end">
-                          <span className="opacity-40">{char.initialDevelopment}</span>
-                          <ChevronRight className="w-3 h-3 opacity-20" />
-                          <span>{char.finalDevelopment}</span>
+    
+                  <AnimatePresence>
+                    {hasArchetypeFilters && !showFilters && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"
+                      >
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                          {[
+                            { label: 'Quadra', value: selectedQuadra },
+                            { label: 'Dev', value: selectedDevelopment },
+                            { label: 'J-Axis', value: selectedJudgmentAxis },
+                            { label: 'P-Axis', value: selectedPerceptionAxis },
+                            { label: 'Lead', value: selectedLeadEnergetic },
+                            { label: 'Aux', value: selectedAuxEnergetic },
+                            { label: 'Qualia', value: selectedBehaviourQualia },
+                            { label: 'Subtype', value: selectedSubtype },
+                            { label: 'Attitude', value: selectedEmotionalAttitude }
+                          ].filter(f => f.value).map((f) => (
+                            <span key={f.label} className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                              {f.label}: {f.value}
+                            </span>
+                          ))}
+                          {selectedAuthors.length > 0 && (
+                            <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                              Authors: {selectedAuthors.length}
+                            </span>
+                          )}
+                          {selectedMotifs.length > 0 && (
+                            <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                              Motifs: {selectedMotifs.length}
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <span>{char.finalDevelopment || char.initialDevelopment}</span>
-                      )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+    
+                  {/* Sort Bar for Subjects */}
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[
+                        { label: 'Last Published', value: 'published' },
+                        { label: 'Last Edited', value: 'edited' }
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSubjectSortOrder(opt.value as any)}
+                          className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
+                            subjectSortOrder === opt.value 
+                              ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
+                              : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                     </div>
-                    <span className="font-mono text-[10px] opacity-40 tracking-tighter">
-                      {(() => {
-                        const effectiveJAxis = char.judgmentAxis || deriveAxesFromQuadra(char.rawQuadra || char.quadra).judgment;
-                        const descriptor = char.emotionalAttitude ? (getEmotionalDescriptor(char.emotionalAttitude, effectiveJAxis) || char.emotionalAttitude) : '';
-                        return [
-                          char.subtype?.trim(), 
-                          descriptor
-                        ].filter(s => s && s.length > 0).join(' • ');
-                      })()}
-                    </span>
+                  </div>
+                  
+                  <AnimatePresence>
+                    {showFilters && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="z-50"
+                      >
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-x-4 gap-y-6 pt-4">
+                          <CustomSelect 
+                            label="Quadra"
+                            value={selectedQuadra}
+                            options={quadras}
+                            onChange={setSelectedQuadra}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Qualia"
+                            value={selectedBehaviourQualia}
+                            options={behaviourQualias}
+                            onChange={setSelectedBehaviourQualia}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Lead Energetic"
+                            value={selectedLeadEnergetic}
+                            options={energetics}
+                            onChange={setSelectedLeadEnergetic}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Auxiliary Energetic"
+                            value={selectedAuxEnergetic}
+                            options={auxEnergetics}
+                            onChange={setSelectedAuxEnergetic}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Judgement Axis"
+                            value={selectedJudgmentAxis}
+                            options={judgmentAxes}
+                            onChange={setSelectedJudgmentAxis}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Perception Axis"
+                            value={selectedPerceptionAxis}
+                            options={perceptionAxes}
+                            onChange={setSelectedPerceptionAxis}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Development"
+                            value={selectedDevelopment}
+                            options={developments}
+                            onChange={setSelectedDevelopment}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Inter-Function Dynamics"
+                            value={selectedSubtype}
+                            options={subtypes}
+                            onChange={setSelectedSubtype}
+                            placeholder="All"
+                          />
+                          <CustomSelect 
+                            label="Emotional Attitude"
+                            value={selectedEmotionalAttitude}
+                            options={emotionalAttitudes}
+                            onChange={setSelectedEmotionalAttitude}
+                            placeholder="All"
+                          />
+                          <AuthorMultiSelect 
+                            label="Authors"
+                            values={selectedAuthors}
+                            options={authors}
+                            onChange={setSelectedAuthors}
+                            placeholder="All"
+                          />
+                          <MultiSelect 
+                            label="Motifs"
+                            values={selectedMotifs}
+                            options={availableMotifs}
+                            onChange={setSelectedMotifs}
+                            placeholder="All"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </header>
+    
+          {/* Grid */}
+          <main className="editorial-grid">
+            <AnimatePresence mode="popLayout">
+              {(currentView === 'all-works' || currentView === 'medium') && !hasActiveFilters && paginatedWorks.map((work) => (
+                <motion.div
+                  key={work.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="character-card group cursor-pointer"
+                  onClick={() => navigateToWork(work)}
+                >
+                  <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+                    <SmartWorkImage 
+                      src={work.imageUrl} 
+                      alt={work.title}
+                      className="w-full h-full group-hover:scale-105 transition-transform"
+                      isOpaque={work.isOpaque}
+                      medium={work.medium}
+                    />
+                  </div>
+                  <div className="flex justify-between items-end gap-4">
+                    <div className="min-w-0">
+                      <span className="font-mono text-[7px] uppercase tracking-widest opacity-30 mb-1 block">
+                        {publishedCharacters.find(c => c.source === work.title)?.medium}
+                      </span>
+                      <h3 className="font-serif text-3xl mb-1 group-hover:italic transition-all truncate leading-tight">{work.title}</h3>
+                      <p className="font-mono text-[10px] uppercase tracking-widest opacity-40 truncate">
+                        {work.year} • {publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length} {pluralize(publishedCharacters.filter(c => (c.source?.trim() || 'Unknown') === work.title && (c.workImageUrl?.trim() || '') === work.imageUrl).length, 'Subject')}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                  </div>
+                </motion.div>
+              ))}
+    
+              {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && filteredCharacters.length === 0 && !isLoading ? (
+                <div className="col-span-full py-32 text-center">
+                  <div className="max-w-md mx-auto">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-6 opacity-20" />
+                    <h2 className="font-serif text-3xl mb-4">
+                      {publishedCharacters.length === 0 ? 'Database Empty' : 'No Matches'}
+                    </h2>
+                    <p className="text-sm opacity-50 leading-relaxed">
+                      {publishedCharacters.length === 0 
+                        ? 'No subjects have been recorded in the database yet.'
+                        : 'Try adjusting your search or filters to see more results.'}
+                    </p>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </main>
-
-      {/* Pagination */}
-      {(currentView === 'medium' || currentView === 'all-works') && !hasActiveFilters && (
-        <PaginationControls 
-          total={worksInMedium.length} 
-          current={currentPage} 
-          onChange={setCurrentPage} 
-          itemsPerPage={ITEMS_PER_PAGE} 
-        />
-      )}
-      {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && (
-        <PaginationControls 
-          total={filteredCharacters.length} 
-          current={currentPage} 
-          onChange={setCurrentPage} 
-          itemsPerPage={ITEMS_PER_PAGE} 
-        />
-      )}
+              ) : (currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && paginatedCharacters.map((char) => {
+                return (
+                  <motion.div
+                    layout
+                    key={char.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="character-card group cursor-pointer"
+                    data-quadra={(char.quadra || char.rawQuadra || '').toLowerCase()}
+                    onClick={() => handleSelectCharacter(char)}
+                  >
+                    <div className="character-image-container aspect-[16/9] flex items-center justify-center bg-[#1a1a1a]/5 overflow-hidden">
+                      <SmartSubjectImage 
+                        src={char.imageUrl || ''} 
+                        alt={char.name}
+                        className="character-image object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="flex justify-between items-start mb-2 gap-4">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1" title={char.name}>{char.name}</h3>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateToWork({ title: char.source, medium: char.medium });
+                          }}
+                          className="font-mono text-[11px] uppercase tracking-widest opacity-50 hover:opacity-100 hover:underline transition-all flex items-center gap-1.5 w-full min-w-0"
+                          title={`${char.source} (${char.year})`}
+                        >
+                          <span className="truncate">{char.source}</span>
+                          <span className="flex-shrink-0">({char.year})</span>
+                        </button>
+                      </div>
+                      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                        <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
+                        <div className={`font-sans text-sm font-bold tracking-[0.05em] ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
+                          {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
+                            <div className="flex items-center gap-1 justify-end">
+                              <span className="opacity-40">{char.initialDevelopment}</span>
+                              <ChevronRight className="w-3 h-3 opacity-20" />
+                              <span>{char.finalDevelopment}</span>
+                            </div>
+                          ) : (
+                            <span>{char.finalDevelopment || char.initialDevelopment}</span>
+                          )}
+                        </div>
+                        <span className="font-mono text-[10px] opacity-40 tracking-tighter">
+                          {(() => {
+                            const effectiveJAxis = char.judgmentAxis || deriveAxesFromQuadra(char.rawQuadra || char.quadra).judgment;
+                            const descriptor = char.emotionalAttitude ? (getEmotionalDescriptor(char.emotionalAttitude, effectiveJAxis) || char.emotionalAttitude) : '';
+                            return [
+                              char.subtype?.trim(), 
+                              descriptor
+                            ].filter(s => s && s.length > 0).join(' • ');
+                          })()}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </main>
+    
+          {/* Pagination */}
+          {(currentView === 'medium' || currentView === 'all-works') && !hasActiveFilters && (
+            <PaginationControls 
+              total={worksInMedium.length} 
+              current={currentPage} 
+              onChange={setCurrentPage} 
+              itemsPerPage={ITEMS_PER_PAGE} 
+            />
+          )}
+          {(currentView === 'feed' || currentView === 'work' || ((currentView === 'medium' || currentView === 'all-works') && hasActiveFilters)) && (
+            <PaginationControls 
+              total={filteredCharacters.length} 
+              current={currentPage} 
+              onChange={setCurrentPage} 
+              itemsPerPage={ITEMS_PER_PAGE} 
+            />
+          )}
+          </>
+        ) : (
+          <OnboardingPrompt onShowSettings={() => setShowSettings(true)} />
+        )}
+      </AnimatePresence>
 
       {/* Modal / Detail View */}
       <AnimatePresence>
