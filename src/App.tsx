@@ -1576,10 +1576,10 @@ function AppContent() {
       exit={{ opacity: 0, y: 10 }}
       className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
     >
-      <div className="px-4 sm:px-6 py-8 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-12 border-b border-[#1a1a1a]/10 pb-6">
-          <div>
-            <h2 className="font-serif text-4xl mb-2">Settings</h2>
+      <div className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-12 border-b border-[#1a1a1a]/10 pb-6 shrink-0">
+          <div className="mb-4 sm:mb-0">
+            <h2 className="font-serif text-3xl sm:text-4xl mb-1 sm:mb-2">Settings</h2>
             <p className="font-mono text-[9px] uppercase tracking-widest opacity-40">Configure Your Gallery Experience</p>
           </div>
           <button 
@@ -1587,13 +1587,13 @@ function AppContent() {
               setShowSettings(false);
               setAuthorSearch('');
             }}
-            className="p-3 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+            className="p-2 sm:p-3 hover:bg-[#1a1a1a]/5 rounded-full transition-colors -ml-2 sm:mr-0"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-12 pb-12">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-8 sm:space-y-12 pb-12">
           <section>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div className="max-w-xl">
@@ -1643,7 +1643,7 @@ function AppContent() {
                             : [...prev, author]
                         );
                       }}
-                      className={`group p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
+                      className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
                         isSelected 
                           ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
                           : 'bg-white border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
@@ -1658,7 +1658,7 @@ function AppContent() {
                       
                       <div className="relative z-10">
                         <div className="flex items-start justify-between mb-3">
-                          <span className={`font-serif text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
+                          <span className={`font-serif text-lg sm:text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
                             {author}
                           </span>
                           {isSelected ? (
@@ -1669,9 +1669,9 @@ function AppContent() {
                         </div>
                         
                         {works && (
-                          <div className="flex flex-wrap gap-1.5 mt-2 opacity-50">
+                          <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 opacity-50">
                             {Array.from(works).slice(0, 3).map(w => (
-                              <span key={w} className="font-mono text-[7px] uppercase tracking-widest border border-current px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                              <span key={w} className="font-mono text-[6px] md:text-[7px] uppercase tracking-widest border border-current px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                 {w}
                               </span>
                             ))}
@@ -1689,13 +1689,13 @@ function AppContent() {
             </div>
 
             {allAvailableAuthors.length > 0 && selectedAuthors.length > 0 && (
-               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-end">
+               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-center sm:justify-end">
                  <button 
                   onClick={() => {
                     setShowSettings(false);
                     setAuthorSearch('');
                   }}
-                  className="px-10 py-3 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-10 py-4 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                  >
                    View Gallery ({selectedAuthors.length} Followed)
                  </button>
@@ -1704,11 +1704,11 @@ function AppContent() {
           </section>
         </div>
 
-        <div className="pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30">
-          <span className="font-mono text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
+        <div className="pt-4 sm:pt-6 border-t border-[#1a1a1a]/5 flex items-center justify-between opacity-30 shrink-0">
+          <span className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest">Gallery Settings Interface v1.0</span>
           <div className="flex gap-4">
-            <User className="w-4 h-4" />
-            <Activity className="w-4 h-4" />
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-[#1a1a1a]" />
           </div>
         </div>
       </div>
@@ -1717,26 +1717,26 @@ function AppContent() {
 
   if (!isLoading && selectedAuthors.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed] p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed] p-8 text-center overscroll-none">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full"
+          className="max-w-md w-full py-12"
         >
-           <div className="mb-12 relative">
+           <div className="mb-8 sm:mb-12 relative">
              <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
-             <User className="w-20 h-20 mx-auto relative z-10 opacity-10" />
+             <User className="w-16 h-16 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
            </div>
            
-           <h1 className="font-serif text-5xl mb-6 tracking-tight">Galleries require <span className="italic">authorship</span>.</h1>
-           <p className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-12 leading-relaxed max-w-sm mx-auto">
+           <h1 className="font-serif text-3xl sm:text-5xl mb-6 tracking-tight leading-tight">Galleries require <span className="italic">authorship</span>.</h1>
+           <p className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 mb-10 sm:mb-12 leading-relaxed max-w-sm mx-auto">
              Nothing is displayed here by default. Follow your preferred analysts to curate your browsing experience.
            </p>
            
-           <div className="flex flex-col gap-4">
+           <div className="flex flex-col gap-4 px-4 sm:px-0">
             <button 
               onClick={() => setShowSettings(true)}
-              className="px-12 py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:shadow-[#1a1a1a]/20 hover:scale-105 active:scale-95 group"
+              className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:shadow-[#1a1a1a]/20 hover:scale-105 active:scale-95 group"
             >
               Configure Authors
             </button>
