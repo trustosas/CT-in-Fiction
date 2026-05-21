@@ -107,8 +107,8 @@ export const MOTIF_DEFINITIONS: Record<string, Record<string, string[]>> = {
     ],
     'Behavioural': [
       'Computation: Data analysis, computer science, programming, math, statistical modelling',
-      'Government Systems: The legal system, economics, finance, military operations',
-      'Engineering: Bioengineering, mechanical engineering, circuits, fluid mechanics, robotics, automotive'
+      'Engineering: Bioengineering, mechanical engineering, circuits, fluid mechanics, robotics, automotive',
+      'Government Systems: The legal system, economics, finance, military operations'
     ],
     'Linguistic': [
       'Blunt Delivery: Matter-of-fact language, straightforward and unadorned',
