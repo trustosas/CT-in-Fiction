@@ -874,6 +874,36 @@ function AppContent() {
     }
   }, [subjectSlug]);
 
+  // Automatically add an author when a work or subject link of that author is visited
+  useEffect(() => {
+    if (!characters || characters.length === 0) return;
+    
+    let matchedAuthor: string | null = null;
+    
+    if (subjectSlug && workSlug) {
+      const found = characters.find(c => 
+        slugify(c.name) === subjectSlug && 
+        slugify(c.source) === workSlug &&
+        (!mediumSlug || slugify(c.medium) === mediumSlug)
+      );
+      if (found && found.author) {
+        matchedAuthor = found.author;
+      }
+    } else if (workSlug) {
+      const found = characters.find(c => 
+        slugify(c.source) === workSlug &&
+        (!mediumSlug || slugify(c.medium) === mediumSlug)
+      );
+      if (found && found.author) {
+        matchedAuthor = found.author;
+      }
+    }
+    
+    if (matchedAuthor && !selectedAuthors.includes(matchedAuthor)) {
+      setSelectedAuthors(prev => [...prev, matchedAuthor!]);
+    }
+  }, [characters, mediumSlug, workSlug, subjectSlug, selectedAuthors]);
+
   const publishedCharacters = useMemo(() => {
     return characters.filter(c => c.isPublished && c.author && selectedAuthors.includes(c.author));
   }, [characters, selectedAuthors]);
