@@ -447,16 +447,11 @@ function SettingsModal({
                         
                         {works && (
                           <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 opacity-50">
-                            {Array.from(works).slice(0, 3).map(w => (
+                            {Array.from(works).map(w => (
                               <span key={w} className="font-mono text-[6px] md:text-[7px] uppercase tracking-widest border border-current px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                 {w}
                               </span>
                             ))}
-                            {works.size > 3 && (
-                              <span className="font-mono text-[7px] uppercase tracking-widest px-1 py-0.5 opacity-50">
-                                +{works.size - 3}
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
