@@ -1471,7 +1471,7 @@ function AppContent() {
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {label === 'Development' && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-sans tracking-[0.2em] whitespace-nowrap">{value}</span>
+                <span className="font-sans tracking-[0.05em] whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{getDevelopmentName(value, '', selectedBehaviourQualia || undefined)}</span>
               </span>
             ) : label === 'Inter-Function Dynamics' && value ? (
