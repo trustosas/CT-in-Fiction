@@ -548,14 +548,31 @@ function AppContent() {
   const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects' | 'published' | 'edited'>(() => {
     return (localStorage.getItem('workSortOrder') as any) || 'published';
   });
-  const [workSortDirection, setWorkSortDirection] = useState<'asc' | 'desc'>(() => {
-    return (localStorage.getItem('workSortDirection') as any) || 'desc';
+  const [workSortDirections, setWorkSortDirections] = useState<Record<string, 'asc' | 'desc'>>(() => {
+    try {
+      const saved = localStorage.getItem('workSortDirections');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      az: 'asc',
+      year: 'desc',
+      subjects: 'desc',
+      published: 'desc',
+      edited: 'desc'
+    };
   });
   const [subjectSortOrder, setSubjectSortOrder] = useState<'published' | 'edited'>(() => {
     return (localStorage.getItem('subjectSortOrder') as any) || 'published';
   });
-  const [subjectSortDirection, setSubjectSortDirection] = useState<'asc' | 'desc'>(() => {
-    return (localStorage.getItem('subjectSortDirection') as any) || 'desc';
+  const [subjectSortDirections, setSubjectSortDirections] = useState<Record<string, 'asc' | 'desc'>>(() => {
+    try {
+      const saved = localStorage.getItem('subjectSortDirections');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      published: 'desc',
+      edited: 'desc'
+    };
   });
 
   useEffect(() => {
@@ -567,16 +584,16 @@ function AppContent() {
   }, [workSortOrder]);
 
   useEffect(() => {
-    localStorage.setItem('workSortDirection', workSortDirection);
-  }, [workSortDirection]);
+    localStorage.setItem('workSortDirections', JSON.stringify(workSortDirections));
+  }, [workSortDirections]);
 
   useEffect(() => {
     localStorage.setItem('subjectSortOrder', subjectSortOrder);
   }, [subjectSortOrder]);
 
   useEffect(() => {
-    localStorage.setItem('subjectSortDirection', subjectSortDirection);
-  }, [subjectSortDirection]);
+    localStorage.setItem('subjectSortDirections', JSON.stringify(subjectSortDirections));
+  }, [subjectSortDirections]);
 
   const [selectedQuadra, setSelectedQuadra] = useState<string | null>(() => localStorage.getItem('selectedQuadra'));
   const [selectedDevelopment, setSelectedDevelopment] = useState<string | null>(() => localStorage.getItem('selectedDevelopment'));
@@ -1416,9 +1433,10 @@ function AppContent() {
           ? getTime(a, true) - getTime(b, true)
           : getTime(a, false) - getTime(b, false);
         
-        return subjectSortDirection === 'asc' ? result : -result;
+        const currentDirection = subjectSortDirections[subjectSortOrder] || 'desc';
+        return currentDirection === 'asc' ? result : -result;
       });
-  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters, subjectSortOrder, subjectSortDirection]);
+  }, [publishedCharacters, currentView, activeWork, activeMedium, searchQuery, currentFilters, subjectSortOrder, subjectSortDirections]);
 
   const currentWorkData = activeWork ? works.find(w => w.title === activeWork) : null;
 
@@ -1836,11 +1854,12 @@ function AppContent() {
         result = a.title.localeCompare(b.title); // Default to A-Z
       }
 
-      return workSortDirection === 'asc' ? result : -result;
+      const currentDirection = workSortDirections[workSortOrder] || 'desc';
+      return currentDirection === 'asc' ? result : -result;
     });
 
     return sorted;
-  }, [publishedCharacters, activeMedium, works, currentView, searchQuery, currentFilters, workSortOrder, workSortDirection]);
+  }, [publishedCharacters, activeMedium, works, currentView, searchQuery, currentFilters, workSortOrder, workSortDirections]);
 
   const isNotFound = useMemo(() => {
     if (isLoading) return false;
@@ -2317,17 +2336,19 @@ function AppContent() {
                         { label: 'A-Z', value: 'az' },
                         { label: 'Year', value: 'year' },
                         { label: 'Scale', value: 'subjects' },
-                        { label: 'Last Published', value: 'published' },
-                        { label: 'Last Edited', value: 'edited' }
+                        { label: workSortDirections.published === 'asc' ? 'First Published' : 'Last Published', value: 'published' },
+                        { label: workSortDirections.edited === 'asc' ? 'First Edited' : 'Last Edited', value: 'edited' }
                       ].map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => {
                             if (workSortOrder === opt.value) {
-                              setWorkSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                              setWorkSortDirections(prev => ({
+                                ...prev,
+                                [opt.value]: prev[opt.value] === 'asc' ? 'desc' : 'asc'
+                              }));
                             } else {
                               setWorkSortOrder(opt.value as any);
-                              setWorkSortDirection(opt.value === 'az' ? 'asc' : 'desc');
                             }
                           }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
@@ -2340,7 +2361,7 @@ function AppContent() {
                             {opt.label}
                             {workSortOrder === opt.value && (
                               <span className="text-[8px] leading-none select-none ml-0.5">
-                                {workSortDirection === 'asc' ? '▲' : '▼'}
+                                {workSortDirections[opt.value] === 'asc' ? '▲' : '▼'}
                               </span>
                             )}
                           </span>
@@ -2442,17 +2463,19 @@ function AppContent() {
                     <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
                     <div className="flex flex-wrap items-center gap-2">
                       {[
-                        { label: 'Last Published', value: 'published' },
-                        { label: 'Last Edited', value: 'edited' }
+                        { label: subjectSortDirections.published === 'asc' ? 'First Published' : 'Last Published', value: 'published' },
+                        { label: subjectSortDirections.edited === 'asc' ? 'First Edited' : 'Last Edited', value: 'edited' }
                       ].map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => {
                             if (subjectSortOrder === opt.value) {
-                              setSubjectSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                              setSubjectSortDirections(prev => ({
+                                ...prev,
+                                [opt.value]: prev[opt.value] === 'asc' ? 'desc' : 'asc'
+                              }));
                             } else {
                               setSubjectSortOrder(opt.value as any);
-                              setSubjectSortDirection('desc');
                             }
                           }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
@@ -2465,7 +2488,7 @@ function AppContent() {
                             {opt.label}
                             {subjectSortOrder === opt.value && (
                               <span className="text-[8px] leading-none select-none ml-0.5">
-                                {subjectSortDirection === 'asc' ? '▲' : '▼'}
+                                {subjectSortDirections[opt.value] === 'asc' ? '▲' : '▼'}
                               </span>
                             )}
                           </span>
