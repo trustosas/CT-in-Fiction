@@ -86,8 +86,8 @@ export const MOTIF_DEFINITIONS: Record<string, Record<string, string[]>> = {
   'Fe': {
     'Philosophical': [
       'Teleology: The universe is a teleological/purposeful/wilful evolution unfolding',
-      'Panpsychism: The universe is made of conscious agents interacting',
-      'I-Thou Ontology: Our being is co-defined by our interaction with others'
+      'I-Thou Ontology: Our being is co-defined by our interaction with others',
+      'Panpsychism: The universe is made of conscious agents interacting'
     ],
     'Behavioural': [
       'Transmutable Soul: Character is malleable and contingent on what we do/believe',
