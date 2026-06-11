@@ -334,7 +334,9 @@ function SettingsModal({
   allAvailableAuthors, 
   selectedAuthors, 
   setSelectedAuthors, 
-  authorToWorks 
+  authorToWorks,
+  unfollowedWorks,
+  setUnfollowedWorks
 }: { 
   onClose: () => void,
   authorSearch: string,
@@ -342,7 +344,9 @@ function SettingsModal({
   allAvailableAuthors: string[],
   selectedAuthors: string[],
   setSelectedAuthors: (updater: (prev: string[]) => string[]) => void,
-  authorToWorks: Map<string, Set<string>>
+  authorToWorks: Map<string, Set<string>>,
+  unfollowedWorks: string[],
+  setUnfollowedWorks: React.Dispatch<React.SetStateAction<string[]>>
 }) {
   return (
     <motion.div 
@@ -411,16 +415,21 @@ function SettingsModal({
                   const isSelected = selectedAuthors.includes(author);
                   const works = authorToWorks.get(author);
                   return (
-                    <button
+                    <div
                       key={author}
                       onClick={() => {
-                        setSelectedAuthors(prev => 
-                          prev.includes(author) 
-                            ? prev.filter(a => a !== author)
-                            : [...prev, author]
-                        );
+                        setSelectedAuthors(prev => {
+                          if (prev.includes(author)) {
+                            return prev.filter(a => a !== author);
+                          } else {
+                            // "When I follow an author, I auto follow all their works."
+                            // Clear any unfollowed works for this author so they are all followed by default
+                            setUnfollowedWorks(old => old.filter(key => !key.startsWith(`${author}:`)));
+                            return [...prev, author];
+                          }
+                        });
                       }}
-                      className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden ${
+                      className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden cursor-pointer ${
                         isSelected 
                           ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
                           : 'bg-[#f5f2ed] border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
@@ -446,16 +455,59 @@ function SettingsModal({
                         </div>
                         
                         {works && (
-                          <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 opacity-50">
-                            {Array.from(works).map(w => (
-                              <span key={w} className="font-mono text-[6px] md:text-[7px] uppercase tracking-widest border border-current px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                {w}
-                              </span>
-                            ))}
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-4">
+                            {Array.from(works).map(w => {
+                              const workKey = `${author}:${w}`;
+                              const isWorkUnfollowed = unfollowedWorks.includes(workKey);
+                              const isWorkFollowed = isSelected && !isWorkUnfollowed;
+                              
+                              return (
+                                <button
+                                  key={w}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent toggling the entire author card
+                                    
+                                    if (!isSelected) {
+                                      // If the author is not selected yet, clicking a work chip selects the author
+                                      // and auto follows only this selected work while unfollowing all other works.
+                                      setSelectedAuthors(prev => [...prev, author]);
+                                      const otherWorks = Array.from(works).filter(other => other !== w);
+                                      setUnfollowedWorks(old => [
+                                        ...old.filter(key => !key.startsWith(`${author}:`)),
+                                        ...otherWorks.map(other => `${author}:${other}`)
+                                      ]);
+                                    } else {
+                                      // Toggle this work's follow/unfollow state
+                                      setUnfollowedWorks(old => {
+                                        if (old.includes(workKey)) {
+                                          return old.filter(key => key !== workKey);
+                                        } else {
+                                          return [...old, workKey];
+                                        }
+                                      });
+                                    }
+                                  }}
+                                  className={`group/chip flex items-center gap-1.5 font-mono text-[9px] md:text-[10px] uppercase tracking-widest border px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full whitespace-nowrap transition-all duration-200 z-20 ${
+                                    isWorkFollowed
+                                      ? 'bg-[#f5f2ed] text-[#1a1a1a] border-[#f5f2ed] hover:bg-white hover:scale-105 active:scale-95'
+                                      : isSelected
+                                        ? 'text-[#f5f2ed]/45 border-[#f5f2ed]/20 hover:border-[#f5f2ed]/50 hover:text-[#f5f2ed] line-through bg-transparent hover:scale-105 active:scale-95'
+                                        : 'text-[#1a1a1a]/40 border-[#1a1a1a]/15 hover:border-[#1a1a1a]/40 hover:text-[#1a1a1a] bg-transparent hover:scale-105 active:scale-95'
+                                  }`}
+                                >
+                                  {isWorkFollowed ? (
+                                    <Check className="w-2.5 h-2.5 shrink-0" />
+                                  ) : (
+                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 border ${isSelected ? 'border-[#f5f2ed]/30 group-hover/chip:border-[#f5f2ed]' : 'border-[#1a1a1a]/30 group-hover/chip:border-[#1a1a1a]'}`} />
+                                  )}
+                                  <span>{w}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
             </div>
@@ -544,6 +596,10 @@ function AppContent() {
     const old = localStorage.getItem('selectedAuthor');
     return old ? [old] : [];
   });
+  const [unfollowedWorks, setUnfollowedWorks] = useState<string[]>(() => {
+    const saved = localStorage.getItem('unfollowedWorks');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [filterAuthors, setFilterAuthors] = useState<string[]>([]);
   const [selectedMotifs, setSelectedMotifs] = useState<number[]>(() => {
     const saved = localStorage.getItem('selectedMotifs');
@@ -613,6 +669,10 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('selectedAuthors', JSON.stringify(selectedAuthors));
   }, [selectedAuthors]);
+
+  useEffect(() => {
+    localStorage.setItem('unfollowedWorks', JSON.stringify(unfollowedWorks));
+  }, [unfollowedWorks]);
 
   useEffect(() => {
     localStorage.setItem('selectedMotifs', JSON.stringify(selectedMotifs));
@@ -874,6 +934,7 @@ function AppContent() {
     if (!characters || characters.length === 0) return;
     
     let matchedAuthor: string | null = null;
+    let matchedWork: string | null = null;
     
     if (subjectSlug && workSlug) {
       const found = characters.find(c => 
@@ -883,6 +944,7 @@ function AppContent() {
       );
       if (found && found.author) {
         matchedAuthor = found.author;
+        matchedWork = found.source;
       }
     } else if (workSlug) {
       const found = characters.find(c => 
@@ -891,17 +953,32 @@ function AppContent() {
       );
       if (found && found.author) {
         matchedAuthor = found.author;
+        matchedWork = found.source;
       }
     }
     
-    if (matchedAuthor && !selectedAuthors.includes(matchedAuthor)) {
-      setSelectedAuthors(prev => [...prev, matchedAuthor!]);
+    if (matchedAuthor) {
+      if (!selectedAuthors.includes(matchedAuthor)) {
+        setSelectedAuthors(prev => [...prev, matchedAuthor!]);
+      }
+      if (matchedWork) {
+        const workKey = `${matchedAuthor}:${matchedWork}`;
+        if (unfollowedWorks.includes(workKey)) {
+          setUnfollowedWorks(prev => prev.filter(key => key !== workKey));
+        }
+      }
     }
-  }, [characters, mediumSlug, workSlug, subjectSlug, selectedAuthors]);
+  }, [characters, mediumSlug, workSlug, subjectSlug, selectedAuthors, unfollowedWorks]);
 
   const publishedCharacters = useMemo(() => {
-    return characters.filter(c => c.isPublished && c.author && selectedAuthors.includes(c.author));
-  }, [characters, selectedAuthors]);
+    return characters.filter(c => {
+      if (!c.isPublished || !c.author || !selectedAuthors.includes(c.author)) {
+        return false;
+      }
+      const workKey = `${c.author}:${c.source}`;
+      return !unfollowedWorks.includes(workKey);
+    });
+  }, [characters, selectedAuthors, unfollowedWorks]);
 
   const media = useMemo(() => Array.from(new Set(publishedCharacters.map(c => c.medium))).sort(), [publishedCharacters]);
 
@@ -1835,6 +1912,8 @@ function AppContent() {
             selectedAuthors={selectedAuthors}
             setSelectedAuthors={setSelectedAuthors}
             authorToWorks={authorToWorks}
+            unfollowedWorks={unfollowedWorks}
+            setUnfollowedWorks={setUnfollowedWorks}
           />
         )}
       </AnimatePresence>
