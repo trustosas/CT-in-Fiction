@@ -535,6 +535,8 @@ function AppContent() {
   const location = useLocation();
   const { mediumSlug, workSlug, subjectSlug } = useParams();
   const detailPanelRef = useRef<HTMLDivElement>(null);
+  const scrollPositions = useRef<Record<string, number>>({});
+  const lastPathname = useRef<string>(location.pathname);
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -577,7 +579,41 @@ function AppContent() {
   });
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const handleScroll = () => {
+      const segments = location.pathname.split('/').filter(Boolean);
+      const isSubjectView = segments.length >= 3;
+      const baseKey = isSubjectView ? '/' + segments.slice(0, 2).join('/') : location.pathname;
+      scrollPositions.current[baseKey] = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const prevPath = lastPathname.current;
+    lastPathname.current = location.pathname;
+
+    const prevSegments = prevPath.split('/').filter(Boolean);
+    const currSegments = location.pathname.split('/').filter(Boolean);
+
+    const prevBase = prevSegments.length >= 3 ? '/' + prevSegments.slice(0, 2).join('/') : prevPath;
+    const currBase = currSegments.length >= 3 ? '/' + currSegments.slice(0, 2).join('/') : location.pathname;
+
+    if (prevBase !== currBase) {
+      const savedScroll = scrollPositions.current[currBase] || 0;
+      const isGoingBack = currBase === '/' || currBase.length < prevBase.length;
+      
+      if (savedScroll > 0) {
+        setTimeout(() => {
+          window.scrollTo({
+            top: savedScroll,
+            behavior: isGoingBack ? 'auto' : 'smooth'
+          });
+        }, 30);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
   }, [location.pathname]);
 
   useEffect(() => {
