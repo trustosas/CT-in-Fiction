@@ -704,8 +704,6 @@ function AppContent() {
   const [motifAnchor, setMotifAnchor] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
-  const [wasOnFeed, setWasOnFeed] = useState(false);
-  const [accessedViaAll, setAccessedViaAll] = useState(false);
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string>('');
   const [isFetchingAnalysis, setIsFetchingAnalysis] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'notFound' | 'empty' | 'available'>('idle');
@@ -1070,33 +1068,23 @@ function AppContent() {
   }, [mediumSlug, workSlug, location.pathname]);
 
   const navigateToWork = (work: { title: string; medium: string }) => {
-    if (currentView === 'all-works') {
-      setAccessedViaAll(true);
-    } else if (currentView === 'feed') {
-      setAccessedViaAll(false);
-    }
     navigate(`/${slugify(work.medium)}/${slugify(work.title)}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateToMedium = (mediumName: string) => {
-    if (currentView !== 'all-works' && currentView !== 'medium' && currentView !== 'work') {
-      setAccessedViaAll(false);
-    }
     navigate(`/${slugify(mediumName)}`);
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateToHome = () => {
-    setAccessedViaAll(false);
     navigate('/');
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateToAllWorks = () => {
-    setAccessedViaAll(false);
     navigate('/all-works');
     setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1104,25 +1092,15 @@ function AppContent() {
 
   const handleSelectCharacter = (char: Character | null) => {
     if (char) {
-      if (currentView === 'all-works') {
-        setAccessedViaAll(true);
-      } else if (currentView === 'feed') {
-        setAccessedViaAll(false);
-      }
-      setWasOnFeed(!mediumSlug && !workSlug);
       navigate(`/${slugify(char.medium)}/${slugify(char.source)}/${slugify(char.name)}`);
     } else {
-      if (wasOnFeed) {
-        navigate('/');
-      } else if (activeWork && activeMedium) {
+      if (activeWork && activeMedium) {
         navigate(`/${slugify(activeMedium)}/${slugify(activeWork)}`);
       } else if (activeMedium) {
         navigate(`/${slugify(activeMedium)}`);
       } else {
         navigate('/');
       }
-      setWasOnFeed(false);
-      setAccessedViaAll(false);
     }
   };
 
@@ -2043,7 +2021,7 @@ function AppContent() {
                       </button>
                     )}
 
-                    {(currentView === 'all-works' || (accessedViaAll && (activeMedium || activeWork))) && (
+                    {currentView === 'all-works' && (
                       <>
                         <button 
                           onClick={navigateToAllWorks}
@@ -2056,7 +2034,7 @@ function AppContent() {
 
                     {activeMedium && (
                       <>
-                        {(currentView === 'all-works' || accessedViaAll) && <span className="opacity-20 translate-y-[-1px]">/</span>}
+                        {currentView === 'all-works' && <span className="opacity-20 translate-y-[-1px]">/</span>}
                         <button 
                           onClick={() => navigateToMedium(activeMedium)}
                           className={`font-mono text-[10px] uppercase tracking-widest transition-all truncate max-w-[150px] sm:max-w-[300px] ${currentView === 'medium' ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}`}
