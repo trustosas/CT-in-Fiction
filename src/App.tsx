@@ -530,6 +530,42 @@ function SettingsModal({
   );
 }
 
+const getDepsString = (
+  mediumSlug: string | undefined,
+  workSlug: string | undefined,
+  searchQuery: string,
+  selectedQuadra: string | null,
+  selectedDevelopment: string | null,
+  selectedJudgmentAxis: string | null,
+  selectedPerceptionAxis: string | null,
+  selectedLeadEnergetic: string | null,
+  selectedAuxEnergetic: string | null,
+  selectedBehaviourQualia: string | null,
+  selectedSubtype: string | null,
+  selectedInterEnergetic: string | null,
+  selectedEmotionalAttitude: string | null,
+  selectedMotifs: number[],
+  filterAuthors: string[]
+) => {
+  return JSON.stringify({
+    mediumSlug,
+    workSlug,
+    searchQuery,
+    selectedQuadra,
+    selectedDevelopment,
+    selectedJudgmentAxis,
+    selectedPerceptionAxis,
+    selectedLeadEnergetic,
+    selectedAuxEnergetic,
+    selectedBehaviourQualia,
+    selectedSubtype,
+    selectedInterEnergetic,
+    selectedEmotionalAttitude,
+    selectedMotifs,
+    filterAuthors
+  });
+};
+
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -537,11 +573,55 @@ function AppContent() {
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const scrollPositions = useRef<Record<string, number>>({});
   const lastPathname = useRef<string>(location.pathname);
+  const isFirstRender = useRef(true);
+  
+  const getBaseKey = () => {
+    const segments = location.pathname.split('/').filter(Boolean);
+    const isSubjectView = segments.length >= 3;
+    return isSubjectView ? '/' + segments.slice(0, 2).join('/') : location.pathname;
+  };
+
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSyncTrigger, setShowSyncTrigger] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  const [currentPage, setCurrentPage] = useState(() => {
+    try {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const isSubjectView = segments.length >= 3;
+      const baseKey = isSubjectView ? '/' + segments.slice(0, 2).join('/') : window.location.pathname;
+
+      const currentDeps = {
+        mediumSlug: segments[0],
+        workSlug: segments[1],
+        searchQuery: localStorage.getItem('searchQuery') || '',
+        selectedQuadra: localStorage.getItem('selectedQuadra'),
+        selectedDevelopment: localStorage.getItem('selectedDevelopment'),
+        selectedJudgmentAxis: localStorage.getItem('selectedJudgmentAxis'),
+        selectedPerceptionAxis: localStorage.getItem('selectedPerceptionAxis'),
+        selectedLeadEnergetic: localStorage.getItem('selectedLeadEnergetic'),
+        selectedAuxEnergetic: localStorage.getItem('selectedAuxEnergetic'),
+        selectedBehaviourQualia: localStorage.getItem('selectedBehaviourQualia'),
+        selectedSubtype: localStorage.getItem('selectedSubtype'),
+        selectedInterEnergetic: localStorage.getItem('selectedInterEnergetic'),
+        selectedEmotionalAttitude: localStorage.getItem('selectedEmotionalAttitude'),
+        selectedMotifs: JSON.parse(localStorage.getItem('selectedMotifs') || '[]'),
+        filterAuthors: []
+      };
+      const currentDepsStr = JSON.stringify(currentDeps);
+
+      const savedDepsStr = sessionStorage.getItem(`currentPageDeps_${baseKey}`);
+      if (savedDepsStr === currentDepsStr) {
+        const saved = sessionStorage.getItem(`currentPage_${baseKey}`);
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+      }
+    } catch (e) {}
+    return 1;
+  });
   const [error, setError] = useState<string | null>(null);
   const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -617,8 +697,33 @@ function AppContent() {
   }, [location.pathname]);
 
   useEffect(() => {
+    const baseKey = getBaseKey();
+    sessionStorage.setItem(`currentPage_${baseKey}`, String(currentPage));
+    const currentDepsStr = getDepsString(
+      mediumSlug,
+      workSlug,
+      searchQuery,
+      selectedQuadra,
+      selectedDevelopment,
+      selectedJudgmentAxis,
+      selectedPerceptionAxis,
+      selectedLeadEnergetic,
+      selectedAuxEnergetic,
+      selectedBehaviourQualia,
+      selectedSubtype,
+      selectedInterEnergetic,
+      selectedEmotionalAttitude,
+      selectedMotifs,
+      filterAuthors
+    );
+    sessionStorage.setItem(`currentPageDeps_${baseKey}`, currentDepsStr);
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
+  }, [currentPage, location.pathname]);
 
   useEffect(() => {
     if (detailPanelRef.current) {
@@ -915,8 +1020,49 @@ function AppContent() {
   };
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [mediumSlug, workSlug, searchQuery, selectedQuadra, selectedDevelopment, selectedJudgmentAxis, selectedPerceptionAxis, selectedLeadEnergetic, selectedAuxEnergetic, selectedBehaviourQualia, selectedSubtype, selectedInterEnergetic, selectedEmotionalAttitude, selectedMotifs]);
+    const baseKey = getBaseKey();
+    const currentDepsStr = getDepsString(
+      mediumSlug,
+      workSlug,
+      searchQuery,
+      selectedQuadra,
+      selectedDevelopment,
+      selectedJudgmentAxis,
+      selectedPerceptionAxis,
+      selectedLeadEnergetic,
+      selectedAuxEnergetic,
+      selectedBehaviourQualia,
+      selectedSubtype,
+      selectedInterEnergetic,
+      selectedEmotionalAttitude,
+      selectedMotifs,
+      filterAuthors
+    );
+
+    const savedDepsStr = sessionStorage.getItem(`currentPageDeps_${baseKey}`);
+    if (savedDepsStr !== currentDepsStr) {
+      setCurrentPage(1);
+      sessionStorage.setItem(`currentPage_${baseKey}`, '1');
+      sessionStorage.setItem(`currentPageDeps_${baseKey}`, currentDepsStr);
+    }
+  }, [
+    mediumSlug,
+    workSlug,
+    searchQuery,
+    selectedQuadra,
+    selectedDevelopment,
+    selectedJudgmentAxis,
+    selectedPerceptionAxis,
+    selectedLeadEnergetic,
+    selectedAuxEnergetic,
+    selectedBehaviourQualia,
+    selectedSubtype,
+    selectedInterEnergetic,
+    selectedEmotionalAttitude,
+    selectedMotifs,
+    filterAuthors,
+    location.pathname
+  ]);
   const loadData = async (isSilent = false, force = false) => {
     try {
       if (!isSilent) setIsLoading(true);
