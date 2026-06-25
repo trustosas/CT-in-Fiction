@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --breakpoint-xs: 400px;
+}
+
+@layer base {
+  body {
+    @apply bg-[#f5f2ed] text-[#1a1a1a] font-sans antialiased overflow-x-hidden;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+  gap: 1.5rem;
+}
+
+.character-card {
+  @apply relative overflow-hidden transition-all duration-500 ease-out;
+}
+
+.character-image-container {
+  @apply aspect-[16/9] overflow-hidden rounded-sm mb-3;
+}
+
+.character-image {
+  @apply w-full h-full transition-transform duration-700;
+}
+
+/* Minimal Scrollbar */
+.minimal-scrollbar::-webkit-scrollbar {
+  width: 2px;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 26, 0.1);
+  border-radius: 10px;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 26, 0.2);
+}
+
+.minimal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 26, 26, 0.1) transparent;
+}
