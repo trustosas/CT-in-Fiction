@@ -581,12 +581,12 @@ function AppContent() {
   }, [location.pathname]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
   useEffect(() => {
     if (detailPanelRef.current) {
-      detailPanelRef.current.scrollTop = 0;
+      detailPanelRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [subjectSlug]);
 
