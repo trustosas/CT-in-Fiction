@@ -534,6 +534,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { mediumSlug, workSlug, subjectSlug } = useParams();
+  const detailPanelRef = useRef<HTMLDivElement>(null);
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -574,6 +575,20 @@ function AppContent() {
       edited: 'desc'
     };
   });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (detailPanelRef.current) {
+      detailPanelRef.current.scrollTop = 0;
+    }
+  }, [subjectSlug]);
 
   useEffect(() => {
     localStorage.setItem('searchQuery', searchQuery);
@@ -2748,6 +2763,7 @@ function AppContent() {
                 className="fixed inset-0 bg-[#f5f2ed]/90 backdrop-blur-sm z-40"
               />
               <motion.div 
+                ref={detailPanelRef}
                 layoutId={selectedCharacter.id}
                 className="fixed inset-y-0 right-0 w-full md:w-[750px] bg-[#f5f2ed] z-50 shadow-2xl p-8 md:p-16 overflow-y-auto"
                 data-quadra={(selectedCharacter.quadra || selectedCharacter.rawQuadra || '').toLowerCase()}
