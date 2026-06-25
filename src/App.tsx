@@ -1107,9 +1107,18 @@ function AppContent() {
 
   const handleSelectCharacter = (char: Character | null) => {
     if (char) {
-      navigate(`/${slugify(char.medium)}/${slugify(char.source)}/${slugify(char.name)}`);
+      navigate(`/${slugify(char.medium)}/${slugify(char.source)}/${slugify(char.name)}`, {
+        state: { fromView: currentView }
+      });
     } else {
-      if (activeWork && activeMedium) {
+      const fromView = (location.state as any)?.fromView;
+      if (fromView === 'feed') {
+        navigate('/');
+      } else if (fromView === 'all-works') {
+        navigate('/all-works');
+      } else if (fromView === 'medium' && activeMedium) {
+        navigate(`/${slugify(activeMedium)}`);
+      } else if (activeWork && activeMedium) {
         navigate(`/${slugify(activeMedium)}/${slugify(activeWork)}`);
       } else if (activeMedium) {
         navigate(`/${slugify(activeMedium)}`);
