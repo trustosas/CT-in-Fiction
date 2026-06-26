@@ -1690,27 +1690,27 @@ function AppContent() {
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {label === 'Development' && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-sans tracking-[0.05em] whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[10px] tracking-wider whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{getDevelopmentName(value, '', selectedBehaviourQualia || undefined)}</span>
               </span>
             ) : label === 'Inter-Function Dynamics' && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[10px] tracking-wider whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{getSubtypeName(value)}</span>
               </span>
             ) : (label === 'Lead Energetic' || label === 'Auxiliary Energetic') && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[10px] tracking-wider whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{ENERGETIC_NAMES[value]}</span>
               </span>
             ) : (label === 'Lead Function' || label === 'Auxiliary Function') && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[10px] tracking-wider whitespace-nowrap">{value}</span>
                 <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter font-normal leading-tight">{FUNCTION_NAMES[value]}</span>
               </span>
             ) : label === 'Emotional Attitude' && value ? (
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-serif italic text-sm whitespace-nowrap">{value}</span>
+                <span className="font-mono text-[10px] tracking-wider whitespace-nowrap">{value}</span>
               </span>
             ) : (value || placeholder)}
           </span>
@@ -1732,7 +1732,7 @@ function AppContent() {
                 className="max-h-[160px] overflow-y-auto minimal-scrollbar"
               >
                 <button 
-                  onClick={(e) => { e.stopPropagation(); onChange(null); setIsOpen(false); }}
+                   onClick={(e) => { e.stopPropagation(); onChange(null); setIsOpen(false); }}
                   className="w-full px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-left hover:bg-[#1a1a1a]/5 transition-colors flex items-center justify-between border-b border-[#1a1a1a]/5"
                 >
                   {placeholder}
@@ -1747,24 +1747,26 @@ function AppContent() {
                     <div className="flex flex-col gap-0.5">
                         {label === 'Development' ? (
                           <>
-                            <span className="font-sans text-sm font-bold tracking-[0.05em] whitespace-nowrap">{opt}</span>
+                            <span className="font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">{opt}</span>
                             <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getDevelopmentName(opt, '', selectedBehaviourQualia || undefined)}</span>
                           </>
                         ) : label === 'Inter-Function Dynamics' ? (
                           <>
-                            <span className="font-serif italic text-sm whitespace-nowrap">{opt}</span>
+                            <span className="font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">{opt}</span>
                             <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter leading-tight">{getSubtypeName(opt)}</span>
                           </>
                         ) : (label === 'Lead Energetic' || label === 'Auxiliary Energetic') ? (
                           <>
-                            <span className="font-serif italic text-sm whitespace-nowrap">{opt}</span>
+                            <span className="font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">{opt}</span>
                             <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter leading-tight">{ENERGETIC_NAMES[opt]}</span>
                           </>
                         ) : (label === 'Lead Function' || label === 'Auxiliary Function') ? (
                           <>
-                            <span className="font-serif italic text-sm whitespace-nowrap">{opt}</span>
+                            <span className="font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">{opt}</span>
                             <span className="font-mono text-[9px] opacity-40 uppercase tracking-tighter leading-tight">{FUNCTION_NAMES[opt]}</span>
                           </>
+                        ) : label === 'Emotional Attitude' ? (
+                          <span className="font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">{opt}</span>
                         ) : opt}
                     </div>
                     {value === opt && <Check className="w-3 h-3 flex-shrink-0 ml-2" />}
