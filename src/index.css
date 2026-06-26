@@ -13,6 +13,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --charcoal-color: #1a1a1a;
     --beige-color: #f5f2ed;
     --bg-page: #f5f2ed;
@@ -29,6 +30,7 @@
   }
 
   .theme-dark {
+    color-scheme: dark;
     --charcoal-color: #f5f2ed;
     --beige-color: #262421;
     --bg-page: #262421;

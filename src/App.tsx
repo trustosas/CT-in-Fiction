@@ -707,9 +707,11 @@ function AppContent() {
       if (isDark) {
         document.documentElement.classList.add('theme-dark');
         document.documentElement.classList.remove('theme-light');
+        document.documentElement.style.colorScheme = 'dark';
       } else {
         document.documentElement.classList.add('theme-light');
         document.documentElement.classList.remove('theme-dark');
+        document.documentElement.style.colorScheme = 'light';
       }
     };
 
