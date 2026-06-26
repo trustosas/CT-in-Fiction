@@ -588,6 +588,23 @@ function AppContent() {
   
   const [currentPage, setCurrentPage] = useState(() => {
     try {
+      const isReload = (() => {
+        const entries = performance.getEntriesByType('navigation');
+        if (entries.length > 0) {
+          return (entries[0] as PerformanceNavigationTiming).type === 'reload';
+        }
+        return window.performance?.navigation?.type === 1;
+      })();
+
+      if (isReload) {
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('currentPage_') || key.startsWith('currentPageDeps_')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+        return 1;
+      }
+
       const segments = window.location.pathname.split('/').filter(Boolean);
       const isSubjectView = segments.length >= 3;
       const baseKey = isSubjectView ? '/' + segments.slice(0, 2).join('/') : window.location.pathname;
