@@ -2643,33 +2643,31 @@ function AppContent() {
               </div>
               
               {currentView === 'all-works' || currentView === 'medium' ? (
-                <div className="flex flex-col gap-4 w-full">
-                  <div className="flex flex-col gap-2 w-full max-w-2xl">
-                    <div className="relative w-full">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-                      <input 
-                        type="text"
-                        placeholder="Search works..."
-                        className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-base"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    {selectedMotifs.length > 0 && (location.state as any)?.fromSubjectMediumMotif && (
-                      <div className="flex">
-                        <button
-                          onClick={() => {
-                            setSelectedMotifs([]);
-                            navigate(location.pathname, { replace: true, state: {} });
-                          }}
-                          className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-charcoal/40 hover:text-charcoal transition-all cursor-pointer font-medium hover:underline"
-                        >
-                          <X className="w-2.5 h-2.5" />
-                          Reset Motif Selection
-                        </button>
-                      </div>
-                    )}
+                <div className="flex flex-col gap-3.5 w-full">
+                  <div className="relative w-full max-w-2xl">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                    <input 
+                      type="text"
+                      placeholder="Search works..."
+                      className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-base"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
+                  {selectedMotifs.length > 0 && (location.state as any)?.fromSubjectMediumMotif && (
+                    <div className="flex">
+                      <button
+                        onClick={() => {
+                          setSelectedMotifs([]);
+                          navigate(location.pathname, { replace: true, state: {} });
+                        }}
+                        className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-charcoal/40 hover:text-charcoal transition-all cursor-pointer font-medium hover:underline"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                        Reset Motif Selection
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
                     <div className="flex flex-wrap items-center gap-2">
