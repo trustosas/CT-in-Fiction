@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Routes, Route, useLocation } from 'react-router-dom';
-import { Search, ArrowRight, X, Zap, Activity, Filter, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash, Settings as SettingsIcon } from 'lucide-react';
+import { Search, ArrowRight, X, Zap, Activity, Filter, Compass, Layers, ChevronLeft, ChevronRight, ChevronDown, Info, Loader2, AlertCircle, Menu, Check, User, FileText, Hash, Settings as SettingsIcon, Sun, Moon, Laptop } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -202,7 +202,7 @@ function SmartWorkImage({ src, alt, className, isOpaque, medium }: { src: string
         referrerPolicy="no-referrer"
       />
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#f5f2ed]/50 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg-page)]/50 backdrop-blur-sm">
           <Loader2 className="w-6 h-6 animate-spin opacity-20" />
         </div>
       )}
@@ -336,7 +336,9 @@ function SettingsModal({
   setSelectedAuthors, 
   authorToWorks,
   unfollowedWorks,
-  setUnfollowedWorks
+  setUnfollowedWorks,
+  themeMode,
+  setThemeMode
 }: { 
   onClose: () => void,
   authorSearch: string,
@@ -346,14 +348,16 @@ function SettingsModal({
   setSelectedAuthors: (updater: (prev: string[]) => string[]) => void,
   authorToWorks: Map<string, Set<string>>,
   unfollowedWorks: string[],
-  setUnfollowedWorks: React.Dispatch<React.SetStateAction<string[]>>
+  setUnfollowedWorks: React.Dispatch<React.SetStateAction<string[]>>,
+  themeMode: 'light' | 'dark' | 'system',
+  setThemeMode: (val: 'light' | 'dark' | 'system') => void
 }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-[#f5f2ed] z-[100] flex flex-col"
+      className="fixed inset-0 bg-[var(--bg-page)] z-[100] flex flex-col"
     >
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -376,6 +380,40 @@ function SettingsModal({
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-8 sm:space-y-12 pb-12">
+          {/* Theme selection section */}
+          <section className="border-b border-[#1a1a1a]/10 pb-8">
+            <div className="max-w-xl mb-6">
+              <h3 className="font-serif text-xl sm:text-2xl mb-2 flex items-center gap-2">
+                <Sun className="w-5 h-5 sm:w-6 sm:h-6" />
+                Theme Mode
+              </h3>
+              <p className="text-xs sm:text-sm opacity-60 leading-relaxed">
+                Choose your preferred interface appearance.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 max-w-md">
+              {(['light', 'dark', 'system'] as const).map((mode) => {
+                const isActive = themeMode === mode;
+                const Icon = mode === 'light' ? Sun : mode === 'dark' ? Moon : Laptop;
+                const label = mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'System';
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setThemeMode(mode)}
+                    className={`flex flex-col items-center justify-center p-4 border rounded-sm transition-all duration-200 gap-2 cursor-pointer ${
+                      isActive 
+                        ? 'bg-[#1a1a1a] text-[#f5f2ed] border-[#1a1a1a]' 
+                        : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[#1a1a1a]/30 text-[#1a1a1a]'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-mono text-[9px] uppercase tracking-wider font-bold">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           <section>
             <div className="flex flex-col gap-6 mb-8">
               <div className="max-w-xl">
@@ -432,7 +470,7 @@ function SettingsModal({
                       className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden cursor-pointer ${
                         isSelected 
                           ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
-                          : 'bg-[#f5f2ed] border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30'
+                          : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[#1a1a1a]/30'
                       }`}
                     >
                       {isSelected && (
@@ -489,7 +527,7 @@ function SettingsModal({
                                   }}
                                   className={`group/chip flex items-center gap-1.5 font-mono text-[9px] md:text-[10px] uppercase tracking-widest border px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full whitespace-nowrap transition-all duration-200 z-20 ${
                                     isWorkFollowed
-                                      ? 'bg-[#f5f2ed] text-[#1a1a1a] border-[#f5f2ed] hover:bg-white hover:scale-105 active:scale-95'
+                                      ? 'bg-[var(--bg-card)] text-[#1a1a1a] border-[var(--bg-card)] hover:bg-white hover:scale-105 active:scale-95'
                                       : isSelected
                                         ? 'text-[#f5f2ed]/45 border-[#f5f2ed]/20 hover:border-[#f5f2ed]/50 hover:text-[#f5f2ed] line-through bg-transparent hover:scale-105 active:scale-95'
                                         : 'text-[#1a1a1a]/40 border-[#1a1a1a]/15 hover:border-[#1a1a1a]/40 hover:text-[#1a1a1a] bg-transparent hover:scale-105 active:scale-95'
@@ -643,6 +681,48 @@ function AppContent() {
   const ITEMS_PER_PAGE = 10;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>(() => {
+    try {
+      const saved = localStorage.getItem('themeMode');
+      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        return saved;
+      }
+    } catch (e) {}
+    return 'system';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('themeMode', themeMode);
+    } catch (e) {}
+
+    const applyTheme = () => {
+      let isDark = false;
+      if (themeMode === 'system') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      } else {
+        isDark = themeMode === 'dark';
+      }
+
+      if (isDark) {
+        document.documentElement.classList.add('theme-dark');
+        document.documentElement.classList.remove('theme-light');
+      } else {
+        document.documentElement.classList.add('theme-light');
+        document.documentElement.classList.remove('theme-dark');
+      }
+    };
+
+    applyTheme();
+
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [themeMode]);
+
   const [authorSearch, setAuthorSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
   const [workSortOrder, setWorkSortOrder] = useState<'az' | 'year' | 'subjects' | 'published' | 'edited'>(() => {
@@ -1724,7 +1804,7 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-full left-0 right-0 mt-2 bg-[#f5f2ed] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden"
             >
               <div 
                 ref={scrollRef}
@@ -1848,7 +1928,7 @@ function AppContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-[#f5f2ed] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
             >
               <div className="p-2 border-b border-[#1a1a1a]/10">
                 <input 
@@ -1960,7 +2040,7 @@ function AppContent() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-[#f5f2ed] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
             >
               <div className="p-2 border-b border-[#1a1a1a]/5">
                 <div className="relative">
@@ -1994,7 +2074,7 @@ function AppContent() {
                 ))}
               </div>
               {values.length > 0 && (
-                <div className="p-2 border-t border-[#1a1a1a]/5 bg-[#f5f2ed]/30">
+                <div className="p-2 border-t border-[#1a1a1a]/5 bg-[var(--bg-card)]/30">
                   <button 
                     onClick={() => onChange([])}
                     className="w-full py-1.5 font-mono text-[8px] uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity"
@@ -2097,7 +2177,7 @@ function AppContent() {
 
   if (isLoading && (mediumSlug || workSlug || subjectSlug)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed]">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-page)]">
         <Loader2 className="w-12 h-12 animate-spin mb-4 opacity-20" />
         <span className="font-mono text-xs uppercase tracking-widest opacity-40">Retrieving...</span>
       </div>
@@ -2106,7 +2186,7 @@ function AppContent() {
 
   if (isNotFound) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f2ed] p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-page)] p-6 text-center">
         <h1 className="font-serif text-6xl mb-4">404</h1>
         <p className="font-mono text-xs uppercase tracking-widest opacity-50 mb-8">Subject or Source Not Found in Database</p>
         <button 
@@ -2136,6 +2216,8 @@ function AppContent() {
             authorToWorks={authorToWorks}
             unfollowedWorks={unfollowedWorks}
             setUnfollowedWorks={setUnfollowedWorks}
+            themeMode={themeMode}
+            setThemeMode={setThemeMode}
           />
         )}
       </AnimatePresence>
@@ -2151,7 +2233,7 @@ function AppContent() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setIsMenuOpen(false)}
-                    className="fixed inset-0 bg-[#f5f2ed]/95 backdrop-blur-md z-[60]"
+                    className="fixed inset-0 bg-[var(--bg-page)]/95 backdrop-blur-md z-[60]"
                   />
                   <motion.div 
                     initial={{ x: '-100%' }}
@@ -2970,12 +3052,12 @@ function AppContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => handleSelectCharacter(null)}
-                className="fixed inset-0 bg-[#f5f2ed]/90 backdrop-blur-sm z-40"
+                className="fixed inset-0 bg-[var(--bg-page)]/90 backdrop-blur-sm z-40"
               />
               <motion.div 
                 ref={detailPanelRef}
                 layoutId={selectedCharacter.id}
-                className="fixed inset-y-0 right-0 w-full md:w-[750px] bg-[#f5f2ed] z-50 shadow-2xl p-8 md:p-16 overflow-y-auto"
+                className="fixed inset-y-0 right-0 w-full md:w-[750px] bg-[var(--bg-page)] z-50 shadow-2xl p-8 md:p-16 overflow-y-auto"
                 data-quadra={(selectedCharacter.quadra || selectedCharacter.rawQuadra || '').toLowerCase()}
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
@@ -3217,20 +3299,20 @@ function AppContent() {
                 {/* Core Profile Data */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
                   {selectedCharacter.subtype && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Inter-Function Dynamics</p>
                       <span className="font-serif italic text-xl block leading-none mb-1">{selectedCharacter.subtype}</span>
                       <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getSubtypeName(selectedCharacter.subtype)}</p>
                     </div>
                   )}
                   {selectedCharacter.behaviourQualia && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Qualia</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
                     </div>
                   )}
                   {(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment) && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Development</p>
                       {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                         <div className="grid grid-cols-[auto_24px_1fr] gap-x-1 items-baseline">
@@ -3261,7 +3343,7 @@ function AppContent() {
                     </div>
                   )}
                   {selectedCharacter.emotionalAttitude && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Emotional Attitude</p>
                       {getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) ? (
                         <>
@@ -3278,19 +3360,19 @@ function AppContent() {
                     </div>
                   )}
                   {selectedCharacter.unguardedness && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Unguardedness</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.unguardedness}</span>
                     </div>
                   )}
                   {selectedCharacter.guardedness && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Guardedness</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.guardedness}</span>
                     </div>
                   )}
                   {selectedCharacter.alternateType && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[#f5f2ed]/30">
+                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Alternate Type</p>
                       <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}</p>
                     </div>
@@ -3319,7 +3401,7 @@ function AppContent() {
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
                               {Object.entries(ct.energetics).filter(([_, val]) => val).map(([key, val]) => (
-                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
+                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[var(--bg-card)]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <div className="flex flex-col">
                                     <p className="font-serif italic text-base leading-tight">{val}</p>
@@ -3353,7 +3435,7 @@ function AppContent() {
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
                               {Object.entries(ct.functions).filter(([_, val]) => val).map(([key, val]) => (
-                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[#f5f2ed]/20">
+                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[var(--bg-card)]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <div className="flex flex-col">
                                     <p className="font-serif italic text-base leading-tight">{val}</p>
