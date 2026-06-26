@@ -2408,7 +2408,7 @@ function AppContent() {
 
       {/* Header */}
       <header className="mb-8 border-b border-charcoal/10 pb-6">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-6">
               <div className="max-w-2xl min-w-0">
                 <div className="flex flex-col mb-4">
                   <div className="flex items-center gap-3">
@@ -2488,6 +2488,7 @@ function AppContent() {
                         : `Exploring ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} within the ${activeMedium} medium.`
                       }
                     </p>
+
                   </>
                 ) : (
                   <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
@@ -2643,15 +2644,31 @@ function AppContent() {
               
               {currentView === 'all-works' || currentView === 'medium' ? (
                 <div className="flex flex-col gap-4 w-full">
-                  <div className="relative w-full max-w-2xl">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-                    <input 
-                      type="text"
-                      placeholder="Search works..."
-                      className="bg-transparent border-b border-charcoal/20 py-3 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-lg"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                  <div className="flex flex-col gap-2 w-full max-w-2xl">
+                    <div className="relative w-full">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                      <input 
+                        type="text"
+                        placeholder="Search works..."
+                        className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-base"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    {selectedMotifs.length > 0 && (location.state as any)?.fromSubjectMediumMotif && (
+                      <div className="flex">
+                        <button
+                          onClick={() => {
+                            setSelectedMotifs([]);
+                            navigate(location.pathname, { replace: true, state: {} });
+                          }}
+                          className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-charcoal/40 hover:text-charcoal transition-all cursor-pointer font-medium hover:underline"
+                        >
+                          <X className="w-2.5 h-2.5" />
+                          Reset Motif Selection
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-[9px] uppercase tracking-widest opacity-30 whitespace-nowrap">Sort By</span>
@@ -3775,7 +3792,7 @@ function AppContent() {
                                       setActiveMotifId(null);
                                       setActiveMotifDesc(null);
                                       if (selectedCharacter) {
-                                        navigate(`/${slugify(selectedCharacter.medium)}`);
+                                        navigate(`/${slugify(selectedCharacter.medium)}`, { state: { fromSubjectMediumMotif: true } });
                                       }
                                     }}
                                     className="text-[9px] font-mono uppercase tracking-wider bg-beige/10 hover:bg-beige/20 border border-beige/15 hover:border-beige/30 px-2 py-1 rounded transition-all"
