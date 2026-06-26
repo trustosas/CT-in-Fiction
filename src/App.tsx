@@ -1340,6 +1340,21 @@ function AppContent() {
     ) || null;
   }, [subjectSlug, workSlug, mediumSlug, publishedCharacters]);
 
+  // Lock scroll on background / last view when a Subject profile is in focus
+  useEffect(() => {
+    if (selectedCharacter) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [selectedCharacter]);
+
   const similarByActiveMotif = useMemo(() => {
     if (!activeMotifId) return { currentWork: [], allMedia: [] };
     const motifIdx = parseInt(activeMotifId);
