@@ -2111,6 +2111,28 @@ function AppContent() {
       });
     }
 
+    const hasArchetypes = !!(
+      currentFilters.quadra ||
+      currentFilters.development ||
+      currentFilters.judgmentAxis ||
+      currentFilters.perceptionAxis ||
+      currentFilters.leadEnergetic ||
+      currentFilters.auxEnergetic ||
+      currentFilters.behaviourQualia ||
+      currentFilters.subtype ||
+      currentFilters.interEnergetic ||
+      currentFilters.emotionalAttitude ||
+      (currentFilters.authors && currentFilters.authors.length > 0) ||
+      (currentFilters.motifs && currentFilters.motifs.length > 0)
+    );
+
+    if (hasArchetypes) {
+      list = list.filter(w => {
+        const workChars = publishedCharacters.filter(c => c.source === w.title && c.medium === w.medium);
+        return workChars.some(c => matchesFilters(c, currentFilters));
+      });
+    }
+
     // Apply Sorting
     const sorted = [...list].sort((a, b) => {
       const getWorkTime = (workTitle: string, isEditedSort: boolean) => {
