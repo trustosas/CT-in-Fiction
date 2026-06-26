@@ -7,21 +7,41 @@
   --font-serif: "Playfair Display", serif;
   --font-mono: "JetBrains Mono", monospace;
   --breakpoint-xs: 400px;
+  --color-charcoal: var(--charcoal-color);
+  --color-beige: var(--beige-color);
 }
 
 @layer base {
   :root {
-    --bg-page: #ffffff;
-    --bg-card: #f5f2ed;
+    --charcoal-color: #1a1a1a;
+    --beige-color: #f5f2ed;
+    --bg-page: #f5f2ed;
+    --bg-card: #ffffff;
     --border-color: rgba(26, 26, 26, 0.1);
     --text-base: #1a1a1a;
+    --bg-author-selected: #1a1a1a;
+    --text-author-selected: #f5f2ed;
+    --border-author-selected: #1a1a1a;
+    --bg-nav: #f5f2ed;
+    --text-nav: #1a1a1a;
+    --border-nav: rgba(26, 26, 26, 0.15);
+    --hover-nav: rgba(26, 26, 26, 0.05);
   }
 
   .theme-dark {
-    --bg-page: #f5f2ed;
-    --bg-card: #ffffff;
-    --border-color: rgba(26, 26, 26, 0.15);
-    --text-base: #1a1a1a;
+    --charcoal-color: #f5f2ed;
+    --beige-color: #262421;
+    --bg-page: #262421;
+    --bg-card: #32302c;
+    --border-color: rgba(245, 242, 237, 0.15);
+    --text-base: #f5f2ed;
+    --bg-author-selected: #121110;
+    --text-author-selected: #f5f2ed;
+    --border-author-selected: #121110;
+    --bg-nav: #121110;
+    --text-nav: #f5f2ed;
+    --border-nav: rgba(245, 242, 237, 0.1);
+    --hover-nav: rgba(245, 242, 237, 0.05);
   }
 
   body {
@@ -69,15 +89,16 @@
 }
 
 .minimal-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(26, 26, 26, 0.1);
+  background: var(--border-color);
   border-radius: 10px;
 }
 
 .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(26, 26, 26, 0.2);
+  background: var(--text-base);
+  opacity: 0.3;
 }
 
 .minimal-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(26, 26, 26, 0.1) transparent;
+  scrollbar-color: var(--border-color) transparent;
 }

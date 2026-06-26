@@ -170,7 +170,7 @@ function SmartWorkImage({ src, alt, className, isOpaque, medium }: { src: string
 
   if (!src || hasError) {
     return (
-      <div className={`${className} flex items-center justify-center bg-[#1a1a1a]/5 opacity-20`}>
+      <div className={`${className} flex items-center justify-center bg-charcoal/5 opacity-20`}>
         <FileText className="w-12 h-12" />
       </div>
     );
@@ -216,7 +216,7 @@ function SmartSubjectImage({ src, alt, className }: { src: string, alt: string, 
 
   if (!src || hasError) {
     return (
-      <div className={`${className} flex flex-col items-center justify-center bg-[#1a1a1a]/5 gap-2`}>
+      <div className={`${className} flex flex-col items-center justify-center bg-charcoal/5 gap-2`}>
         <User className="w-12 h-12 opacity-10" />
         <p className="font-mono text-[8px] uppercase tracking-[0.2em] opacity-30">Portrait Unavailable</p>
       </div>
@@ -237,7 +237,7 @@ function SmartSubjectImage({ src, alt, className }: { src: string, alt: string, 
         referrerPolicy="no-referrer"
       />
       {!isLoaded && (
-        <div className="absolute inset-0 bg-[#1a1a1a]/5 animate-pulse flex items-center justify-center">
+        <div className="absolute inset-0 bg-charcoal/5 animate-pulse flex items-center justify-center">
            <Loader2 className="w-4 h-4 animate-spin opacity-10" />
         </div>
       )}
@@ -260,14 +260,14 @@ function PaginationControls({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-6 mt-12 py-8 border-t border-[#1a1a1a]/5">
+    <div className="flex items-center justify-center gap-2 sm:gap-6 mt-12 py-8 border-t border-charcoal/5">
       <button 
         onClick={() => {
           onChange(Math.max(1, current - 1));
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={current === 1}
-        className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-[#1a1a1a]/20 rounded-full disabled:opacity-10 hover:bg-[#1a1a1a] hover:text-[#f5f2ed] transition-all"
+        className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-charcoal/20 rounded-full disabled:opacity-10 hover:bg-charcoal hover:text-beige transition-all"
       >
         <ChevronLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
         <span className="hidden xs:inline">Prev</span>
@@ -286,7 +286,7 @@ function PaginationControls({
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={current === totalPages}
-        className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-[#1a1a1a]/20 rounded-full disabled:opacity-10 hover:bg-[#1a1a1a] hover:text-[#f5f2ed] transition-all"
+        className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-charcoal/20 rounded-full disabled:opacity-10 hover:bg-charcoal hover:text-beige transition-all"
       >
         <span className="hidden xs:inline">Next</span>
         <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -304,7 +304,7 @@ function OnboardingPrompt({ onShowSettings }: { onShowSettings: () => void }) {
         className="max-w-md w-full py-8 sm:py-12"
       >
          <div className="mb-8 relative">
-           <div className="absolute inset-0 bg-[#1a1a1a]/5 rounded-full blur-3xl scale-150" />
+           <div className="absolute inset-0 bg-charcoal/5 rounded-full blur-3xl scale-150" />
            <SettingsIcon className="w-12 h-12 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
          </div>
          
@@ -316,7 +316,7 @@ function OnboardingPrompt({ onShowSettings }: { onShowSettings: () => void }) {
          <div className="flex flex-col gap-4 px-6 sm:px-0">
           <button 
             onClick={onShowSettings}
-            className="px-8 sm:px-12 py-4 sm:py-5 bg-[#1a1a1a] text-[#f5f2ed] font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:scale-105 active:scale-95 group"
+            className="px-8 sm:px-12 py-4 sm:py-5 bg-charcoal text-beige font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:scale-105 active:scale-95 group"
           >
             Configure Authors
           </button>
@@ -366,14 +366,14 @@ function SettingsModal({
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
         className="px-4 sm:px-6 py-6 md:py-12 md:px-12 lg:px-24 max-w-[2000px] mx-auto w-full flex-1 flex flex-col overflow-hidden relative"
       >
-        <div className="flex items-center justify-between mb-8 sm:mb-12 border-b border-[#1a1a1a]/10 pb-4 shrink-0">
+        <div className="flex items-center justify-between mb-8 sm:mb-12 border-b border-charcoal/10 pb-4 shrink-0">
           <div>
             <h2 className="font-serif text-2xl sm:text-4xl mb-1">Settings</h2>
             <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Gallery Configuration</p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+            className="p-2 hover:bg-charcoal/5 rounded-full transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -381,7 +381,7 @@ function SettingsModal({
 
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-8 sm:space-y-12 pb-12">
           {/* Theme selection section */}
-          <section className="border-b border-[#1a1a1a]/10 pb-8">
+          <section className="border-b border-charcoal/10 pb-8">
             <div className="max-w-xl mb-6">
               <h3 className="font-serif text-xl sm:text-2xl mb-2 flex items-center gap-2">
                 <Sun className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -402,8 +402,8 @@ function SettingsModal({
                     onClick={() => setThemeMode(mode)}
                     className={`flex flex-col items-center justify-center p-4 border rounded-sm transition-all duration-200 gap-2 cursor-pointer ${
                       isActive 
-                        ? 'bg-[#1a1a1a] text-[#f5f2ed] border-[#1a1a1a]' 
-                        : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[#1a1a1a]/30 text-[#1a1a1a]'
+                        ? 'bg-charcoal text-beige border-charcoal' 
+                        : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-charcoal/30 text-charcoal'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -431,7 +431,7 @@ function SettingsModal({
                 <input 
                   type="text"
                   placeholder="Search authors or works..."
-                  className="w-full bg-[#1a1a1a]/5 border-none py-3 pl-10 pr-4 rounded-sm focus:bg-[#1a1a1a]/10 transition-colors text-sm placeholder:opacity-30"
+                  className="w-full bg-charcoal/5 border-none py-3 pl-10 pr-4 rounded-sm focus:bg-charcoal/10 transition-colors text-sm placeholder:opacity-30"
                   value={authorSearch}
                   onChange={(e) => setAuthorSearch(e.target.value)}
                 />
@@ -469,26 +469,26 @@ function SettingsModal({
                       }}
                       className={`group p-4 sm:p-6 text-left border rounded-sm transition-all duration-300 relative overflow-hidden cursor-pointer ${
                         isSelected 
-                          ? 'bg-[#1a1a1a] border-[#1a1a1a] text-[#f5f2ed]' 
-                          : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[#1a1a1a]/30'
+                          ? 'bg-[var(--bg-author-selected)] border-[var(--border-author-selected)] text-[var(--text-author-selected)]' 
+                          : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-charcoal/30 text-charcoal'
                       }`}
                     >
                       {isSelected && (
                         <motion.div 
                           layoutId="active-bg"
-                          className="absolute inset-0 bg-[#1a1a1a] z-0"
+                          className="absolute inset-0 bg-[var(--bg-author-selected)] z-0"
                         />
                       )}
                       
                       <div className="relative z-10">
                         <div className="flex items-start justify-between mb-3">
-                          <span className={`font-serif text-lg sm:text-xl group-hover:italic transition-all ${isSelected ? 'text-[#f5f2ed]' : 'text-[#1a1a1a]'}`}>
+                          <span className={`font-serif text-lg sm:text-xl group-hover:italic transition-all ${isSelected ? 'text-[var(--text-author-selected)]' : 'text-charcoal'}`}>
                             {author}
                           </span>
                           {isSelected ? (
-                            <Check className="w-5 h-5 text-[#f5f2ed]" />
+                            <Check className="w-5 h-5 text-[var(--text-author-selected)]" />
                           ) : (
-                            <div className="w-5 h-5 rounded-full border border-[#1a1a1a]/10" />
+                            <div className="w-5 h-5 rounded-full border border-charcoal/10" />
                           )}
                         </div>
                         
@@ -527,16 +527,16 @@ function SettingsModal({
                                   }}
                                   className={`group/chip flex items-center gap-1.5 font-mono text-[9px] md:text-[10px] uppercase tracking-widest border px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full whitespace-nowrap transition-all duration-200 z-20 ${
                                     isWorkFollowed
-                                      ? 'bg-[var(--bg-card)] text-[#1a1a1a] border-[var(--bg-card)] hover:bg-white hover:scale-105 active:scale-95'
+                                      ? 'bg-[var(--bg-card)] text-charcoal border-[var(--bg-card)] hover:bg-white hover:scale-105 active:scale-95'
                                       : isSelected
-                                        ? 'text-[#f5f2ed]/45 border-[#f5f2ed]/20 hover:border-[#f5f2ed]/50 hover:text-[#f5f2ed] line-through bg-transparent hover:scale-105 active:scale-95'
-                                        : 'text-[#1a1a1a]/40 border-[#1a1a1a]/15 hover:border-[#1a1a1a]/40 hover:text-[#1a1a1a] bg-transparent hover:scale-105 active:scale-95'
+                                        ? 'text-[var(--text-author-selected)]/45 border-[var(--text-author-selected)]/20 hover:border-[var(--text-author-selected)]/50 hover:text-[var(--text-author-selected)] line-through bg-transparent hover:scale-105 active:scale-95'
+                                        : 'text-charcoal/40 border-charcoal/15 hover:border-charcoal/40 hover:text-charcoal bg-transparent hover:scale-105 active:scale-95'
                                   }`}
                                 >
                                   {isWorkFollowed ? (
                                     <Check className="w-2.5 h-2.5 shrink-0" />
                                   ) : (
-                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 border ${isSelected ? 'border-[#f5f2ed]/30 group-hover/chip:border-[#f5f2ed]' : 'border-[#1a1a1a]/30 group-hover/chip:border-[#1a1a1a]'}`} />
+                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 border ${isSelected ? 'border-[var(--text-author-selected)]/30 group-hover/chip:border-[var(--text-author-selected)]' : 'border-charcoal/30 group-hover/chip:border-charcoal'}`} />
                                   )}
                                   <span>{w}</span>
                                 </button>
@@ -551,10 +551,10 @@ function SettingsModal({
             </div>
 
             {allAvailableAuthors.length > 0 && selectedAuthors.length > 0 && (
-               <div className="mt-8 pt-8 border-t border-[#1a1a1a]/5 flex justify-center sm:justify-end">
+               <div className="mt-8 pt-8 border-t border-charcoal/5 flex justify-center sm:justify-end">
                  <button 
                   onClick={onClose}
-                  className="w-full sm:w-auto px-10 py-4 bg-[#1a1a1a] text-white font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-10 py-4 bg-charcoal text-beige font-mono text-[10px] uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                  >
                    View Gallery ({selectedAuthors.length} Followed)
                  </button>
@@ -1759,13 +1759,13 @@ function AppContent() {
       <div className="flex flex-col gap-1.5 group relative" ref={containerRef}>
         <label 
           onClick={() => setIsOpen(!isOpen)}
-          className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-[#1a1a1a] cursor-pointer"
+          className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-charcoal cursor-pointer"
         >
           {label}
         </label>
         <button 
           onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-          className="w-full flex items-center justify-between bg-transparent border-b border-[#1a1a1a]/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-[#1a1a1a]"
+          className="w-full flex items-center justify-between bg-transparent border-b border-charcoal/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-charcoal"
         >
           <span className={`transition-opacity ${value ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {label === 'Development' && value ? (
@@ -1804,7 +1804,7 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-charcoal/20 shadow-2xl z-[100] overflow-hidden"
             >
               <div 
                 ref={scrollRef}
@@ -1813,7 +1813,7 @@ function AppContent() {
               >
                 <button 
                    onClick={(e) => { e.stopPropagation(); onChange(null); setIsOpen(false); }}
-                  className="w-full px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-left hover:bg-[#1a1a1a]/5 transition-colors flex items-center justify-between border-b border-[#1a1a1a]/5"
+                  className="w-full px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-left hover:bg-charcoal/5 transition-colors flex items-center justify-between border-b border-charcoal/5"
                 >
                   {placeholder}
                   {value === null && <Check className="w-3 h-3" />}
@@ -1822,7 +1822,7 @@ function AppContent() {
                   <button 
                     key={opt}
                     onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
-                    className="w-full px-4 py-3 text-[10px] font-mono tracking-wider text-left hover:bg-[#1a1a1a]/5 transition-colors flex items-center justify-between border-b border-[#1a1a1a]/5 last:border-0"
+                    className="w-full px-4 py-3 text-[10px] font-mono tracking-wider text-left hover:bg-charcoal/5 transition-colors flex items-center justify-between border-b border-charcoal/5 last:border-0"
                   >
                     <div className="flex flex-col gap-0.5">
                         {label === 'Development' ? (
@@ -1854,9 +1854,9 @@ function AppContent() {
                 ))}
               </div>
               {/* Progress Indicator */}
-              <div className="h-[1px] w-full bg-[#1a1a1a]/5">
+              <div className="h-[1px] w-full bg-charcoal/5">
                 <motion.div 
-                  className="h-full bg-[#1a1a1a]/40"
+                  className="h-full bg-charcoal/40"
                   style={{ width: `${scrollProgress * 100}%` }}
                 />
               </div>
@@ -1909,12 +1909,12 @@ function AppContent() {
 
     return (
       <div className="flex flex-col gap-1.5 group relative" ref={containerRef}>
-        <label className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-[#1a1a1a]">
+        <label className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-charcoal">
           {label}
         </label>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between bg-transparent border-b border-[#1a1a1a]/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-[#1a1a1a]"
+          className="w-full flex items-center justify-between bg-transparent border-b border-charcoal/30 py-1.5 text-[10px] font-mono tracking-wider text-left transition-colors hover:border-charcoal"
         >
           <span className={`transition-opacity ${values.length > 0 ? 'opacity-100 font-bold' : 'opacity-50 uppercase'}`}>
             {values.length > 0 ? `${values.length} Selected` : placeholder}
@@ -1928,13 +1928,13 @@ function AppContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-charcoal/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
             >
-              <div className="p-2 border-b border-[#1a1a1a]/10">
+              <div className="p-2 border-b border-charcoal/10">
                 <input 
                   type="text"
                   placeholder="Search motifs..."
-                  className="w-full bg-[#1a1a1a]/5 px-3 py-2 text-[10px] font-mono focus:outline-none rounded"
+                  className="w-full bg-charcoal/5 px-3 py-2 text-[10px] font-mono focus:outline-none rounded"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -1944,10 +1944,10 @@ function AppContent() {
                   <button 
                     key={opt.id}
                     onClick={() => toggleOption(opt.id)}
-                    className="w-full px-4 py-2 text-[10px] font-mono tracking-wider text-left hover:bg-[#1a1a1a]/5 transition-colors flex items-center justify-between"
+                    className="w-full px-4 py-2 text-[10px] font-mono tracking-wider text-left hover:bg-charcoal/5 transition-colors flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="bg-[#1a1a1a]/10 px-1 py-0.5 rounded text-[8px]">{opt.function}</span>
+                      <span className="bg-charcoal/10 px-1 py-0.5 rounded text-[8px]">{opt.function}</span>
                       <span className="truncate max-w-[140px]">{opt.label.split(':')[0]}</span>
                     </span>
                     {values.includes(opt.id) && <Check className="w-3 h-3" />}
@@ -1957,7 +1957,7 @@ function AppContent() {
               {values.length > 0 && (
                 <button 
                   onClick={() => onChange([])}
-                  className="p-2 text-[8px] font-mono uppercase tracking-widest text-center border-t border-[#1a1a1a]/10 hover:bg-[#1a1a1a]/5"
+                  className="p-2 text-[8px] font-mono uppercase tracking-widest text-center border-t border-charcoal/10 hover:bg-charcoal/5"
                 >
                   Clear Selection
                 </button>
@@ -2012,16 +2012,16 @@ function AppContent() {
       <div className="flex flex-col gap-1.5 group relative" ref={containerRef}>
         <label 
           onClick={() => setIsOpen(!isOpen)}
-          className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-[#1a1a1a] cursor-pointer"
+          className="font-mono text-[8px] uppercase tracking-widest opacity-70 text-charcoal cursor-pointer"
         >
           {label}
         </label>
         <button 
           onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-          className={`flex items-center justify-between w-full border-b border-[#1a1a1a]/30 py-1.5 px-0 text-left transition-all hover:border-[#1a1a1a] ${isOpen ? 'border-[#1a1a1a]' : ''}`}
+          className={`flex items-center justify-between w-full border-b border-charcoal/30 py-1.5 px-0 text-left transition-all hover:border-charcoal ${isOpen ? 'border-charcoal' : ''}`}
         >
           <div className="flex items-center gap-2 overflow-hidden flex-1">
-            <span className={`font-mono text-[10px] uppercase tracking-wider truncate ${values.length > 0 ? 'text-[#1a1a1a] font-bold' : 'opacity-50'}`}>
+            <span className={`font-mono text-[10px] uppercase tracking-wider truncate ${values.length > 0 ? 'text-charcoal font-bold' : 'opacity-50'}`}>
               {values.length > 0 ? `${values.length} Selected` : placeholder}
             </span>
           </div>
@@ -2040,15 +2040,15 @@ function AppContent() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[#1a1a1a]/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
+              className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-charcoal/20 shadow-2xl z-[100] overflow-hidden flex flex-col"
             >
-              <div className="p-2 border-b border-[#1a1a1a]/5">
+              <div className="p-2 border-b border-charcoal/5">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-20" />
                   <input 
                     type="text" 
                     placeholder="Search..."
-                    className="w-full bg-[#1a1a1a]/5 rounded-md py-2 pl-8 pr-3 font-mono text-[10px] focus:outline-none"
+                    className="w-full bg-charcoal/5 rounded-md py-2 pl-8 pr-3 font-mono text-[10px] focus:outline-none"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -2064,7 +2064,7 @@ function AppContent() {
                   <button
                     key={opt}
                     onClick={() => toggleOption(opt)}
-                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-md transition-all text-left group/opt ${values.includes(opt) ? 'bg-[#1a1a1a] text-white' : 'hover:bg-[#1a1a1a]/5'}`}
+                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-md transition-all text-left group/opt ${values.includes(opt) ? 'bg-charcoal text-beige' : 'hover:bg-charcoal/5'}`}
                   >
                     <span className={`font-mono text-[10px] tracking-wider truncate flex-1 ${values.includes(opt) ? 'opacity-100' : 'opacity-60 group-hover/opt:opacity-100'}`}>
                       {opt}
@@ -2074,7 +2074,7 @@ function AppContent() {
                 ))}
               </div>
               {values.length > 0 && (
-                <div className="p-2 border-t border-[#1a1a1a]/5 bg-[var(--bg-card)]/30">
+                <div className="p-2 border-t border-charcoal/5 bg-[var(--bg-card)]/30">
                   <button 
                     onClick={() => onChange([])}
                     className="w-full py-1.5 font-mono text-[8px] uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity"
@@ -2191,7 +2191,7 @@ function AppContent() {
         <p className="font-mono text-xs uppercase tracking-widest opacity-50 mb-8">Subject or Source Not Found in Database</p>
         <button 
           onClick={navigateToHome}
-          className="px-8 py-3 bg-[#1a1a1a] text-white font-mono text-xs uppercase tracking-widest rounded-full hover:bg-black transition-colors"
+          className="px-8 py-3 bg-charcoal text-beige font-mono text-xs uppercase tracking-widest rounded-full hover:bg-black transition-colors"
         >
           Return to Gallery
         </button>
@@ -2233,20 +2233,20 @@ function AppContent() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setIsMenuOpen(false)}
-                    className="fixed inset-0 bg-[var(--bg-page)]/95 backdrop-blur-md z-[60]"
+                    className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60]"
                   />
                   <motion.div 
                     initial={{ x: '-100%' }}
                     animate={{ x: 0 }}
                     exit={{ x: '-100%' }}
                     transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                    className="fixed inset-y-0 left-0 w-full md:w-[260px] bg-[#1a1a1a] text-white z-[70] p-6 shadow-2xl flex flex-col"
+                    className="fixed inset-y-0 left-0 w-full md:w-[260px] bg-[var(--bg-nav)] text-[var(--text-nav)] border-r border-[var(--border-nav)] z-[70] p-6 shadow-2xl flex flex-col"
                   >
                     <div className="flex items-center justify-between mb-8">
                       <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40">Navigation</span>
                       <button 
                         onClick={() => setIsMenuOpen(false)}
-                        className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                        className="p-1.5 hover:bg-[var(--hover-nav)] rounded-full transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -2260,7 +2260,7 @@ function AppContent() {
                         Gallery
                       </button>
                       
-                      <div className="pt-6 border-t border-white/10">
+                      <div className="pt-6 border-t border-[var(--border-nav)]">
                         <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">{pluralize(media.length, 'Medium', 'Media')}</span>
                         <div className="space-y-2">
                           <button 
@@ -2281,7 +2281,7 @@ function AppContent() {
                           ))}
                         </div>
                       </div>
-                      <div className="pt-6 border-t border-white/10 mt-auto">
+                      <div className="pt-6 border-t border-[var(--border-nav)] mt-auto">
                         <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
                         <button 
                           onClick={() => {
@@ -2296,7 +2296,7 @@ function AppContent() {
                       </div>
                     </nav>
 
-                    <div className="pt-6 mt-auto border-t border-white/5 font-mono text-[8px] uppercase tracking-widest opacity-20">
+                    <div className="pt-6 mt-auto border-t border-[var(--border-nav)] font-mono text-[8px] uppercase tracking-widest opacity-20">
                       CT in Fiction v2.0
                     </div>
                   </motion.div>
@@ -2305,11 +2305,11 @@ function AppContent() {
             </AnimatePresence>
 
             {/* Navigation / Breadcrumbs */}
-            <nav className={`flex items-center justify-between border-b border-[#1a1a1a]/5 pb-6 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
+            <nav className={`flex items-center justify-between border-b border-charcoal/5 pb-6 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
               <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
                 <button 
                   onClick={() => setIsMenuOpen(true)}
-                  className="p-2 -ml-2 hover:bg-[#1a1a1a]/5 rounded-full transition-colors flex items-center gap-2"
+                  className="p-2 -ml-2 hover:bg-charcoal/5 rounded-full transition-colors flex items-center gap-2"
                 >
                   <Menu className="w-5 h-5" />
                   {selectedAuthors.length === 0 && (
@@ -2368,7 +2368,7 @@ function AppContent() {
             </nav>
 
       {/* Header */}
-      <header className="mb-8 border-b border-[#1a1a1a]/10 pb-6">
+      <header className="mb-8 border-b border-charcoal/10 pb-6">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
               <div className="max-w-2xl min-w-0">
                 <div className="flex flex-col mb-4">
@@ -2396,8 +2396,8 @@ function AppContent() {
                           disabled={isSyncing}
                           className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
                             isSyncing 
-                            ? "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a] cursor-default" 
-                            : "bg-[#1a1a1a]/5 border-[#1a1a1a]/10 text-[#1a1a1a]/60 hover:bg-[#1a1a1a]/10 hover:text-[#1a1a1a] cursor-pointer"
+                            ? "bg-charcoal/5 border-charcoal/10 text-charcoal cursor-default" 
+                            : "bg-charcoal/5 border-charcoal/10 text-charcoal/60 hover:bg-charcoal/10 hover:text-charcoal cursor-pointer"
                           }`}
                         >
                           {isSyncing && <Loader2 className="w-2.5 h-2.5 animate-spin opacity-40" />}
@@ -2455,7 +2455,7 @@ function AppContent() {
                     {currentWorkData && (
                       <div 
                         onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
-                        className="w-48 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                        className="w-48 aspect-video bg-charcoal/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
                         title="Click to copy image link"
                       >
                         <SmartWorkImage 
@@ -2473,7 +2473,7 @@ function AppContent() {
                               exit={{ opacity: 0 }}
                               className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none"
                             >
-                              <span className="font-mono text-[8px] uppercase tracking-widest text-[#1a1a1a]">Link Copied</span>
+                              <span className="font-mono text-[8px] uppercase tracking-widest text-charcoal">Link Copied</span>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -2508,7 +2508,7 @@ function AppContent() {
                               initial={{ opacity: 0, y: 5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
-                              className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
+                              className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-charcoal/40 pointer-events-none"
                             >
                               {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
                             </motion.span>
@@ -2609,7 +2609,7 @@ function AppContent() {
                     <input 
                       type="text"
                       placeholder="Search works..."
-                      className="bg-transparent border-b border-[#1a1a1a]/20 py-3 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full text-lg"
+                      className="bg-transparent border-b border-charcoal/20 py-3 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-lg"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -2638,8 +2638,8 @@ function AppContent() {
                           }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
                             workSortOrder === opt.value 
-                              ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
-                              : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                              ? 'bg-charcoal text-beige border-charcoal' 
+                              : 'border-charcoal/10 hover:border-charcoal/30 opacity-60 hover:opacity-100'
                           }`}
                         >
                           <span className="inline-flex items-center gap-1">
@@ -2663,7 +2663,7 @@ function AppContent() {
                       <input 
                         type="text"
                         placeholder="Search subjects..."
-                        className="bg-transparent border-b border-[#1a1a1a]/20 py-2 pl-10 pr-4 focus:outline-none focus:border-[#1a1a1a] transition-colors w-full sm:w-64 md:w-80"
+                        className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full sm:w-64 md:w-80"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
@@ -2671,7 +2671,7 @@ function AppContent() {
                     <button 
                       onClick={() => setShowFilters(!showFilters)}
                       className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
-                        (showFilters || hasArchetypeFilters) ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'border-[#1a1a1a]/20 hover:border-[#1a1a1a]'
+                        (showFilters || hasArchetypeFilters) ? 'bg-charcoal text-beige border-charcoal' : 'border-charcoal/20 hover:border-charcoal'
                       }`}
                       title={showFilters ? 'Hide Filters' : 'Show Filters'}
                     >
@@ -2702,17 +2702,17 @@ function AppContent() {
                             { label: 'Subtype', value: selectedSubtype },
                             { label: 'Attitude', value: selectedEmotionalAttitude }
                           ].filter(f => f.value).map((f) => (
-                            <span key={f.label} className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                            <span key={f.label} className="font-mono text-[8px] uppercase tracking-widest bg-charcoal/5 px-2 py-0.5 rounded whitespace-nowrap">
                               {f.label}: {f.value}
                             </span>
                           ))}
                           {filterAuthors.length > 0 && (
-                            <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                            <span className="font-mono text-[8px] uppercase tracking-widest bg-charcoal/5 px-2 py-0.5 rounded whitespace-nowrap">
                               Authors: {filterAuthors.length}
                             </span>
                           )}
                           {selectedMotifs.length > 0 && (
-                            <span className="font-mono text-[8px] uppercase tracking-widest bg-[#1a1a1a]/5 px-2 py-0.5 rounded whitespace-nowrap">
+                            <span className="font-mono text-[8px] uppercase tracking-widest bg-charcoal/5 px-2 py-0.5 rounded whitespace-nowrap">
                               Motifs: {selectedMotifs.length}
                             </span>
                           )}
@@ -2733,7 +2733,7 @@ function AppContent() {
                               setFilterAuthors([]);
                               setSelectedMotifs([]);
                             }}
-                            className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-[#1a1a1a]/40 hover:text-[#1a1a1a] transition-all cursor-pointer font-medium hover:underline mt-0.5"
+                            className="inline-flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.2em] text-charcoal/40 hover:text-charcoal transition-all cursor-pointer font-medium hover:underline mt-0.5"
                           >
                             <X className="w-2.5 h-2.5" />
                             Clear All Filters
@@ -2765,8 +2765,8 @@ function AppContent() {
                           }}
                           className={`px-4 py-2 rounded-full border font-mono text-[9px] uppercase tracking-widest transition-all ${
                             subjectSortOrder === opt.value 
-                              ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' 
-                              : 'border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 opacity-60 hover:opacity-100'
+                              ? 'bg-charcoal text-beige border-charcoal' 
+                              : 'border-charcoal/10 hover:border-charcoal/30 opacity-60 hover:opacity-100'
                           }`}
                         >
                           <span className="inline-flex items-center gap-1">
@@ -2896,7 +2896,7 @@ function AppContent() {
                   className="character-card group cursor-pointer"
                   onClick={() => navigateToWork(work)}
                 >
-                  <div className="character-image-container aspect-[4/3] mb-4 bg-[#1a1a1a]/5 overflow-hidden flex items-center justify-center">
+                  <div className="character-image-container aspect-[4/3] mb-4 bg-charcoal/5 overflow-hidden flex items-center justify-center">
                     <SmartWorkImage 
                       src={work.imageUrl} 
                       alt={work.title}
@@ -2946,7 +2946,7 @@ function AppContent() {
                     data-quadra={(char.quadra || char.rawQuadra || '').toLowerCase()}
                     onClick={() => handleSelectCharacter(char)}
                   >
-                    <div className="character-image-container aspect-[16/9] flex items-center justify-center bg-[#1a1a1a]/5 overflow-hidden">
+                    <div className="character-image-container aspect-[16/9] flex items-center justify-center bg-charcoal/5 overflow-hidden">
                       <SmartSubjectImage 
                         src={char.imageUrl || ''} 
                         alt={char.name}
@@ -2969,7 +2969,7 @@ function AppContent() {
                         </button>
                       </div>
                       <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                        <span className="font-mono text-xs bg-[#1a1a1a]/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
+                        <span className="font-mono text-xs bg-charcoal/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
                         <div className={`font-sans text-sm font-bold tracking-[0.05em] ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                           {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
                             <div className="flex items-center gap-1 justify-end">
@@ -3105,7 +3105,7 @@ function AppContent() {
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-[#1a1a1a]/40 pointer-events-none"
+                          className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-charcoal/40 pointer-events-none"
                         >
                           {copyStatus === 'macro' ? 'Full Profile Copied' : 
                            copyStatus === 'mini' ? 'Mini Summary Copied' :
@@ -3236,7 +3236,7 @@ function AppContent() {
                       <span className="truncate">{selectedCharacter.source}</span>
                       <span className="flex-shrink-0">({selectedCharacter.year})</span>
                     </button>
-                    <div className="h-px flex-1 bg-[#1a1a1a]/10" />
+                    <div className="h-px flex-1 bg-charcoal/10" />
                     <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                       <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
                       <div className={`font-sans text-lg font-bold tracking-[0.05em] leading-none ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
@@ -3258,7 +3258,7 @@ function AppContent() {
 
                 <div 
                   onClick={() => selectedCharacter.imageUrl && handleCopyImage(selectedCharacter.imageUrl)}
-                  className="aspect-[16/9] rounded-sm overflow-hidden mb-12 relative group bg-[#1a1a1a]/5 flex items-center justify-center cursor-pointer active:scale-[0.99] transition-transform select-none"
+                  className="aspect-[16/9] rounded-sm overflow-hidden mb-12 relative group bg-charcoal/5 flex items-center justify-center cursor-pointer active:scale-[0.99] transition-transform select-none"
                 >
                   <SmartSubjectImage 
                     src={selectedCharacter.imageUrl || ''} 
@@ -3299,20 +3299,20 @@ function AppContent() {
                 {/* Core Profile Data */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
                   {selectedCharacter.subtype && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Inter-Function Dynamics</p>
                       <span className="font-serif italic text-xl block leading-none mb-1">{selectedCharacter.subtype}</span>
                       <p className="font-mono text-[9px] opacity-40 uppercase tracking-tighter">{getSubtypeName(selectedCharacter.subtype)}</p>
                     </div>
                   )}
                   {selectedCharacter.behaviourQualia && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Qualia</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.behaviourQualia}</span>
                     </div>
                   )}
                   {(selectedCharacter.finalDevelopment || selectedCharacter.initialDevelopment) && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Development</p>
                       {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                         <div className="grid grid-cols-[auto_24px_1fr] gap-x-1 items-baseline">
@@ -3343,7 +3343,7 @@ function AppContent() {
                     </div>
                   )}
                   {selectedCharacter.emotionalAttitude && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Emotional Attitude</p>
                       {getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) ? (
                         <>
@@ -3360,19 +3360,19 @@ function AppContent() {
                     </div>
                   )}
                   {selectedCharacter.unguardedness && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Unguardedness</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.unguardedness}</span>
                     </div>
                   )}
                   {selectedCharacter.guardedness && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Guardedness</p>
                       <span className="font-serif italic text-xl block leading-none">{selectedCharacter.guardedness}</span>
                     </div>
                   )}
                   {selectedCharacter.alternateType && (
-                    <div className="border border-[#1a1a1a]/5 p-4 rounded bg-[var(--bg-card)]/30">
+                    <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Alternate Type</p>
                       <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}</p>
                     </div>
@@ -3381,7 +3381,7 @@ function AppContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                   <div className="space-y-6">
-                    <div className="border-b border-[#1a1a1a]/5 pb-4">
+                    <div className="border-b border-charcoal/5 pb-4">
                       <button 
                         onClick={() => toggleSection('energetics')}
                         className="w-full flex items-center justify-between group"
@@ -3401,7 +3401,7 @@ function AppContent() {
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
                               {Object.entries(ct.energetics).filter(([_, val]) => val).map(([key, val]) => (
-                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[var(--bg-card)]/20">
+                                <div key={key} className="border border-charcoal/5 p-3 rounded bg-[var(--bg-card)]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <div className="flex flex-col">
                                     <p className="font-serif italic text-base leading-tight">{val}</p>
@@ -3415,7 +3415,7 @@ function AppContent() {
                       </AnimatePresence>
                     </div>
 
-                    <div className="border-b border-[#1a1a1a]/5 pb-4">
+                    <div className="border-b border-charcoal/5 pb-4">
                       <button 
                         onClick={() => toggleSection('functions')}
                         className="w-full flex items-center justify-between group"
@@ -3435,7 +3435,7 @@ function AppContent() {
                           >
                             <div className="grid grid-cols-2 gap-4 pt-4">
                               {Object.entries(ct.functions).filter(([_, val]) => val).map(([key, val]) => (
-                                <div key={key} className="border border-[#1a1a1a]/5 p-3 rounded bg-[var(--bg-card)]/20">
+                                <div key={key} className="border border-charcoal/5 p-3 rounded bg-[var(--bg-card)]/20">
                                   <p className="font-mono text-[9px] uppercase opacity-40 mb-1">{key}</p>
                                   <div className="flex flex-col">
                                     <p className="font-serif italic text-base leading-tight">{val}</p>
@@ -3457,19 +3457,19 @@ function AppContent() {
                       </h4>
                       <div className="grid grid-cols-3 gap-3">
                         {ct.axes.judgment && (
-                          <div className="border border-[#1a1a1a]/5 p-3 rounded">
+                          <div className="border border-charcoal/5 p-3 rounded">
                             <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Judgment</p>
                             <p className="font-serif italic text-base">{ct.axes.judgment}</p>
                           </div>
                         )}
                         {ct.axes.perception && (
-                          <div className="border border-[#1a1a1a]/5 p-3 rounded">
+                          <div className="border border-charcoal/5 p-3 rounded">
                             <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Perception</p>
                             <p className="font-serif italic text-base">{ct.axes.perception}</p>
                           </div>
                         )}
                         {ct.quadra && (
-                          <div className="border border-[#1a1a1a]/5 p-3 rounded bg-[#1a1a1a] text-white">
+                          <div className="border border-charcoal/5 p-3 rounded bg-charcoal text-beige">
                             <p className="font-mono text-[9px] uppercase opacity-40 mb-1">Quadra</p>
                             <p className="font-serif italic text-base">{ct.quadra}</p>
                           </div>
@@ -3480,7 +3480,7 @@ function AppContent() {
                 </div>
 
                 {/* Analysis Section (Full-width) */}
-                <div id="analysis" className="border-t border-[#1a1a1a]/10 pt-8 mt-12 scroll-mt-24">
+                <div id="analysis" className="border-t border-charcoal/10 pt-8 mt-12 scroll-mt-24">
                     <button 
                       onClick={() => toggleSection('analysis')}
                       className="w-full flex items-center justify-between group py-2"
@@ -3551,7 +3551,7 @@ function AppContent() {
                     </AnimatePresence>
 
                     {/* Metadata Footer */}
-                    <div className="flex flex-col sm:flex-row gap-8 pt-8 border-t border-[#1a1a1a]/5 opacity-60 mt-12">
+                    <div className="flex flex-col sm:flex-row gap-8 pt-8 border-t border-charcoal/5 opacity-60 mt-12">
                       {selectedCharacter.author && (
                         <div className="flex flex-col gap-1">
                           <p className="font-mono text-[8px] uppercase tracking-widest opacity-40">Author</p>
@@ -3605,7 +3605,7 @@ function AppContent() {
                   if (activeMotifs.length === 0) return null;
 
                   return (
-                    <div className="mt-12 pt-8 border-t border-[#1a1a1a]/10 relative">
+                    <div className="mt-12 pt-8 border-t border-charcoal/10 relative">
                       <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-6 flex items-center gap-2">
                         <Layers className="w-3 h-3" /> Observed Motif Profile
                       </h4>
@@ -3637,11 +3637,11 @@ function AppContent() {
                                   }
                                 }}
                                 className={`group flex items-center gap-1.5 px-2 py-1 rounded-full transition-all text-left ${
-                                  isActive ? 'bg-[#1a1a1a] text-white' : 'bg-[#1a1a1a]/5 hover:bg-[#1a1a1a]/10'
+                                  isActive ? 'bg-charcoal text-beige' : 'bg-charcoal/5 hover:bg-charcoal/10'
                                 }`}
                               >
                                 <span className={`font-mono text-[8px] font-bold px-1 py-0.5 rounded uppercase ${
-                                  isActive ? 'bg-white/20 text-white' : 'bg-[#1a1a1a]/10'
+                                  isActive ? 'bg-beige/20 text-beige' : 'bg-charcoal/10'
                                 }`}>
                                   {motif.function}
                                 </span>
@@ -3667,7 +3667,7 @@ function AppContent() {
                               initial={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: showAbove ? 10 : -10 }}
-                              className="fixed z-[100] bg-[#1a1a1a] text-white p-4 rounded-xl shadow-2xl border border-white/10"
+                              className="fixed z-[100] bg-charcoal text-beige p-4 rounded-xl shadow-2xl border border-charcoal/10"
                               style={{
                                 width: bubbleWidth,
                                 left: leftPos,
@@ -3679,8 +3679,8 @@ function AppContent() {
                               <div 
                                 className={`absolute w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent ${
                                   showAbove 
-                                    ? 'border-t-[8px] border-t-[#1a1a1a] -bottom-2' 
-                                    : 'border-b-[8px] border-b-[#1a1a1a] -top-2'
+                                    ? 'border-t-[8px] border-t-charcoal -bottom-2' 
+                                    : 'border-b-[8px] border-b-charcoal -top-2'
                                 }`}
                                 style={{ left: Math.max(12, Math.min(tailLeft - 8, bubbleWidth - 24)) }}
                               />
@@ -3777,7 +3777,7 @@ function AppContent() {
                 })()}
 
                 {selectedCharacter.notes && (
-                  <div className="mt-12 p-6 bg-[#1a1a1a]/5 rounded-sm border-l-2 border-[#1a1a1a]/20">
+                  <div className="mt-12 p-6 bg-charcoal/5 rounded-sm border-l-2 border-charcoal/20">
                     <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
                       <Info className="w-3 h-3" /> Analyst Notes
                     </h4>
@@ -3785,12 +3785,12 @@ function AppContent() {
                   </div>
                 )}
 
-                <div className="border-t border-[#1a1a1a]/10 pt-8 mt-12">
+                <div className="border-t border-charcoal/10 pt-8 mt-12">
                   <h4 className="font-mono text-[10px] uppercase tracking-widest opacity-40 mb-6">Work Reference</h4>
                   <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     <button 
                       onClick={() => navigateToWork({ title: selectedCharacter.source, medium: selectedCharacter.medium })}
-                      className="w-full md:w-64 aspect-video bg-[#1a1a1a]/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-[#1a1a1a]/10 transition-colors group"
+                      className="w-full md:w-64 aspect-video bg-charcoal/5 rounded-sm overflow-hidden flex items-center justify-center hover:bg-charcoal/10 transition-colors group"
                     >
                       <SmartWorkImage 
                         src={selectedCharacter.workImageUrl} 
@@ -3813,7 +3813,7 @@ function AppContent() {
         })()}
       </AnimatePresence>
 
-      <footer className="mt-16 pt-8 border-t border-[#1a1a1a]/10 flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="mt-16 pt-8 border-t border-charcoal/10 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
           © 2026 CT in Fiction. All rights reserved.
         </p>
