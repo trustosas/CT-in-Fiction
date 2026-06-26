@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <script>
+      (function() {
+        try {
+          const saved = localStorage.getItem('themeMode');
+          let isDark = false;
+          if (saved === 'dark') {
+            isDark = true;
+          } else if (saved !== 'light') {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+          if (isDark) {
+            document.documentElement.classList.add('theme-dark');
+            document.documentElement.classList.remove('theme-light');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.add('theme-light');
+            document.documentElement.classList.remove('theme-dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>CT in Fiction</title>
   </head>
   <body>
