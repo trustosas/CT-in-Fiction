@@ -8,7 +8,7 @@ import './index.css';
 // Inject Vercel analytics programmatically with custom proxy endpoints to bypass ad blockers
 inject({
   scriptSrc: '/va/script.js',
-  endpoint: '/va/event'
+  endpoint: '/va'
 });
 
 createRoot(document.getElementById('root')!).render(
