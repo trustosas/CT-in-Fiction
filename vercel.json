@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/va/script.js",
+      "destination": "/_vercel/insights/script.js"
+    },
+    {
+      "source": "/va/event",
+      "destination": "/_vercel/insights/event"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

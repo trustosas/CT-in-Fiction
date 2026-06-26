@@ -5,8 +5,11 @@ import { inject } from '@vercel/analytics';
 import App from './App.tsx';
 import './index.css';
 
-// Inject Vercel analytics programmatically
-inject();
+// Inject Vercel analytics programmatically with custom proxy endpoints to bypass ad blockers
+inject({
+  scriptSrc: '/va/script.js',
+  endpoint: '/va/event'
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
