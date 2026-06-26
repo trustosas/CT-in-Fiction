@@ -3690,7 +3690,7 @@ function AppContent() {
                                 {activeMotifDesc}
                               </p>
 
-                              <div className="pt-4 border-t border-white/10">
+                              <div className="pt-4 border-t border-beige/15">
                                 <p className="font-mono text-[7px] uppercase tracking-[0.2em] opacity-40 mb-3">Similar Characters</p>
                                 <div className="flex flex-wrap gap-2">
                                   <button 
@@ -3714,7 +3714,7 @@ function AppContent() {
                                         navigate(`/${slugify(selectedCharacter.medium)}/${slugify(selectedCharacter.source)}`);
                                       }
                                     }}
-                                    className="text-[9px] font-mono uppercase tracking-wider bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                                    className="text-[9px] font-mono uppercase tracking-wider bg-beige/10 hover:bg-beige/20 border border-beige/15 hover:border-beige/30 px-2 py-1 rounded transition-all"
                                   >
                                     Current Work
                                   </button>
@@ -3739,7 +3739,7 @@ function AppContent() {
                                         navigate(`/${slugify(selectedCharacter.medium)}`);
                                       }
                                     }}
-                                    className="text-[9px] font-mono uppercase tracking-wider bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                                    className="text-[9px] font-mono uppercase tracking-wider bg-beige/10 hover:bg-beige/20 border border-beige/15 hover:border-beige/30 px-2 py-1 rounded transition-all"
                                   >
                                     Current Medium
                                   </button>
@@ -3762,7 +3762,7 @@ function AppContent() {
                                       setActiveMotifDesc(null);
                                       navigate('/');
                                     }}
-                                    className="text-[9px] font-mono uppercase tracking-wider bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                                    className="text-[9px] font-mono uppercase tracking-wider bg-beige/10 hover:bg-beige/20 border border-beige/15 hover:border-beige/30 px-2 py-1 rounded transition-all"
                                   >
                                     All
                                   </button>
