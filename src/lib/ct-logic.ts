@@ -329,11 +329,16 @@ export function getDevelopmentName(symbol: string, leadEnergetic: string, behavi
   return mapping[symbol] || symbol;
 }
 
-export function formatTypeDisplay(type: string, rawQuadra?: string): string {
-  if (rawQuadra && rawQuadra.trim().length > 0) {
-    return rawQuadra.trim();
+export function formatTypeDisplay(type: string, rawQuadra?: string, subtype?: string): string {
+  if (!type || type.trim().length === 0) {
+    if (subtype && subtype.trim().length > 0) {
+      return subtype.trim();
+    }
+    if (rawQuadra && rawQuadra.trim().length > 0) {
+      return rawQuadra.trim();
+    }
+    return '';
   }
-  if (!type) return '';
   const lead = type.substring(0, 2);
   const aux = type.substring(2, 4);
   const isAuxUncertain = ['Ji', 'Je', 'Pe', 'Pi'].includes(aux);

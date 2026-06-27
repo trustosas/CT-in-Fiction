@@ -1821,7 +1821,7 @@ function AppContent() {
 
         const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              char.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             formatTypeDisplay(char.type, char.rawQuadra).toLowerCase().includes(searchQuery.toLowerCase());
+                             formatTypeDisplay(char.type, char.rawQuadra, char.subtype).toLowerCase().includes(searchQuery.toLowerCase());
         
         return matchesSearch && matchesFilters(char, currentFilters);
       })
@@ -2689,7 +2689,7 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
                                   }).join('\n');
                                   const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
     
@@ -2720,7 +2720,7 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra)}** ${devTicker}`;
+                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
                                   }).join('\n');
     
                                   const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
@@ -3128,7 +3128,7 @@ function AppContent() {
                         </button>
                       </div>
                       <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                        <span className="font-mono text-xs bg-charcoal/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra)}</span>
+                        <span className="font-mono text-xs bg-charcoal/5 px-2 py-1 rounded mb-1">{formatTypeDisplay(char.type, char.rawQuadra, char.subtype)}</span>
                         <div className={`font-sans text-sm font-bold tracking-[0.05em] ${!char.finalDevelopment ? 'opacity-40' : ''}`}>
                           {char.initialDevelopment && char.finalDevelopment && char.initialDevelopment !== char.finalDevelopment ? (
                             <div className="flex items-center gap-1 justify-end">
@@ -3145,7 +3145,7 @@ function AppContent() {
                             const effectiveJAxis = char.judgmentAxis || deriveAxesFromQuadra(char.rawQuadra || char.quadra).judgment;
                             const descriptor = char.emotionalAttitude ? (getEmotionalDescriptor(char.emotionalAttitude, effectiveJAxis) || char.emotionalAttitude) : '';
                             return [
-                              char.subtype?.trim(), 
+                              char.rawQuadra?.trim(), 
                               descriptor
                             ].filter(s => s && s.length > 0).join(' • ');
                           })()}
@@ -3295,7 +3295,7 @@ function AppContent() {
 
                               const shareText = [
                                 `# [${selectedCharacter.name}](${currentPageUrl})`,
-                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${devTicker}`,
+                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra, selectedCharacter.subtype)} | ${devTicker}`,
                                 `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
                                 selectedCharacter.subtype && `> **Inter-Function Dynamics:** ${selectedCharacter.subtype} (${getSubtypeName(selectedCharacter.subtype)})`,
                                 selectedCharacter.behaviourQualia && `> **Qualia:** ${selectedCharacter.behaviourQualia}`,
@@ -3303,7 +3303,7 @@ function AppContent() {
                                 selectedCharacter.emotionalAttitude && `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude} (${getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) || getEmotionalCategory(selectedCharacter.emotionalAttitude)})`,
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
-                                selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
+                                selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra, selectedCharacter.subtype)}`,
                                 selectedCharacter.author && `> **Author:** ${selectedCharacter.author}`,
                                 analysisStatus === 'available' && `[Analysis](${currentPageUrl}#analysis)`,
                                 `-# Shared from [CT in Fiction](${baseOriginUrl})`
@@ -3345,7 +3345,7 @@ function AppContent() {
 
                               const shareText = [
                                 `# [${selectedCharacter.name}](${currentPageUrl})`,
-                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)} | ${devTicker}`,
+                                `## ${formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra, selectedCharacter.subtype)} | ${devTicker}`,
                                 `> **Source:** ${selectedCharacter.source} (${selectedCharacter.year})`,
                                 selectedCharacter.subtype && `> **Inter-Function Dynamics:** ${selectedCharacter.subtype} (${getSubtypeName(selectedCharacter.subtype)})`,
                                 selectedCharacter.behaviourQualia && `> **Qualia:** ${selectedCharacter.behaviourQualia}`,
@@ -3353,7 +3353,7 @@ function AppContent() {
                                 selectedCharacter.emotionalAttitude && `> **Emotional Attitude:** ${selectedCharacter.emotionalAttitude} (${getEmotionalDescriptor(selectedCharacter.emotionalAttitude, ct.axes.judgment) || getEmotionalCategory(selectedCharacter.emotionalAttitude)})`,
                                 selectedCharacter.unguardedness && `> **Unguardedness:** ${selectedCharacter.unguardedness}`,
                                 selectedCharacter.guardedness && `> **Guardedness:** ${selectedCharacter.guardedness}`,
-                                selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}`,
+                                selectedCharacter.alternateType && `> **Alternate Type:** ${formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra, selectedCharacter.subtype)}`,
                                 selectedCharacter.author && `> **Author:** ${selectedCharacter.author}`,
                                 "### Energetics",
                                 `**Lead:** ${ct.energetics.lead} • **Auxiliary:** ${ct.energetics.auxiliary} • **Tertiary:** ${ct.energetics.tertiary} • **Polar:** ${ct.energetics.polar}`,
@@ -3397,7 +3397,7 @@ function AppContent() {
                     </button>
                     <div className="h-px flex-1 bg-charcoal/10" />
                     <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                      <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra)}</span>
+                      <span className="font-mono text-sm font-bold mb-0.5">{formatTypeDisplay(selectedCharacter.type, selectedCharacter.rawQuadra, selectedCharacter.subtype)}</span>
                       <div className={`font-sans text-lg font-bold tracking-[0.05em] leading-none ${!selectedCharacter.finalDevelopment ? 'opacity-40' : ''}`}>
                         {selectedCharacter.initialDevelopment && selectedCharacter.finalDevelopment && selectedCharacter.initialDevelopment !== selectedCharacter.finalDevelopment ? (
                           <div className="grid grid-cols-[1fr_24px_1fr] items-center">
@@ -3533,7 +3533,7 @@ function AppContent() {
                   {selectedCharacter.alternateType && (
                     <div className="border border-charcoal/5 p-4 rounded bg-[var(--bg-card)]/30">
                       <p className="font-mono text-[9px] uppercase opacity-40 mb-2">Alternate Type</p>
-                      <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra)}</p>
+                      <p className="font-serif italic text-xl leading-none">{formatTypeDisplay(selectedCharacter.alternateType, selectedCharacter.rawQuadra, selectedCharacter.subtype)}</p>
                     </div>
                   )}
                 </div>
