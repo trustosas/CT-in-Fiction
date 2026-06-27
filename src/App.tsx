@@ -1053,8 +1053,23 @@ function AppContent() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCommitSha, setLatestCommitSha] = useState<string | null>(null);
 
+  const cleanGithubRepo = (str: string): string => {
+    if (!str) return '';
+    const trimmed = str.trim();
+    if (trimmed.includes('github.com')) {
+      try {
+        const u = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+        const segments = u.pathname.split('/').filter(Boolean);
+        if (segments.length >= 2) return `${segments[0]}/${segments[1]}`;
+      } catch (e) { /* ignore */ }
+    }
+    return trimmed.replace('https://github.com/', '').replace('http://github.com/', '').split('/').slice(0, 2).join('/');
+  };
+
   const fetchLatestCommitSha = async () => {
-    const repo = import.meta.env.VITE_ANALYSES_REPO;
+    const rawRepo = import.meta.env.VITE_ANALYSES_REPO;
+    if (!rawRepo) return null;
+    const repo = cleanGithubRepo(rawRepo);
     if (!repo) return null;
     const branches = ['main', 'master'];
     
@@ -1249,6 +1264,7 @@ function AppContent() {
     try {
       if (!isSilent) setIsLoading(true);
       setIsSyncing(true);
+      let sha = latestCommitSha;
       if (subjectSlug) {
         setAnalysisMarkdown('');
         setAnalysisStatus('idle');
@@ -1256,12 +1272,18 @@ function AppContent() {
       }
       
       // Fetch both characters and the latest commit SHA in parallel
-      const [data, sha] = await Promise.all([
+      // Fetch the latest commit SHA if we do not have it yet or if this is a forced refresh
+      const fetchShaPromise = (!sha || force) ? fetchLatestCommitSha() : Promise.resolve(sha);
+      
+      const [data, fetchedSha] = await Promise.all([
         fetchCharacters(force),
-        fetchLatestCommitSha()
+        fetchShaPromise
       ]);
 
-      if (sha) setLatestCommitSha(sha);
+      if (fetchedSha) {
+        sha = fetchedSha;
+        setLatestCommitSha(fetchedSha);
+      }
 
       if (data && Array.isArray(data)) {
         setCharacters(data);
