@@ -115,6 +115,11 @@ async function startServer() {
     }
   });
 
+  // Vercel Analytics reporting endpoint placeholder
+  app.post("/va", (req, res) => {
+    res.status(204).end();
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -141,8 +141,91 @@ const pluralize = (count: number, singular: string, plural?: string) => {
 function MarkdownAnalysis({ markdown }: { markdown: string }) {
   return (
     <div className="relative group">
-      <div className="prose prose-sm max-w-none prose-neutral opacity-90 leading-relaxed font-serif text-lg prose-p:last:mb-0">
-        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} rehypePlugins={[rehypeRaw]}>
+      <div className="leading-relaxed font-serif text-charcoal/90">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkBreaks]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            h1: ({ node, ...props }) => (
+              <h1 
+                className="font-serif text-2xl sm:text-3xl font-semibold mt-10 mb-4 pb-2 border-b border-charcoal/15 text-charcoal tracking-tight" 
+                {...props}
+              />
+            ),
+            h2: ({ node, ...props }) => (
+              <h2 
+                className="font-serif text-xl sm:text-2xl font-medium mt-8 mb-3 text-charcoal tracking-tight" 
+                {...props}
+              />
+            ),
+            h3: ({ node, ...props }) => (
+              <h3 
+                className="font-serif text-lg sm:text-xl font-medium mt-6 mb-2 text-charcoal/90 italic" 
+                {...props}
+              />
+            ),
+            p: ({ node, ...props }) => (
+              <p 
+                className="font-serif text-[16px] sm:text-[18px] leading-relaxed mb-4 text-charcoal/80" 
+                {...props}
+              />
+            ),
+            ul: ({ node, ...props }) => (
+              <ul 
+                className="list-disc pl-6 mb-6 space-y-2.5 text-charcoal/85 font-serif text-[16px] sm:text-[18px]" 
+                {...props}
+              />
+            ),
+            ol: ({ node, ...props }) => (
+              <ol 
+                className="list-decimal pl-6 mb-6 space-y-2.5 text-charcoal/85 font-serif text-[16px] sm:text-[18px]" 
+                {...props}
+              />
+            ),
+            li: ({ node, ...props }) => (
+              <li 
+                className="leading-relaxed" 
+                {...props}
+              />
+            ),
+            blockquote: ({ node, ...props }) => (
+              <blockquote 
+                className="border-l-4 border-charcoal/30 pl-4 italic my-6 text-charcoal/70 bg-charcoal/5 py-2 pr-4 rounded-r" 
+                {...props}
+              />
+            ),
+            strong: ({ node, ...props }) => (
+              <strong 
+                className="font-bold text-charcoal" 
+                {...props}
+              />
+            ),
+            em: ({ node, ...props }) => (
+              <em 
+                className="italic text-charcoal/90" 
+                {...props}
+              />
+            ),
+            a: ({ node, ...props }) => (
+              <a 
+                className="underline text-charcoal hover:opacity-85 transition-opacity" 
+                {...props}
+              />
+            ),
+            code: ({ node, ...props }) => (
+              <code 
+                className="font-mono text-xs bg-charcoal/10 px-1.5 py-0.5 rounded text-charcoal" 
+                {...props}
+              />
+            ),
+            pre: ({ node, ...props }) => (
+              <pre 
+                className="font-mono text-xs bg-charcoal/5 p-4 rounded overflow-x-auto text-charcoal my-4 border border-charcoal/10" 
+                {...props}
+              />
+            ),
+          }}
+        >
           {markdown}
         </ReactMarkdown>
       </div>
