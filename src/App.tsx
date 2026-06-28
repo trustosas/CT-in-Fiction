@@ -3150,6 +3150,7 @@ function AppContent() {
                               : '';
                             return [
                               displaySubtype, 
+                              char.rawQuadra?.trim(),
                               descriptor
                             ].filter(s => s && s.length > 0).join(' • ');
                           })()}
