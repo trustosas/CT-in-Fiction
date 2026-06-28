@@ -3144,8 +3144,10 @@ function AppContent() {
                           {(() => {
                             const effectiveJAxis = char.judgmentAxis || deriveAxesFromQuadra(char.rawQuadra || char.quadra).judgment;
                             const descriptor = char.emotionalAttitude ? (getEmotionalDescriptor(char.emotionalAttitude, effectiveJAxis) || char.emotionalAttitude) : '';
+                            const isEdgeCase = ['je+pi', 'ji+pe', 'j', 'p', 'e', 'i', 'jepi', 'jipe'].includes(char.type?.trim().toLowerCase());
+                            const displaySubtype = !isEdgeCase && char.subtype?.toLowerCase() !== 'all' ? char.subtype?.trim() : '';
                             return [
-                              char.rawQuadra?.trim(), 
+                              displaySubtype, 
                               descriptor
                             ].filter(s => s && s.length > 0).join(' • ');
                           })()}
