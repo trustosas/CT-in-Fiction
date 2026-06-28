@@ -339,6 +339,25 @@ export function formatTypeDisplay(type: string, rawQuadra?: string, subtype?: st
     }
     return '';
   }
+
+  const cleanType = type.trim();
+  const customLabels: Record<string, string> = {
+    'Je+Pi': 'Conductor',
+    'Ji+Pe': 'Revisor',
+    'J': 'Judgment-lead',
+    'P': 'Perception-lead',
+    'E': 'Extroverted',
+    'I': 'Introverted'
+  };
+
+  const matchedKey = Object.keys(customLabels).find(
+    k => k.toLowerCase() === cleanType.toLowerCase() || k.toLowerCase().replace(/\+/g, '') === cleanType.toLowerCase().replace(/\+/g, '')
+  );
+
+  if (matchedKey) {
+    return customLabels[matchedKey];
+  }
+
   const lead = type.substring(0, 2);
   const aux = type.substring(2, 4);
   const isAuxUncertain = ['Ji', 'Je', 'Pe', 'Pi'].includes(aux);
