@@ -3248,8 +3248,8 @@ function AppContent() {
                         <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1 flex items-center gap-1.5" title={char.name}>
                           <span className="truncate">{char.name}</span>
                           {hasAnalysisInTree(char) && (
-                            <span title="Analysis available" className="inline-flex items-center translate-y-[2px] opacity-40 hover:opacity-70 transition-opacity">
-                              <FileText className="w-4 h-4 text-charcoal flex-shrink-0" />
+                            <span title="Analysis available" className="inline-flex items-center translate-y-[2px] opacity-45 hover:opacity-75 transition-opacity">
+                              <FileText className="w-[19px] h-[19px] text-charcoal flex-shrink-0" fill="currentColor" stroke="var(--bg-page)" />
                             </span>
                           )}
                         </h3>
@@ -3402,11 +3402,6 @@ function AppContent() {
                     className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words select-none relative cursor-pointer flex items-center gap-3 flex-wrap"
                   >
                     <span>{selectedCharacter.name}</span>
-                    {hasAnalysisInTree(selectedCharacter) && (
-                      <span title="Analysis available" className="inline-flex items-center translate-y-[4px] md:translate-y-[6px] opacity-30 hover:opacity-60 transition-opacity">
-                        <FileText className="w-8 h-8 md:w-10 md:h-10 text-charcoal flex-shrink-0" />
-                      </span>
-                    )}
                     <AnimatePresence mode="wait">
                       {copyStatus ? (
                         <motion.span
@@ -3807,15 +3802,18 @@ function AppContent() {
                         </a>
                         <AnimatePresence mode="wait">
                           {isFetchingAnalysis ? (
-                            <motion.span 
+                            <motion.div 
                               key="fetching"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 0.4 }}
-                              exit={{ opacity: 0 }}
-                              className="font-mono text-[9px] uppercase tracking-widest italic"
+                              initial={{ opacity: 0, x: -5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -5 }}
+                              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-charcoal/5 border-charcoal/10 text-charcoal cursor-default"
                             >
-                              Fetching...
-                            </motion.span>
+                              <Loader2 className="w-2.5 h-2.5 animate-spin opacity-40" />
+                              <span className="font-mono text-[8px] uppercase tracking-tighter">
+                                Fetching...
+                              </span>
+                            </motion.div>
                           ) : !expandedSections.has('analysis') ? (
                             <motion.span 
                               key="status"
