@@ -347,7 +347,6 @@ function PaginationControls({
       <button 
         onClick={() => {
           onChange(Math.max(1, current - 1));
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={current === 1}
         className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-charcoal/20 rounded-full disabled:opacity-10 hover:bg-charcoal hover:text-beige transition-all"
@@ -366,7 +365,6 @@ function PaginationControls({
       <button 
         onClick={() => {
           onChange(Math.min(totalPages, current + 1));
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={current === totalPages}
         className="group flex items-center gap-1 sm:gap-2 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] px-2.5 sm:px-5 py-2 sm:py-2.5 border border-charcoal/20 rounded-full disabled:opacity-10 hover:bg-charcoal hover:text-beige transition-all"
@@ -694,6 +692,7 @@ function AppContent() {
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const scrollPositions = useRef<Record<string, number>>({});
   const lastPathname = useRef<string>(location.pathname);
+  const lastPathForPageScroll = useRef<string>(location.pathname);
   const isFirstRender = useRef(true);
   
   const getBaseKey = () => {
@@ -916,9 +915,23 @@ function AppContent() {
 
     if (isFirstRender.current) {
       isFirstRender.current = false;
+      lastPathForPageScroll.current = location.pathname;
       return;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (lastPathForPageScroll.current === location.pathname) {
+      const searchbar = document.getElementById('searchbar-area');
+      if (searchbar) {
+        const yOffset = -4;
+        const y = searchbar.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    lastPathForPageScroll.current = location.pathname;
   }, [currentPage, location.pathname]);
 
   useEffect(() => {
@@ -2905,7 +2918,7 @@ function AppContent() {
               </div>
               
               {currentView === 'all-works' || currentView === 'medium' ? (
-                <div className="flex flex-col gap-3.5 w-full">
+                <div id="searchbar-area" className="flex flex-col gap-3.5 w-full pt-2">
                   <div className="relative w-full max-w-2xl">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                     <input 
@@ -2972,7 +2985,7 @@ function AppContent() {
                   </div>
                 </div>
               ) : (currentView === 'feed' || currentView === 'work') && (
-                <div className="flex flex-col gap-4 w-full lg:w-auto">
+                <div id="searchbar-area" className="flex flex-col gap-4 w-full lg:w-auto pt-2">
                   <div className="flex items-center gap-2 sm:gap-4">
                     <div className="relative flex-1 min-w-0">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
