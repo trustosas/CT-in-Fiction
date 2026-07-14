@@ -366,7 +366,7 @@ export function formatTypeDisplay(type: string, rawQuadra?: string, subtype?: st
   );
 
   if (matchedKey) {
-    return customLabels[matchedKey];
+    return q ? `${q} ${customLabels[matchedKey]}` : customLabels[matchedKey];
   }
 
   const lead = type.substring(0, 2);
