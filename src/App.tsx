@@ -1518,6 +1518,17 @@ function AppContent() {
     }
     
     if (matchedAuthor) {
+      // If the user manually unfollowed this author or work while in the settings modal,
+      // we navigate back to the gallery instead of auto-re-following it.
+      if (showSettings) {
+        const isAuthorUnfollowed = !selectedAuthors.includes(matchedAuthor);
+        const isWorkUnfollowed = matchedWork && unfollowedWorks.includes(`${matchedAuthor}:${matchedWork}`);
+        if (isAuthorUnfollowed || isWorkUnfollowed) {
+          navigate('/');
+          return;
+        }
+      }
+
       if (!selectedAuthors.includes(matchedAuthor)) {
         setSelectedAuthors(prev => [...prev, matchedAuthor!]);
       }
@@ -1528,7 +1539,7 @@ function AppContent() {
         }
       }
     }
-  }, [characters, mediumSlug, workSlug, subjectSlug, selectedAuthors, unfollowedWorks]);
+  }, [characters, mediumSlug, workSlug, subjectSlug, selectedAuthors, unfollowedWorks, showSettings, navigate]);
 
   const publishedCharacters = useMemo(() => {
     return characters.filter(c => {
@@ -2434,12 +2445,13 @@ function AppContent() {
 
   const isNotFound = useMemo(() => {
     if (isLoading) return false;
+    if (showSettings) return false;
     if (currentView === 'all-works') return false;
     if (mediumSlug && !activeMedium) return true;
     if (workSlug && !activeWork) return true;
     if (subjectSlug && !selectedCharacter) return true;
     return false;
-  }, [isLoading, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
+  }, [isLoading, showSettings, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
 
   const hasArchetypeFilters = useMemo(() => {
     return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedInterEnergetic || selectedEmotionalAttitude || filterAuthors.length > 0 || selectedMotifs.length > 0);
