@@ -3148,9 +3148,11 @@ function AppContent() {
                             const displaySubtype = char.subtype && char.subtype.toLowerCase() !== 'all' && char.subtype.trim().toLowerCase() !== label.trim().toLowerCase()
                               ? char.subtype.trim()
                               : '';
+                            const showQuadra = char.rawQuadra && char.rawQuadra.trim().length > 0 && 
+                              (!label.toLowerCase().includes(char.rawQuadra.toLowerCase().trim()));
                             return [
                               displaySubtype, 
-                              char.rawQuadra?.trim(),
+                              showQuadra ? char.rawQuadra.trim() : '',
                               descriptor
                             ].filter(s => s && s.length > 0).join(' • ');
                           })()}

@@ -340,18 +340,29 @@ export function formatTypeDisplay(type: string, rawQuadra?: string, subtype?: st
     return '';
   }
 
-  const cleanType = type.trim();
+  const cleanType = type.trim().toLowerCase().replace(/\+/g, '');
+  const q = rawQuadra ? rawQuadra.trim() : '';
+
+  if (cleanType === 'jepi') {
+    return q ? `${q} Conductor` : 'Conductor';
+  }
+  if (cleanType === 'jipe') {
+    return q ? `${q} Revisor` : 'Revisor';
+  }
+  if (cleanType === 'e') {
+    return q ? `${q} Extrovert` : 'Extrovert';
+  }
+  if (cleanType === 'i') {
+    return q ? `${q} Introvert` : 'Introvert';
+  }
+
   const customLabels: Record<string, string> = {
-    'Je+Pi': 'Conductor',
-    'Ji+Pe': 'Revisor',
     'J': 'Judgment-lead',
-    'P': 'Perception-lead',
-    'E': 'Extroverted',
-    'I': 'Introverted'
+    'P': 'Perception-lead'
   };
 
   const matchedKey = Object.keys(customLabels).find(
-    k => k.toLowerCase() === cleanType.toLowerCase() || k.toLowerCase().replace(/\+/g, '') === cleanType.toLowerCase().replace(/\+/g, '')
+    k => k.toLowerCase() === cleanType
   );
 
   if (matchedKey) {
