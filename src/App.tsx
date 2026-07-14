@@ -2820,7 +2820,11 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
+                                    const hasAnalysis = hasAnalysisInTree(c);
+                                    const subjectName = hasAnalysis 
+                                      ? `[${c.name}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : c.name;
+                                    return `- ${subjectName} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
                                   }).join('\n');
                                   const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
     
@@ -2851,7 +2855,11 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
-                                    return `- ${c.name} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
+                                    const hasAnalysis = hasAnalysisInTree(c);
+                                    const subjectName = hasAnalysis 
+                                      ? `[${c.name}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : c.name;
+                                    return `- ${subjectName} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
                                   }).join('\n');
     
                                   const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
