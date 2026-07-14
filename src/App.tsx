@@ -2820,11 +2820,20 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
+                                    
                                     const hasAnalysis = hasAnalysisInTree(c);
-                                    const subjectName = hasAnalysis 
-                                      ? `[${c.name}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
-                                      : c.name;
-                                    return `- ${subjectName} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
+                                    const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
+                                    const typeWithLink = hasAnalysis
+                                      ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : typeDisplay;
+                                    
+                                    const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
+                                    const emotionalName = c.emotionalAttitude 
+                                      ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
+                                      : '';
+                                    const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
+
+                                    return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
                                   }).join('\n');
                                   const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
     
@@ -2855,11 +2864,20 @@ function AppContent() {
                                     const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
                                       ? `${c.initialDevelopment} › ${c.finalDevelopment}`
                                       : (c.finalDevelopment || c.initialDevelopment);
+                                    
                                     const hasAnalysis = hasAnalysisInTree(c);
-                                    const subjectName = hasAnalysis 
-                                      ? `[${c.name}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
-                                      : c.name;
-                                    return `- ${subjectName} **${formatTypeDisplay(c.type, c.rawQuadra, c.subtype)}** ${devTicker}`;
+                                    const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
+                                    const typeWithLink = hasAnalysis
+                                      ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : typeDisplay;
+                                    
+                                    const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
+                                    const emotionalName = c.emotionalAttitude 
+                                      ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
+                                      : '';
+                                    const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
+
+                                    return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
                                   }).join('\n');
     
                                   const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
