@@ -705,6 +705,20 @@ function AppContent() {
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [analysisTreePaths, setAnalysisTreePaths] = useState<Set<string>>(() => {
+    try {
+      const cached = localStorage.getItem('ct_github_tree_cache');
+      if (cached) {
+        const paths = JSON.parse(cached);
+        if (Array.isArray(paths)) {
+          return new Set(paths.map(p => p.toLowerCase().trim()));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return new Set();
+  });
   const [showSyncTrigger, setShowSyncTrigger] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(() => {
@@ -1066,6 +1080,88 @@ function AppContent() {
     return trimmed.replace('https://github.com/', '').replace('http://github.com/', '').split('/').slice(0, 2).join('/');
   };
 
+  const getFilePath = (str: string): string => {
+    if (!str) return '';
+    const trimmed = str.trim();
+    if (!trimmed.startsWith('http')) return trimmed;
+    try {
+      const u = new URL(trimmed);
+      const segments = u.pathname.split('/').filter(Boolean);
+      if (segments.length < 3) return '';
+      
+      let startIdx = 2;
+      if (u.hostname === 'github.com') {
+        if (segments[2] === 'blob' || segments[2] === 'raw' || segments[2] === 'tree') {
+          startIdx = 4;
+        } else {
+          startIdx = 3;
+        }
+      } else if (u.hostname === 'raw.githubusercontent.com') {
+        if (segments[2] === 'refs' && segments[3] === 'heads') {
+          startIdx = 5;
+        } else {
+          startIdx = 3;
+        }
+      }
+      return segments.slice(startIdx).join('/');
+    } catch (e) {
+      return trimmed;
+    }
+  };
+
+  const fetchGithubTree = async (sha: string) => {
+    const rawRepo = import.meta.env.VITE_ANALYSES_REPO;
+    if (!rawRepo) return null;
+    const repo = cleanGithubRepo(rawRepo);
+    if (!repo) return null;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`, {
+        mode: 'cors',
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.tree || [];
+      }
+    } catch (err) {
+      console.error('Failed to fetch Github tree:', err);
+    }
+    return null;
+  };
+
+  const hasAnalysisInTree = (char: Character): boolean => {
+    if (!char) return false;
+    
+    if (analysisTreePaths.size > 0) {
+      if (char.analysis && char.analysis.trim().length > 0) {
+        const charPath = getFilePath(char.analysis).toLowerCase().trim();
+        if (analysisTreePaths.has(charPath)) return true;
+        if (analysisTreePaths.has(charPath + '.md')) return true;
+        if (charPath.endsWith('.md') && analysisTreePaths.has(charPath.slice(0, -3))) return true;
+      }
+      
+      // Fallback matching by character name/slug in the tree
+      const nameSlug = slugify(char.name);
+      const nameUnder = char.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      
+      for (const p of Array.from(analysisTreePaths)) {
+        const filename = p.split('/').pop() || '';
+        const lowerFilename = filename.toLowerCase();
+        if (lowerFilename === `${nameSlug}.md` || 
+            lowerFilename === `${nameUnder}.md` || 
+            lowerFilename === `${slugify(char.name).replace(/-/g, '_')}.md` ||
+            lowerFilename.startsWith(nameSlug + '.') ||
+            lowerFilename.startsWith(nameUnder + '.')) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    // Fallback if tree is not yet loaded
+    return !!(char.analysis && char.analysis.trim().length > 0);
+  };
+
   const fetchLatestCommitSha = async () => {
     const rawRepo = import.meta.env.VITE_ANALYSES_REPO;
     if (!rawRepo) return null;
@@ -1283,6 +1379,41 @@ function AppContent() {
       if (fetchedSha) {
         sha = fetchedSha;
         setLatestCommitSha(fetchedSha);
+      }
+
+      // Fetch/load GitHub tree paths for analysis files check
+      if (sha) {
+        try {
+          let treePaths: string[] = [];
+          const cachedTree = localStorage.getItem('ct_github_tree_cache');
+          if (cachedTree && !force) {
+            try {
+              treePaths = JSON.parse(cachedTree);
+            } catch (e) {
+              console.error('Failed to parse cached tree', e);
+            }
+          }
+
+          if (treePaths.length === 0 || force) {
+            const treeItems = await fetchGithubTree(sha);
+            if (treeItems && Array.isArray(treeItems)) {
+              treePaths = treeItems
+                .filter((item: any) => item.type === 'blob')
+                .map((item: any) => item.path);
+              try {
+                localStorage.setItem('ct_github_tree_cache', JSON.stringify(treePaths));
+              } catch (e) {
+                console.warn('Failed to save tree to localStorage', e);
+              }
+            }
+          }
+
+          if (treePaths.length > 0) {
+            setAnalysisTreePaths(new Set(treePaths.map(p => p.toLowerCase().trim())));
+          }
+        } catch (treeErr) {
+          console.error('Failed to load GitHub tree:', treeErr);
+        }
       }
 
       if (data && Array.isArray(data)) {
@@ -3114,7 +3245,14 @@ function AppContent() {
                     </div>
                     <div className="flex justify-between items-start mb-2 gap-4">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1" title={char.name}>{char.name}</h3>
+                        <h3 className="font-serif text-2xl group-hover:italic transition-all truncate leading-tight mb-1 flex items-center gap-1.5" title={char.name}>
+                          <span className="truncate">{char.name}</span>
+                          {hasAnalysisInTree(char) && (
+                            <span title="Analysis available" className="inline-flex items-center translate-y-[2px] opacity-40 hover:opacity-70 transition-opacity">
+                              <FileText className="w-4 h-4 text-charcoal flex-shrink-0" />
+                            </span>
+                          )}
+                        </h3>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -3261,9 +3399,14 @@ function AppContent() {
                     onMouseLeave={() => {
                       shareOptionsTimeoutRef.current = setTimeout(() => setShowShareOptions(false), 1500);
                     }}
-                    className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words select-none relative cursor-pointer"
+                    className="font-serif text-4xl xs:text-5xl md:text-7xl leading-tight mb-4 break-words select-none relative cursor-pointer flex items-center gap-3 flex-wrap"
                   >
-                    {selectedCharacter.name}
+                    <span>{selectedCharacter.name}</span>
+                    {hasAnalysisInTree(selectedCharacter) && (
+                      <span title="Analysis available" className="inline-flex items-center translate-y-[4px] md:translate-y-[6px] opacity-30 hover:opacity-60 transition-opacity">
+                        <FileText className="w-8 h-8 md:w-10 md:h-10 text-charcoal flex-shrink-0" />
+                      </span>
+                    )}
                     <AnimatePresence mode="wait">
                       {copyStatus ? (
                         <motion.span
