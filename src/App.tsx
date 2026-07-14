@@ -2585,7 +2585,7 @@ function AppContent() {
                     </nav>
 
                     <div className="pt-6 mt-auto border-t border-[var(--border-nav)] font-mono text-[8px] uppercase tracking-widest opacity-20">
-                      CT in Fiction v3.0
+                      CT in Fiction v3.5
                     </div>
                   </motion.div>
                 </>
@@ -2668,7 +2668,7 @@ function AppContent() {
                       {currentView === 'feed' ? 'Gallery' : 
                       currentView === 'all-works' ? 'All Media Collection' :
                       currentView === 'medium' ? `Medium Collection` :
-                      currentView === 'work' ? 'Work Profile' : 'CT in Fiction v3.0'}
+                      currentView === 'work' ? 'Work Profile' : 'CT in Fiction v3.5'}
                     </span>
                     
                     <AnimatePresence mode="wait">
