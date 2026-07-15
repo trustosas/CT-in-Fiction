@@ -138,8 +138,17 @@ const pluralize = (count: number, singular: string, plural?: string) => {
   return plural || `${singular}s`;
 };
 
-const preloadImages = (characters: Character[]) => {
+const preloadImages = async (characters: Character[], forceBust = false) => {
   if (typeof window === 'undefined' || !characters || characters.length === 0) return;
+
+  if (forceBust && 'caches' in window) {
+    try {
+      await caches.delete('ct-image-cache-v2');
+      console.log('[ImagePreloader] Wiped ct-image-cache-v2 on manual sync');
+    } catch (e) {
+      console.error('[ImagePreloader] Failed to delete cache:', e);
+    }
+  }
 
   const urlsSet = new Set<string>();
   characters.forEach(c => {
@@ -152,7 +161,7 @@ const preloadImages = (characters: Character[]) => {
   });
 
   const urls = Array.from(urlsSet);
-  console.log(`[ImagePreloader] Found ${urls.length} unique images to preload/cache`);
+  console.log(`[ImagePreloader] Found ${urls.length} unique images to preload/cache (forceBust: ${forceBust})`);
 
   const BATCH_SIZE = 5;
   const BATCH_DELAY = 1200;
@@ -175,8 +184,8 @@ const preloadImages = (characters: Character[]) => {
     setTimeout(loadNextBatch, BATCH_DELAY);
   };
 
-  // Give priority to initial page load/rendering, then start preloading after 2 seconds
-  setTimeout(loadNextBatch, 2000);
+  // Give priority to initial page load/rendering, then start preloading after 1.5 seconds
+  setTimeout(loadNextBatch, 1500);
 };
 
 function MarkdownAnalysis({ markdown }: { markdown: string }) {
@@ -1472,7 +1481,7 @@ function AppContent() {
 
       if (data && Array.isArray(data)) {
         setCharacters(data);
-        preloadImages(data);
+        preloadImages(data, force);
         setError(null);
         if (force) setShowSyncTrigger(false);
         
