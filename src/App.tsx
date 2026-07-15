@@ -138,6 +138,47 @@ const pluralize = (count: number, singular: string, plural?: string) => {
   return plural || `${singular}s`;
 };
 
+const preloadImages = (characters: Character[]) => {
+  if (typeof window === 'undefined' || !characters || characters.length === 0) return;
+
+  const urlsSet = new Set<string>();
+  characters.forEach(c => {
+    if (c.imageUrl && typeof c.imageUrl === 'string' && c.imageUrl.trim()) {
+      urlsSet.add(c.imageUrl.trim());
+    }
+    if (c.workImageUrl && typeof c.workImageUrl === 'string' && c.workImageUrl.trim()) {
+      urlsSet.add(c.workImageUrl.trim());
+    }
+  });
+
+  const urls = Array.from(urlsSet);
+  console.log(`[ImagePreloader] Found ${urls.length} unique images to preload/cache`);
+
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY = 1200;
+  let index = 0;
+
+  const loadNextBatch = () => {
+    if (index >= urls.length) {
+      console.log('[ImagePreloader] All background images preloaded successfully');
+      return;
+    }
+
+    const batch = urls.slice(index, index + BATCH_SIZE);
+    index += BATCH_SIZE;
+
+    batch.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+
+    setTimeout(loadNextBatch, BATCH_DELAY);
+  };
+
+  // Give priority to initial page load/rendering, then start preloading after 2 seconds
+  setTimeout(loadNextBatch, 2000);
+};
+
 function MarkdownAnalysis({ markdown }: { markdown: string }) {
   return (
     <div className="relative group">
@@ -1431,6 +1472,7 @@ function AppContent() {
 
       if (data && Array.isArray(data)) {
         setCharacters(data);
+        preloadImages(data);
         setError(null);
         if (force) setShowSyncTrigger(false);
         
