@@ -426,7 +426,7 @@ function PaginationControls({
   );
 }
 
-function OnboardingPrompt({ onShowSettings }: { onShowSettings: () => void }) {
+function OnboardingPrompt() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overscroll-none">
       <motion.div 
@@ -439,19 +439,22 @@ function OnboardingPrompt({ onShowSettings }: { onShowSettings: () => void }) {
            <SettingsIcon className="w-12 h-12 sm:w-20 sm:h-20 mx-auto relative z-10 opacity-10" />
          </div>
          
-         <h1 className="font-serif text-3xl sm:text-5xl mb-4 sm:mb-6 tracking-tight leading-tight px-4">Galleries require <span className="italic">authorship</span>.</h1>
-         <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 mb-8 sm:mb-12 leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
-           Nothing is displayed by default. Follow analysts to curate your experience.
-         </p>
-         
-         <div className="flex flex-col gap-4 px-6 sm:px-0">
-          <button 
-            onClick={onShowSettings}
-            className="px-8 sm:px-12 py-4 sm:py-5 bg-charcoal text-beige font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] rounded-full hover:bg-black transition-all shadow-2xl hover:scale-105 active:scale-95 group"
-          >
-            Configure Authors
-          </button>
-          <p className="font-mono text-[7px] sm:text-[8px] uppercase tracking-widest opacity-20">or browse repositories in Settings</p>
+         <h1 className="font-serif text-3xl sm:text-5xl mb-4 sm:mb-6 tracking-tight leading-tight px-4">
+           Choose your <span className="italic">interests</span> in the settings.
+         </h1>
+         <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] opacity-40 mb-8 leading-relaxed max-w-[280px] sm:max-w-sm mx-auto flex flex-col items-center gap-2">
+           <p>Nothing is displayed by default.</p>
+           <p className="flex items-center justify-center gap-1 flex-wrap">
+             <span>Go to</span>
+             <span className="inline-flex items-center gap-1 normal-case font-semibold text-charcoal">
+               <Menu className="w-3 h-3" /> Menu
+             </span>
+             <ChevronRight className="w-2.5 h-2.5 opacity-60" />
+             <span className="inline-flex items-center gap-1 normal-case font-semibold text-charcoal">
+               <SettingsIcon className="w-2.5 h-2.5" /> Settings
+             </span>
+             <span>to configure authors and works you like.</span>
+           </p>
          </div>
       </motion.div>
     </div>
@@ -734,6 +737,17 @@ const getDepsString = (
     filterAuthors
   });
 };
+
+// Boot every user out if they haven't been booted yet
+if (typeof window !== 'undefined') {
+  const booted = localStorage.getItem('booted_2026_07_17');
+  if (!booted) {
+    localStorage.removeItem('selectedAuthors');
+    localStorage.removeItem('selectedAuthor');
+    localStorage.removeItem('unfollowedWorks');
+    localStorage.setItem('booted_2026_07_17', 'true');
+  }
+}
 
 function AppContent() {
   const navigate = useNavigate();
@@ -2574,11 +2588,8 @@ function AppContent() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {selectedAuthors.length > 0 ? (
+        {isMenuOpen && (
           <>
-            <AnimatePresence>
-              {isMenuOpen && (
-                <>
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -2718,6 +2729,15 @@ function AppContent() {
               </div>
             </nav>
 
+      <AnimatePresence mode="wait">
+        {selectedAuthors.length > 0 ? (
+          <motion.div
+            key="gallery-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col flex-1"
+          >
       {/* Header */}
       <header className="mb-8 border-b border-charcoal/10 pb-6">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-6">
@@ -3422,9 +3442,9 @@ function AppContent() {
               itemsPerPage={ITEMS_PER_PAGE} 
             />
           )}
-          </>
+          </motion.div>
         ) : (
-          <OnboardingPrompt onShowSettings={() => setShowSettings(true)} />
+          <OnboardingPrompt key="onboarding" />
         )}
       </AnimatePresence>
 
@@ -4224,7 +4244,7 @@ function AppContent() {
 
       <footer className="mt-16 pt-8 border-t border-charcoal/10 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-mono text-[10px] uppercase tracking-widest opacity-40">
-          © 2026 CT in Fiction. All rights reserved.
+          © {new Date().getFullYear()} CT in Fiction. All rights reserved.
         </p>
         <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest opacity-40">
           <a href="https://docs.google.com/spreadsheets/d/1IQxu5vK1Zr4twJ1rcxVgDiS-EnhoKj79K9thuOtdpic/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">Database</a>
