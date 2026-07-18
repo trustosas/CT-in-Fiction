@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ct-image-cache-v3';
+const CACHE_NAME = 'ct-image-cache-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -57,8 +57,9 @@ self.addEventListener('fetch', (event) => {
 
         // Not in cache: fetch from network using the original request (with query params)
         return fetch(request).then((networkResponse) => {
-          // Only cache valid responses (status 200 or 0 for opaque cross-origin)
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.status === 0)) {
+          // Only cache valid CORS/same-origin responses (status 200)
+          // NEVER cache opaque responses (status 0) because browser-enforced padding can balloon storage to hundreds of megabytes.
+          if (networkResponse && networkResponse.status === 200) {
             // Store in cache under the clean URL key to avoid duplicate storage
             cache.put(cacheKey, networkResponse.clone());
           }
