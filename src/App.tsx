@@ -3934,17 +3934,19 @@ function AppContent() {
                       onClick={() => toggleSection('analysis')}
                       className="w-full flex items-center justify-between group py-2"
                     >
-                      <div className="flex items-center gap-4">
-                        <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 flex items-center gap-2 group-hover:opacity-100 transition-opacity">
-                          <Activity className="w-3 h-3" /> Analysis
-                        </h4>
-                        <a 
-                          href="#analysis"
-                          onClick={(e) => e.stopPropagation()}
-                          className="opacity-0 group-hover:opacity-20 hover:!opacity-60 transition-opacity translate-y-[1px]"
-                        >
-                          <Hash className="w-3 h-3" />
-                        </a>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-40 flex items-center gap-2 group-hover:opacity-100 transition-opacity">
+                            <Activity className="w-3 h-3" /> Analysis
+                          </h4>
+                          <a 
+                            href="#analysis"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-0 ml-0 opacity-0 group-hover:w-3 group-hover:ml-1.5 group-hover:opacity-20 hover:!opacity-60 transition-all duration-200 overflow-hidden flex items-center translate-y-[1px]"
+                          >
+                            <Hash className="w-3 h-3 shrink-0" />
+                          </a>
+                        </div>
                         <AnimatePresence mode="wait">
                           {isFetchingAnalysis ? (
                             <motion.div 
