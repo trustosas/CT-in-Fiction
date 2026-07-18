@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ct-image-cache-v2';
+const CACHE_NAME = 'ct-image-cache-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -42,46 +42,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Normalize cache key by removing search/query parameters
+  const cleanUrl = new URL(request.url);
+  cleanUrl.search = '';
+  const cacheKey = cleanUrl.toString();
+
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
-      // 1. Try an exact match first
-      return cache.match(request).then((exactResponse) => {
-        if (exactResponse) {
-          // If the cached response is valid, return it
-          return exactResponse;
+      // Try to find a match using the clean URL key (without query parameters)
+      return cache.match(cacheKey).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
 
-        // 2. If no exact match (e.g. dynamic/expired Discord CDN query params), 
-        // try matching ignoring search parameters.
-        return cache.match(request, { ignoreSearch: true }).then((laxResponse) => {
-          if (laxResponse) {
-            console.log('[SW] Served from cache ignoring search params:', request.url);
-            return laxResponse;
+        // Not in cache: fetch from network using the original request (with query params)
+        return fetch(request).then((networkResponse) => {
+          // Only cache valid responses (status 200 or 0 for opaque cross-origin)
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.status === 0)) {
+            // Store in cache under the clean URL key to avoid duplicate storage
+            cache.put(cacheKey, networkResponse.clone());
           }
-
-          // 3. Not in cache: fetch from network
-          return fetch(request).then((networkResponse) => {
-            // Only cache valid responses (status 200 or 0 for opaque cross-origin)
-            if (networkResponse && (networkResponse.status === 200 || networkResponse.status === 0)) {
-              // Store in cache
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch((err) => {
-            console.error('[SW] Fetch failed for:', request.url, err);
-            // If the network request fails completely (offline) but we have ANY matched request 
-            // in the cache, try finding a similar URL as a last-resort fallback.
-            return cache.keys().then((keys) => {
-              const matchedKey = keys.find(k => {
-                const kUrl = new URL(k.url);
-                return kUrl.pathname === url.pathname;
-              });
-              if (matchedKey) {
-                return cache.match(matchedKey);
-              }
-              // Fail gracefully
-              throw err;
+          return networkResponse;
+        }).catch((err) => {
+          console.error('[SW] Fetch failed for:', request.url, err);
+          // Last-resort fallback: if fetch failed (e.g. offline) and we have any key with the same pathname, return it
+          return cache.keys().then((keys) => {
+            const matchedKey = keys.find(k => {
+              const kUrl = new URL(k.url);
+              return kUrl.pathname === cleanUrl.pathname;
             });
+            if (matchedKey) {
+              return cache.match(matchedKey);
+            }
+            throw err;
           });
         });
       });

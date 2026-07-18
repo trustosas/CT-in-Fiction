@@ -143,8 +143,8 @@ const preloadImages = async (characters: Character[], forceBust = false) => {
 
   if (forceBust && 'caches' in window) {
     try {
-      await caches.delete('ct-image-cache-v2');
-      console.log('[ImagePreloader] Wiped ct-image-cache-v2 on manual sync');
+      await caches.delete('ct-image-cache-v3');
+      console.log('[ImagePreloader] Wiped ct-image-cache-v3 on manual sync');
     } catch (e) {
       console.error('[ImagePreloader] Failed to delete cache:', e);
     }
