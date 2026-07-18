@@ -2512,11 +2512,32 @@ function AppContent() {
     if (isLoading) return false;
     if (showSettings) return false;
     if (currentView === 'all-works') return false;
-    if (mediumSlug && !activeMedium) return true;
-    if (workSlug && !activeWork) return true;
-    if (subjectSlug && !selectedCharacter) return true;
+
+    // Check if the requested medium/work/subject actually exists in the raw characters database.
+    // This prevents flashing a 404 error during initial load/boot when selectedAuthors is empty
+    // and the automatic author-following effect hasn't run or updated the state yet.
+    if (mediumSlug) {
+      const mediumExists = characters.some(c => slugify(c.medium) === mediumSlug);
+      if (!mediumExists) return true;
+    }
+    if (workSlug) {
+      const workExists = characters.some(c => 
+        slugify(c.source) === workSlug &&
+        (!mediumSlug || slugify(c.medium) === mediumSlug)
+      );
+      if (!workExists) return true;
+    }
+    if (subjectSlug && workSlug) {
+      const subjectExists = characters.some(c => 
+        slugify(c.name) === subjectSlug && 
+        slugify(c.source) === workSlug &&
+        (!mediumSlug || slugify(c.medium) === mediumSlug)
+      );
+      if (!subjectExists) return true;
+    }
+
     return false;
-  }, [isLoading, showSettings, mediumSlug, activeMedium, workSlug, activeWork, subjectSlug, selectedCharacter, currentView]);
+  }, [isLoading, showSettings, mediumSlug, workSlug, subjectSlug, currentView, characters]);
 
   const hasArchetypeFilters = useMemo(() => {
     return !!(selectedQuadra || selectedDevelopment || selectedJudgmentAxis || selectedPerceptionAxis || selectedLeadEnergetic || selectedAuxEnergetic || selectedBehaviourQualia || selectedSubtype || selectedInterEnergetic || selectedEmotionalAttitude || filterAuthors.length > 0 || selectedMotifs.length > 0);
