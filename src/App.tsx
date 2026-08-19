@@ -9,7 +9,13 @@ import rehypeRaw from 'rehype-raw';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
 import { slugify, formatAnalysisForDiscord, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState, getInterEnergeticDynamics } from './lib/ct-logic';
-import { fetchCharacters } from './services/dataService';
+import { fetchCharacters, migrateLegacyDataToFirestore } from './services/dataService';
+import { useAuth } from './context/AuthContext';
+import { CharacterEditModal } from './components/CharacterEditModal';
+import { AuthorManagerModal } from './components/AuthorManagerModal';
+import { WorkManagerModal } from './components/WorkManagerModal';
+import { CodeLoginModal } from './components/CodeLoginModal';
+import { Plus, Edit, LogIn, LogOut, Shield, ShieldCheck, Database, Sparkles as SparklesIcon, KeyRound, Film } from 'lucide-react';
 
 type View = 'medium' | 'work' | 'feed' | 'all-works';
 
@@ -861,6 +867,14 @@ function AppContent() {
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const { session, authorName, isAdmin, isAuthor, logout } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCharModalOpen, setIsCharModalOpen] = useState(false);
+  const [editingChar, setEditingChar] = useState<Character | null>(null);
+  const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
+  const [isWorkModalOpen, setIsWorkModalOpen] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
   const [analysisTreePaths, setAnalysisTreePaths] = useState<Set<string>>(() => {
     try {
       const cached = localStorage.getItem('ct_github_tree_cache');
@@ -1623,11 +1637,11 @@ function AppContent() {
 
         setRefreshTrigger(prev => prev + 1);
       } else {
-        setError('Database is empty or inaccessible. Please check "Publish to Web" settings.');
+        setError('Database is empty or inaccessible.');
       }
     } catch (err) {
-      console.error('Failed to load dynamic data:', err);
-      setError('Sync Failed. Ensure Spreadsheet is "Published to Web" as CSV.');
+      console.error('Failed to load Firestore data:', err);
+      setError('Failed to connect to Firebase database.');
     } finally {
       if (!isSilent) setIsLoading(false);
       setIsSyncing(false);
@@ -2709,7 +2723,7 @@ function AppContent() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setIsMenuOpen(false)}
-                    className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60]"
+                    className="fixed inset-0 bg-black/60 z-[60]"
                   />
                   <motion.div 
                     initial={{ x: '-100%' }}
@@ -2759,6 +2773,77 @@ function AppContent() {
                       </div>
                       <div className="pt-6 border-t border-[var(--border-nav)] mt-auto">
                         <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
+                        
+                        {session ? (
+                          <div className="space-y-3 mb-4">
+                            <div className="p-3 border border-[var(--border-nav)] bg-charcoal/[0.02] dark:bg-white/[0.02]">
+                              <span className="font-mono text-[8px] uppercase tracking-[0.25em] opacity-40 block">Account</span>
+                              <div className="font-serif font-bold text-base mt-0.5">{authorName}</div>
+                              <span className="font-mono text-[9px] uppercase tracking-widest opacity-60">
+                                {isAdmin ? 'Administrator' : 'Validated Author'}
+                              </span>
+                            </div>
+
+                            <button 
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                setEditingChar(null);
+                                setIsCharModalOpen(true);
+                              }}
+                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Character
+                            </button>
+
+                            <button 
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                setIsWorkModalOpen(true);
+                              }}
+                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
+                            >
+                              <Film className="w-4 h-4" />
+                              Works Directory
+                            </button>
+
+                            {isAdmin && (
+                              <button 
+                                onClick={() => {
+                                  setIsMenuOpen(false);
+                                  setIsAuthorModalOpen(true);
+                                }}
+                                className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
+                              >
+                                <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                Codes & Authors
+                              </button>
+                            )}
+
+                            <button 
+                              onClick={() => {
+                                logout();
+                                setIsMenuOpen(false);
+                              }}
+                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-50 hover:opacity-100 py-0.5 text-red-600/80 dark:text-red-400/80"
+                            >
+                              <LogOut className="w-4 h-4" />
+                              Logout
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsLoginModalOpen(true);
+                            }}
+                            className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-70 hover:opacity-100 py-0.5 mb-2"
+                          >
+                            <KeyRound className="w-5 h-5" />
+                            Login
+                          </button>
+                        )}
+
                         <button 
                           onClick={() => {
                             setIsMenuOpen(false);
@@ -2780,12 +2865,12 @@ function AppContent() {
               )}
             </AnimatePresence>
 
-            {/* Navigation / Breadcrumbs */}
-            <nav className={`flex items-center justify-between border-b border-charcoal/5 pb-6 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
-              <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+            {/* Navigation / Breadcrumbs & Admin Auth */}
+            <nav className={`flex items-center justify-between border-b border-charcoal/5 pb-6 gap-4 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
+              <div className="flex items-center gap-6 overflow-x-auto no-scrollbar min-w-0">
                 <button 
                   onClick={() => setIsMenuOpen(true)}
-                  className="p-2 -ml-2 hover:bg-charcoal/5 rounded-full transition-colors flex items-center gap-2"
+                  className="p-2 -ml-2 hover:bg-charcoal/5 rounded-full transition-colors flex items-center gap-2 shrink-0"
                 >
                   <Menu className="w-5 h-5" />
                   {selectedAuthors.length === 0 && (
@@ -2798,7 +2883,7 @@ function AppContent() {
                     {currentView === 'feed' && (
                       <button 
                         onClick={navigateToHome}
-                        className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold"
+                        className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold shrink-0"
                       >
                         Gallery
                       </button>
@@ -2841,6 +2926,51 @@ function AppContent() {
                   </>
                 )}
               </div>
+
+              {/* Author & Admin Access Controls */}
+              {session && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      setEditingChar(null);
+                      setIsCharModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal text-beige dark:bg-white dark:text-black font-mono text-[9px] uppercase tracking-widest font-bold hover:opacity-90 transition-opacity shadow-sm"
+                    title="Add new character analysis"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Add Character</span>
+                  </button>
+
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsAuthorModalOpen(true)}
+                      className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-widest border border-charcoal/20 dark:border-white/20 hover:border-charcoal opacity-70 hover:opacity-100 transition-all"
+                      title="Manage single-use codes and authors"
+                    >
+                      <KeyRound className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Codes</span>
+                    </button>
+                  )}
+
+                  <div className="flex items-center gap-2 pl-2 border-l border-charcoal/10 dark:border-white/10">
+                    <div className="flex flex-col items-end">
+                      <span className="font-serif text-xs font-bold leading-none">{authorName}</span>
+                      <span className="font-mono text-[8px] uppercase tracking-wider opacity-40 leading-tight">
+                        {isAdmin ? 'Admin' : 'Author'}
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={() => logout()}
+                      className="p-1 opacity-40 hover:opacity-100 transition-opacity"
+                      title="Sign out"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </nav>
 
       <AnimatePresence mode="wait">
@@ -3608,12 +3738,27 @@ function AppContent() {
                   <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-40 block">
                     Subject Profile
                   </span>
-                  <button 
-                    onClick={() => handleSelectCharacter(null)}
-                    className="p-2 -mr-2 hover:bg-black/5 rounded-full transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setEditingChar(selectedCharacter);
+                          setIsCharModalOpen(true);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal/5 hover:bg-charcoal/10 rounded-full font-mono text-[10px] uppercase tracking-wider text-charcoal transition-colors border border-charcoal/10"
+                        title="Edit this character analysis"
+                      >
+                        <Edit className="w-3 h-3" />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleSelectCharacter(null)}
+                      className="p-2 -mr-2 hover:bg-black/5 rounded-full transition-colors"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mb-12 relative group/subject">
@@ -4368,6 +4513,43 @@ function AppContent() {
           <a href="mailto:osayandeosas1000@gmail.com" className="hover:opacity-100 transition-opacity">Contact</a>
         </div>
       </footer>
+
+      {/* Author & Admin Modals */}
+      <CodeLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
+
+      <CharacterEditModal
+        isOpen={isCharModalOpen}
+        onClose={() => {
+          setIsCharModalOpen(false);
+          setEditingChar(null);
+        }}
+        character={editingChar}
+        onSaved={() => {
+          loadData(false, true);
+        }}
+        onOpenWorkManager={() => {
+          setIsWorkModalOpen(true);
+        }}
+      />
+
+      <WorkManagerModal
+        isOpen={isWorkModalOpen}
+        onClose={() => setIsWorkModalOpen(false)}
+        onWorksUpdated={() => {
+          loadData(false, true);
+        }}
+      />
+
+      <AuthorManagerModal
+        isOpen={isAuthorModalOpen}
+        onClose={() => setIsAuthorModalOpen(false)}
+        onAuthorsUpdated={() => {
+          loadData(false, true);
+        }}
+      />
     </div>
   );
 }
