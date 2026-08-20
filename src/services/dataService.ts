@@ -18,6 +18,14 @@ const CACHE_TIME_KEY = 'ct_characters_firestore_cache_time';
 let cachedCharacters: Character[] | null = null;
 let lastFetchTime: number = 0;
 
+// Helper with timeout to prevent Firestore network stalls from blocking rendering
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallbackValue), timeoutMs))
+  ]);
+};
+
 /**
  * Fetch characters directly from Firebase Firestore.
  * If Firestore is empty on the very first run, automatically seeds initial data into Firestore.
@@ -28,9 +36,9 @@ export async function fetchCharacters(forceRefresh = false): Promise<Character[]
     return cachedCharacters;
   }
 
-  // 1. Fetch from Firebase Firestore as primary and sole source of truth
+  // 1. Fetch from Firebase Firestore as primary and sole source of truth with 3s timeout
   try {
-    const firestoreChars = await getCharactersFromFirestore();
+    const firestoreChars = await withTimeout(getCharactersFromFirestore(), 3000, []);
     if (firestoreChars && firestoreChars.length > 0) {
       cachedCharacters = firestoreChars;
       lastFetchTime = Date.now();
@@ -44,12 +52,9 @@ export async function fetchCharacters(forceRefresh = false): Promise<Character[]
     // If Firestore database has no characters yet, automatically seed once from static dataset
     if (STATIC_CHARACTERS && STATIC_CHARACTERS.length > 0) {
       console.log('Seeding initial dataset to Firebase Firestore...');
-      await migrateLegacyDataToFirestore(STATIC_CHARACTERS);
-      const seeded = await getCharactersFromFirestore();
-      if (seeded && seeded.length > 0) {
-        cachedCharacters = seeded;
-        return seeded;
-      }
+      migrateLegacyDataToFirestore(STATIC_CHARACTERS).catch(err => console.warn('Background seeding error:', err));
+      cachedCharacters = STATIC_CHARACTERS;
+      return STATIC_CHARACTERS;
     }
   } catch (err) {
     console.error('Firebase Firestore fetch error:', err);
@@ -71,7 +76,8 @@ export async function fetchCharacters(forceRefresh = false): Promise<Character[]
     }
   }
 
-  return STATIC_CHARACTERS || [];
+  cachedCharacters = STATIC_CHARACTERS || [];
+  return cachedCharacters;
 }
 
 // Bulk migration helper: Import characters into Firebase Firestore

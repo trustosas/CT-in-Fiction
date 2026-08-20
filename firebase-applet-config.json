@@ -1,12 +1,11 @@
 {
-  "projectId": "fair-momentum-v67s8",
-  "appId": "1:540595657736:web:4da75fe38348b85b2085bd",
-  "apiKey": "AIzaSyDnsY1d5nMM5zqauuKWELh-FRgHG5EKtxU",
-  "authDomain": "fair-momentum-v67s8.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-ctinfiction3-319efb9e-0356-44c0-8528-f4cd6d07218c",
-  "storageBucket": "fair-momentum-v67s8.firebasestorage.app",
-  "messagingSenderId": "540595657736",
+  "projectId": "gen-lang-client-0181508987",
+  "appId": "1:289191728355:web:b625380e6bc1d8c5f021d6",
+  "apiKey": "AIzaSyDyqS28tMk3n6OTin5dsz94w30KUtg-KPw",
+  "authDomain": "gen-lang-client-0181508987.firebaseapp.com",
+  "storageBucket": "gen-lang-client-0181508987.firebasestorage.app",
+  "messagingSenderId": "289191728355",
   "measurementId": "",
-  "oAuthClientId": "540595657736-f6po2k9d6a9t7toe0atfnk0qi188ue5e.apps.googleusercontent.com",
+  "oAuthClientId": "289191728355-pfrjmkb6jjs448ff4u4pfk46nte92dp7.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }

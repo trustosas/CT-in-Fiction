@@ -1263,4 +1263,198 @@ export function getEmotionalAttitudeLabel(
   };
 }
 
+// ============================================================================
+// §11. Epistemic Type Selection Engine (Uncertainty-First 5-Layer Resolution)
+// ============================================================================
+
+export interface CTTypeCandidate {
+  code: string;
+  lead: 'Ji' | 'Je' | 'Pe' | 'Pi';
+  j_p: 'J' | 'P';
+  macro: 'Ji+Pe' | 'Je+Pi';
+  j_axis: 'Fe-Ti' | 'Te-Fi';
+  p_axis: 'Ne-Si' | 'Se-Ni';
+  quadra: Quadra;
+}
+
+export const EPISTEMIC_16_CANDIDATES: CTTypeCandidate[] = [
+  { code: 'TiNe', lead: 'Ji', j_p: 'J', macro: 'Ji+Pe', j_axis: 'Fe-Ti', p_axis: 'Ne-Si', quadra: 'Alpha' },
+  { code: 'TiSe', lead: 'Ji', j_p: 'J', macro: 'Ji+Pe', j_axis: 'Fe-Ti', p_axis: 'Se-Ni', quadra: 'Beta' },
+  { code: 'FiNe', lead: 'Ji', j_p: 'J', macro: 'Ji+Pe', j_axis: 'Te-Fi', p_axis: 'Ne-Si', quadra: 'Delta' },
+  { code: 'FiSe', lead: 'Ji', j_p: 'J', macro: 'Ji+Pe', j_axis: 'Te-Fi', p_axis: 'Se-Ni', quadra: 'Gamma' },
+
+  { code: 'FeSi', lead: 'Je', j_p: 'J', macro: 'Je+Pi', j_axis: 'Fe-Ti', p_axis: 'Ne-Si', quadra: 'Alpha' },
+  { code: 'FeNi', lead: 'Je', j_p: 'J', macro: 'Je+Pi', j_axis: 'Fe-Ti', p_axis: 'Se-Ni', quadra: 'Beta' },
+  { code: 'TeSi', lead: 'Je', j_p: 'J', macro: 'Je+Pi', j_axis: 'Te-Fi', p_axis: 'Ne-Si', quadra: 'Delta' },
+  { code: 'TeNi', lead: 'Je', j_p: 'J', macro: 'Je+Pi', j_axis: 'Te-Fi', p_axis: 'Se-Ni', quadra: 'Gamma' },
+
+  { code: 'NeTi', lead: 'Pe', j_p: 'P', macro: 'Ji+Pe', j_axis: 'Fe-Ti', p_axis: 'Ne-Si', quadra: 'Alpha' },
+  { code: 'SeTi', lead: 'Pe', j_p: 'P', macro: 'Ji+Pe', j_axis: 'Fe-Ti', p_axis: 'Se-Ni', quadra: 'Beta' },
+  { code: 'NeFi', lead: 'Pe', j_p: 'P', macro: 'Ji+Pe', j_axis: 'Te-Fi', p_axis: 'Ne-Si', quadra: 'Delta' },
+  { code: 'SeFi', lead: 'Pe', j_p: 'P', macro: 'Ji+Pe', j_axis: 'Te-Fi', p_axis: 'Se-Ni', quadra: 'Gamma' },
+
+  { code: 'SiFe', lead: 'Pi', j_p: 'P', macro: 'Je+Pi', j_axis: 'Fe-Ti', p_axis: 'Ne-Si', quadra: 'Alpha' },
+  { code: 'NiFe', lead: 'Pi', j_p: 'P', macro: 'Je+Pi', j_axis: 'Fe-Ti', p_axis: 'Se-Ni', quadra: 'Beta' },
+  { code: 'SiTe', lead: 'Pi', j_p: 'P', macro: 'Je+Pi', j_axis: 'Te-Fi', p_axis: 'Ne-Si', quadra: 'Delta' },
+  { code: 'NiTe', lead: 'Pi', j_p: 'P', macro: 'Je+Pi', j_axis: 'Te-Fi', p_axis: 'Se-Ni', quadra: 'Gamma' }
+];
+
+export const QUADRA_AXES_MAP: Record<string, { j_axis: 'Fe-Ti' | 'Te-Fi'; p_axis: 'Ne-Si' | 'Se-Ni' }> = {
+  Alpha: { j_axis: 'Fe-Ti', p_axis: 'Ne-Si' },
+  Beta:  { j_axis: 'Fe-Ti', p_axis: 'Se-Ni' },
+  Gamma: { j_axis: 'Te-Fi', p_axis: 'Se-Ni' },
+  Delta: { j_axis: 'Te-Fi', p_axis: 'Ne-Si' }
+};
+
+export interface EpistemicUserState {
+  j_p: 'J' | 'P' | null;
+  macro: 'Ji+Pe' | 'Je+Pi' | null;
+  lead: 'Ji' | 'Je' | 'Pe' | 'Pi' | null;
+  quadra: Quadra | null;
+  j_axis: 'Fe-Ti' | 'Te-Fi' | null;
+  p_axis: 'Ne-Si' | 'Se-Ni' | null;
+}
+
+export interface EpistemicEngineResult {
+  candidates: CTTypeCandidate[];
+  inferredState: EpistemicUserState;
+  activeOptions: Record<keyof EpistemicUserState, Set<string>>;
+}
+
+/**
+ * Pure epistemic inference engine recalculation.
+ * Iteratively propagates constraints and collapses candidates.
+ */
+export function recalculateEpistemicEngine(userState: EpistemicUserState): EpistemicEngineResult {
+  const inferred: EpistemicUserState = {
+    j_p: null,
+    macro: null,
+    lead: null,
+    quadra: null,
+    j_axis: null,
+    p_axis: null
+  };
+
+  // Quadra enforcement derived from schema map
+  if (userState.quadra && QUADRA_AXES_MAP[userState.quadra]) {
+    inferred.j_axis = QUADRA_AXES_MAP[userState.quadra].j_axis;
+    inferred.p_axis = QUADRA_AXES_MAP[userState.quadra].p_axis;
+  }
+
+  let filtered = EPISTEMIC_16_CANDIDATES.filter(t => {
+    for (const [key, val] of Object.entries(userState)) {
+      if (val && t[key as keyof CTTypeCandidate] !== val) return false;
+    }
+    for (const [key, val] of Object.entries(inferred)) {
+      if (val && t[key as keyof CTTypeCandidate] !== val) return false;
+    }
+    return true;
+  });
+
+  let inferring = true;
+  while (inferring) {
+    inferring = false;
+    
+    const validPool = {
+      j_p: new Set(filtered.map(c => c.j_p)),
+      macro: new Set(filtered.map(c => c.macro)),
+      lead: new Set(filtered.map(c => c.lead)),
+      quadra: new Set(filtered.map(c => c.quadra)),
+      j_axis: new Set(filtered.map(c => c.j_axis)),
+      p_axis: new Set(filtered.map(c => c.p_axis))
+    };
+
+    (Object.keys(validPool) as Array<keyof EpistemicUserState>).forEach(cat => {
+      if (!userState[cat] && !inferred[cat] && validPool[cat].size === 1) {
+        (inferred as any)[cat] = Array.from(validPool[cat])[0];
+        inferring = true;
+      }
+    });
+
+    if (inferring) {
+      filtered = filtered.filter(t => {
+        for (const [key, val] of Object.entries(inferred)) {
+          if (val && t[key as keyof CTTypeCandidate] !== val) return false;
+        }
+        return true;
+      });
+    }
+  }
+
+  const options: Record<keyof EpistemicUserState, Set<string>> = {
+    j_p: new Set(filtered.map(c => c.j_p)),
+    macro: new Set(filtered.map(c => c.macro)),
+    lead: new Set(filtered.map(c => c.lead)),
+    quadra: new Set(filtered.map(c => c.quadra)),
+    j_axis: new Set(filtered.map(c => c.j_axis)),
+    p_axis: new Set(filtered.map(c => c.p_axis))
+  };
+
+  return { candidates: filtered, inferredState: inferred, activeOptions: options };
+}
+
+/**
+ * Generates editorial natural language resolution description.
+ */
+export function generateNaturalLanguageResolution(
+  activeState: EpistemicUserState,
+  candidateCount: number,
+  singleType: CTTypeCandidate | null
+): string {
+  if (candidateCount === 16) return "Uncertain (Full Matrix Open)";
+  if (candidateCount === 1 && singleType) return `${singleType.code} (Single Type Lock)`;
+
+  const parts: string[] = [];
+
+  let explicitLeadFound = false;
+  if (activeState.lead) {
+    if (activeState.lead === 'Ji' && activeState.j_axis === 'Fe-Ti') { parts.push("Ti-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Ji' && activeState.j_axis === 'Te-Fi') { parts.push("Fi-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Je' && activeState.j_axis === 'Fe-Ti') { parts.push("Fe-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Je' && activeState.j_axis === 'Te-Fi') { parts.push("Te-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Pe' && activeState.p_axis === 'Ne-Si') { parts.push("Ne-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Pe' && activeState.p_axis === 'Se-Ni') { parts.push("Se-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Pi' && activeState.p_axis === 'Ne-Si') { parts.push("Si-lead"); explicitLeadFound = true; }
+    else if (activeState.lead === 'Pi' && activeState.p_axis === 'Se-Ni') { parts.push("Ni-lead"); explicitLeadFound = true; }
+  }
+
+  if (activeState.quadra) {
+    parts.unshift(activeState.quadra);
+  } else if (!explicitLeadFound) {
+    if (activeState.j_axis === 'Fe-Ti') parts.unshift("Measured");
+    if (activeState.j_axis === 'Te-Fi') parts.unshift("Candid");
+    if (activeState.p_axis === 'Ne-Si') parts.unshift("Suspended");
+    if (activeState.p_axis === 'Se-Ni') parts.unshift("Grounded");
+  } else {
+    if (activeState.lead === 'Pe' || activeState.lead === 'Pi') {
+      if (activeState.j_axis === 'Fe-Ti') parts.unshift("Measured");
+      if (activeState.j_axis === 'Te-Fi') parts.unshift("Candid");
+    } else if (activeState.lead === 'Ji' || activeState.lead === 'Je') {
+      if (activeState.p_axis === 'Ne-Si') parts.unshift("Suspended");
+      if (activeState.p_axis === 'Se-Ni') parts.unshift("Grounded");
+    }
+  }
+
+  if (!explicitLeadFound) {
+    if (activeState.lead) {
+      parts.push(`${activeState.lead}-lead`);
+    } else if (activeState.macro === 'Je+Pi' && activeState.j_p === 'J') {
+      parts.push("Je-lead");
+    } else if (activeState.macro === 'Ji+Pe' && activeState.j_p === 'J') {
+      parts.push("Ji-lead");
+    } else if (activeState.macro === 'Je+Pi' && activeState.j_p === 'P') {
+      parts.push("Pi-lead");
+    } else if (activeState.macro === 'Ji+Pe' && activeState.j_p === 'P') {
+      parts.push("Pe-lead");
+    } else if (activeState.macro) {
+      parts.push(activeState.macro === 'Ji+Pe' ? "Revisor" : "Conductor");
+    } else if (activeState.j_p) {
+      parts.push(activeState.j_p === 'P' ? "Perception lead" : "Judgment lead");
+    }
+  }
+
+  return parts.length > 0 ? parts.join(" ") : "Partial Constraint";
+}
+
+
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Sparkles, AlertCircle, Loader2, Plus, Lock, ArrowRight, Film, Check, ExternalLink } from 'lucide-react';
 import { type Character, type Author, type Work, type MediaType, VALID_MEDIA_TYPES } from '../data';
+import { CTEpistemicSelector } from './CTEpistemicSelector';
 import {
   saveCharacterToFirestore,
   getAuthors,
@@ -654,133 +655,47 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
           {/* TAB 2: CT Typology — Spec Driven (§1 - §8) */}
           {activeTab === 'ct' && (
             <div className="space-y-6">
-              {/* §1 & §2. Base Truth Type Input */}
-              <div className="p-5 bg-[var(--bg-page)] border border-[var(--border-color)] rounded-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="font-mono text-[10px] uppercase tracking-widest opacity-80 block font-bold">
-                      Type (§1: The Base Truth) *
-                    </label>
-                    <span className="font-mono text-[8px] uppercase tracking-wider opacity-40">
-                      Every other CT field is derived from or gated by this value.
-                    </span>
-                  </div>
-                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 border border-[var(--border-color)] rounded-sm font-semibold opacity-70">
-                    {deduction.tierLabel}
-                  </span>
-                </div>
+              {/* Epistemic State Engine / Modular CT Type Selector */}
+              <CTEpistemicSelector
+                value={typeInput}
+                quadraValue={rawQuadra}
+                onChange={(newType, newQuadra) => {
+                  handleTypeChange(newType);
+                  if (newQuadra) setRawQuadra(newQuadra);
+                }}
+              />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                  <div>
-                    <input
-                      type="text"
-                      required
-                      value={typeInput}
-                      onChange={(e) => handleTypeChange(e.target.value)}
-                      placeholder="e.g. TiSe, TiPe, Ji"
-                      className="w-full px-3.5 py-2.5 text-base bg-[var(--bg-card)] text-charcoal border border-[var(--border-color)] focus:border-charcoal outline-none rounded-sm font-mono font-bold tracking-wider uppercase"
-                    />
-                  </div>
-
-                  {/* Derived State / Quadra summary */}
-                  <div className="p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[8px] uppercase tracking-widest opacity-50 font-bold">
-                        Derived Quadra & Axes
-                      </span>
-                      {deduction.lockedQuadra && (
-                        <span className="font-mono text-[8px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
-                          <Lock className="w-2.5 h-2.5" />
-                          Locked
-                        </span>
-                      )}
-                    </div>
-
-                    {deduction.lockedQuadra ? (
-                      <div className="space-y-0.5">
-                        <div className="font-serif text-base font-normal">
-                          {deduction.lockedQuadra} Quadra
-                        </div>
-                        <div className="font-mono text-[9px] opacity-60">
-                          {deduction.lockedJudgmentAxis} ({deduction.lockedJudgmentAxis === 'Fe-Ti' ? 'Measured' : 'Candid'}) + {deduction.lockedPerceptionAxis} ({deduction.lockedPerceptionAxis === 'Se-Ni' ? 'Grounded' : 'Suspended'})
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="font-serif text-xs italic opacity-70">
-                          {deduction.explanation}
-                        </div>
-                        {!isHierarchyKnown && (
-                          <div>
-                            <select
-                              value={rawQuadra || ''}
-                              onChange={(e) => setRawQuadra(e.target.value)}
-                              className="w-full px-2 py-1 text-xs bg-[var(--bg-page)] text-charcoal border border-[var(--border-color)] rounded-sm font-mono"
-                            >
-                              <option value="">-- Assert rawQuadra (no hierarchy) --</option>
-                              <option value="Alpha">Alpha</option>
-                              <option value="Beta">Beta</option>
-                              <option value="Gamma">Gamma</option>
-                              <option value="Delta">Delta</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* §3: 4-Slot Stack (when fully resolved) */}
-                {isFullyResolved && deduction.leadFunction && (
-                  <div className="pt-3 border-t border-[var(--border-color)]">
-                    <span className="font-mono text-[8px] uppercase tracking-widest opacity-40 block mb-2 font-semibold">
+              {/* §3: 4-Slot Stack (when fully resolved) */}
+              {isFullyResolved && deduction.leadFunction && (
+                <div className="p-4 bg-[var(--bg-page)] border border-[var(--border-color)] rounded-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] uppercase tracking-widest opacity-60 font-bold">
                       §3 Full 4-Slot Energetic Order (1–2–3–4)
                     </span>
-                    <div className="grid grid-cols-4 gap-2 text-center font-mono">
-                      <div className="p-2 bg-[var(--bg-card)] border border-charcoal/30 rounded-sm">
-                        <div className="text-xs font-bold">{deduction.leadFunction}</div>
-                        <div className="text-[8px] opacity-50 uppercase">Slot 1 • {deduction.leadEnergetic} (Primary)</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
-                        <div className="text-xs font-bold">{deduction.auxiliaryFunction}</div>
-                        <div className="text-[8px] opacity-50 uppercase">Slot 2 • {deduction.auxiliaryEnergetic} (Secondary)</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
-                        <div className="text-xs font-bold">{deduction.tertiaryFunction}</div>
-                        <div className="text-[8px] opacity-50 uppercase">Slot 3 • {deduction.tertiaryEnergetic} (Tertiary)</div>
-                      </div>
-                      <div className="p-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
-                        <div className="text-xs font-bold">{deduction.polarFunction}</div>
-                        <div className="text-[8px] opacity-50 uppercase">Slot 4 • {deduction.polarEnergetic} (Polar)</div>
-                      </div>
+                    <span className="font-mono text-[8px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {deduction.lockedQuadra} Quadra ({deduction.lockedJudgmentAxis} + {deduction.lockedPerceptionAxis})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+                    <div className="p-2.5 bg-[var(--bg-card)] border border-charcoal/30 rounded-sm">
+                      <div className="text-sm font-bold">{deduction.leadFunction}</div>
+                      <div className="text-[8px] opacity-50 uppercase mt-0.5">Slot 1 • {deduction.leadEnergetic} (Primary)</div>
+                    </div>
+                    <div className="p-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
+                      <div className="text-sm font-bold">{deduction.auxiliaryFunction}</div>
+                      <div className="text-[8px] opacity-50 uppercase mt-0.5">Slot 2 • {deduction.auxiliaryEnergetic} (Secondary)</div>
+                    </div>
+                    <div className="p-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
+                      <div className="text-sm font-bold">{deduction.tertiaryFunction}</div>
+                      <div className="text-[8px] opacity-50 uppercase mt-0.5">Slot 3 • {deduction.tertiaryEnergetic} (Tertiary)</div>
+                    </div>
+                    <div className="p-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm">
+                      <div className="text-sm font-bold">{deduction.polarFunction}</div>
+                      <div className="text-[8px] opacity-50 uppercase mt-0.5">Slot 4 • {deduction.polarEnergetic} (Polar)</div>
                     </div>
                   </div>
-                )}
-
-                {/* Candidate Resolution Quick-Pills (§2.1 Positional Partials) */}
-                {!isFullyResolved && deduction.candidateTypes.length > 1 && deduction.candidateTypes.length <= 4 && (
-                  <div className="pt-3 border-t border-[var(--border-color)] flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-[8px] uppercase tracking-widest opacity-50 font-bold">
-                      Resolve to:
-                    </span>
-                    {deduction.candidateTypes.map((cand) => {
-                      const candStack = resolveFullStack(cand);
-                      return (
-                        <button
-                          key={cand}
-                          type="button"
-                          onClick={() => handleSelectCandidateType(cand)}
-                          className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-charcoal rounded-sm font-mono text-[10px] flex items-center gap-1 cursor-pointer transition-all hover:bg-charcoal hover:text-beige"
-                        >
-                          <span className="font-bold">{cand}</span>
-                          <span className="opacity-60">({candStack?.quadra})</span>
-                          <ArrowRight className="w-2.5 h-2.5 opacity-40" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* §5, §6, §7: Gated Parameters */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
