@@ -14,87 +14,13 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Enable JSON parsing with generous limit for image uploads
-  app.use(express.json({ limit: "25mb" }));
-
-  // Configuration
+  // Cache configuration
   const CSV_URL = process.env.VITE_DATABASE_URL;
-  const R2_WORKER_ENDPOINT = process.env.R2_WORKER_ENDPOINT;
-  const R2_API_KEY = process.env.R2_API_KEY;
-  const R2_PUBLIC_DOMAIN = process.env.R2_PUBLIC_DOMAIN;
 
-  // Image upload endpoint (relays to Cloudflare R2 Worker securely)
-  app.post("/api/upload", async (req, res) => {
-    try {
-      const { filename, contentType, dataBase64 } = req.body;
-
-      if (!dataBase64) {
-        return res.status(400).json({ error: "No image data provided" });
-      }
-
-      const cleanFilename = (filename || `upload-${Date.now()}.webp`)
-        .toLowerCase()
-        .replace(/[^a-z0-9.-]/g, "-");
-
-      // If R2 Worker is configured, relay directly to the worker
-      if (R2_WORKER_ENDPOINT) {
-        const buffer = Buffer.from(dataBase64, "base64");
-        const targetUrl = `${R2_WORKER_ENDPOINT.replace(/\/+$/, "")}/${cleanFilename}`;
-
-        const headers: Record<string, string> = {
-          "Content-Type": contentType || "image/webp",
-        };
-        if (R2_API_KEY) {
-          headers["x-api-key"] = R2_API_KEY;
-          headers["Authorization"] = `Bearer ${R2_API_KEY}`;
-        }
-
-        const r2Response = await fetch(targetUrl, {
-          method: "PUT",
-          headers,
-          body: buffer,
-        });
-
-        if (!r2Response.ok) {
-          const errText = await r2Response.text();
-          throw new Error(`R2 Worker upload failed: ${r2Response.status} ${errText}`);
-        }
-
-        let publicUrl = "";
-        try {
-          const r2Json = await r2Response.json();
-          publicUrl = r2Json.url || r2Json.imageUrl || r2Json.publicUrl || "";
-        } catch (e) {
-          // Worker returned raw or non-json response
-        }
-
-        if (!publicUrl) {
-          const baseDomain = R2_PUBLIC_DOMAIN || R2_WORKER_ENDPOINT;
-          publicUrl = `${baseDomain.replace(/\/+$/, "")}/${cleanFilename}`;
-        }
-
-        return res.json({ url: publicUrl, filename: cleanFilename });
-      }
-
-      // Fallback if R2 credentials are not set yet (returns base64 data URI for immediate local preview)
-      const dataUri = `data:${contentType || "image/webp"};base64,${dataBase64}`;
-      return res.json({
-        url: dataUri,
-        filename: cleanFilename,
-        warning: "R2_WORKER_ENDPOINT is not configured. Using data URI placeholder.",
-      });
-    } catch (error) {
-      console.error("Upload failed:", error);
-      res.status(500).json({
-        error: error instanceof Error ? error.message : "Image upload failed",
-      });
-    }
-  });
-
-  // API route for characters (Legacy CSV fallback)
+  // API route for characters
   app.get("/api/characters", async (req, res) => {
     if (!CSV_URL) {
-      return res.json([]);
+      return res.status(500).json({ error: 'Config Error: VITE_DATABASE_URL is not set.' });
     }
     try {
       const isForce = !!req.query.t;

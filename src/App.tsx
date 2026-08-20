@@ -9,13 +9,7 @@ import rehypeRaw from 'rehype-raw';
 import { formatDistanceToNow } from 'date-fns';
 import { CHARACTERS as STATIC_CHARACTERS, type Character } from './data';
 import { slugify, formatAnalysisForDiscord, getStructuredMotifs, getDevelopmentName, getSubtypeName, formatTypeDisplay, deriveQuadra, deriveAxesFromQuadra, normalizeFunctionCode, ENERGETIC_NAMES, FUNCTION_NAMES, FUNCTION_ORDER, getEmotionalDescriptor, getEmotionalCategory, checkEmotionalMatch, getAllMotifs, matchesFilters, type FilterState, getInterEnergeticDynamics } from './lib/ct-logic';
-import { fetchCharacters, migrateLegacyDataToFirestore } from './services/dataService';
-import { useAuth } from './context/AuthContext';
-import { CharacterEditModal } from './components/CharacterEditModal';
-import { AuthorManagerModal } from './components/AuthorManagerModal';
-import { WorkManagerModal } from './components/WorkManagerModal';
-import { CodeLoginModal } from './components/CodeLoginModal';
-import { Plus, Edit, LogIn, LogOut, Shield, ShieldCheck, Database, Sparkles as SparklesIcon, KeyRound, Film } from 'lucide-react';
+import { fetchCharacters } from './services/dataService';
 
 type View = 'medium' | 'work' | 'feed' | 'all-works';
 
@@ -867,14 +861,6 @@ function AppContent() {
   const [characters, setCharacters] = useState<Character[]>(STATIC_CHARACTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const { session, authorName, isAdmin, isAuthor, logout } = useAuth();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isCharModalOpen, setIsCharModalOpen] = useState(false);
-  const [editingChar, setEditingChar] = useState<Character | null>(null);
-  const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
-  const [isWorkModalOpen, setIsWorkModalOpen] = useState(false);
-  const [isMigrating, setIsMigrating] = useState(false);
-  const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
   const [analysisTreePaths, setAnalysisTreePaths] = useState<Set<string>>(() => {
     try {
       const cached = localStorage.getItem('ct_github_tree_cache');
@@ -1355,14 +1341,10 @@ function AppContent() {
     
     for (const branch of branches) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
         const res = await fetch(`https://api.github.com/repos/${repo}/commits/${branch}`, {
           mode: 'cors',
-          cache: 'no-store',
-          signal: controller.signal
+          cache: 'no-store'
         });
-        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           return data.sha;
@@ -1641,11 +1623,11 @@ function AppContent() {
 
         setRefreshTrigger(prev => prev + 1);
       } else {
-        setError('Database is empty or inaccessible.');
+        setError('Database is empty or inaccessible. Please check "Publish to Web" settings.');
       }
     } catch (err) {
-      console.error('Failed to load Firestore data:', err);
-      setError('Failed to connect to Firebase database.');
+      console.error('Failed to load dynamic data:', err);
+      setError('Sync Failed. Ensure Spreadsheet is "Published to Web" as CSV.');
     } finally {
       if (!isSilent) setIsLoading(false);
       setIsSyncing(false);
@@ -1769,19 +1751,12 @@ function AppContent() {
 
   const selectedCharacter = useMemo(() => {
     if (!subjectSlug || !workSlug) return null;
-    const foundInPublished = publishedCharacters.find(c => 
-      slugify(c.name) === subjectSlug && 
-      slugify(c.source) === workSlug &&
-      (!mediumSlug || slugify(c.medium) === mediumSlug)
-    );
-    if (foundInPublished) return foundInPublished;
-
-    return characters.find(c => 
+    return publishedCharacters.find(c => 
       slugify(c.name) === subjectSlug && 
       slugify(c.source) === workSlug &&
       (!mediumSlug || slugify(c.medium) === mediumSlug)
     ) || null;
-  }, [subjectSlug, workSlug, mediumSlug, publishedCharacters, characters]);
+  }, [subjectSlug, workSlug, mediumSlug, publishedCharacters]);
 
   // Lock scroll on background / last view when a Subject profile is in focus
   useEffect(() => {
@@ -2679,7 +2654,7 @@ function AppContent() {
     return worksInMedium.slice(start, start + ITEMS_PER_PAGE);
   }, [worksInMedium, currentPage, ITEMS_PER_PAGE]);
 
-  if (isLoading && characters.length === 0 && (mediumSlug || workSlug || subjectSlug)) {
+  if (isLoading && (mediumSlug || workSlug || subjectSlug)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-page)]">
         <Loader2 className="w-12 h-12 animate-spin mb-4 opacity-20" />
@@ -2734,7 +2709,7 @@ function AppContent() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setIsMenuOpen(false)}
-                    className="fixed inset-0 bg-black/60 z-[60]"
+                    className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60]"
                   />
                   <motion.div 
                     initial={{ x: '-100%' }}
@@ -2784,77 +2759,6 @@ function AppContent() {
                       </div>
                       <div className="pt-6 border-t border-[var(--border-nav)] mt-auto">
                         <span className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-40 mb-4 block">System</span>
-                        
-                        {session ? (
-                          <div className="space-y-3 mb-4">
-                            <div className="p-3 border border-[var(--border-nav)] bg-charcoal/[0.02] dark:bg-white/[0.02]">
-                              <span className="font-mono text-[8px] uppercase tracking-[0.25em] opacity-40 block">Account</span>
-                              <div className="font-serif font-bold text-base mt-0.5">{authorName}</div>
-                              <span className="font-mono text-[9px] uppercase tracking-widest opacity-60">
-                                {isAdmin ? 'Administrator' : 'Validated Author'}
-                              </span>
-                            </div>
-
-                            <button 
-                              onClick={() => {
-                                setIsMenuOpen(false);
-                                setEditingChar(null);
-                                setIsCharModalOpen(true);
-                              }}
-                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
-                            >
-                              <Plus className="w-4 h-4" />
-                              Add Character
-                            </button>
-
-                            <button 
-                              onClick={() => {
-                                setIsMenuOpen(false);
-                                setIsWorkModalOpen(true);
-                              }}
-                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
-                            >
-                              <Film className="w-4 h-4" />
-                              Works Directory
-                            </button>
-
-                            {isAdmin && (
-                              <button 
-                                onClick={() => {
-                                  setIsMenuOpen(false);
-                                  setIsAuthorModalOpen(true);
-                                }}
-                                className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-80 hover:opacity-100 py-0.5"
-                              >
-                                <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                Codes & Authors
-                              </button>
-                            )}
-
-                            <button 
-                              onClick={() => {
-                                logout();
-                                setIsMenuOpen(false);
-                              }}
-                              className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-50 hover:opacity-100 py-0.5 text-red-600/80 dark:text-red-400/80"
-                            >
-                              <LogOut className="w-4 h-4" />
-                              Logout
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsLoginModalOpen(true);
-                            }}
-                            className="flex items-center gap-2 font-serif text-lg hover:italic transition-all text-left w-full opacity-70 hover:opacity-100 py-0.5 mb-2"
-                          >
-                            <KeyRound className="w-5 h-5" />
-                            Login
-                          </button>
-                        )}
-
                         <button 
                           onClick={() => {
                             setIsMenuOpen(false);
@@ -2876,12 +2780,12 @@ function AppContent() {
               )}
             </AnimatePresence>
 
-            {/* Navigation / Breadcrumbs & Admin Auth */}
-            <nav className={`flex items-center justify-between border-b border-charcoal/5 pb-6 gap-4 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
-              <div className="flex items-center gap-6 overflow-x-auto no-scrollbar min-w-0">
+            {/* Navigation / Breadcrumbs */}
+            <nav className={`flex items-center justify-between border-b border-charcoal/5 pb-6 ${selectedAuthors.length > 0 ? 'mb-12' : 'mb-6 md:mb-12'}`}>
+              <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
                 <button 
                   onClick={() => setIsMenuOpen(true)}
-                  className="p-2 -ml-2 hover:bg-charcoal/5 rounded-full transition-colors flex items-center gap-2 shrink-0"
+                  className="p-2 -ml-2 hover:bg-charcoal/5 rounded-full transition-colors flex items-center gap-2"
                 >
                   <Menu className="w-5 h-5" />
                   {selectedAuthors.length === 0 && (
@@ -2894,7 +2798,7 @@ function AppContent() {
                     {currentView === 'feed' && (
                       <button 
                         onClick={navigateToHome}
-                        className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold shrink-0"
+                        className="font-mono text-[10px] uppercase tracking-widest opacity-100 font-bold"
                       >
                         Gallery
                       </button>
@@ -2937,51 +2841,6 @@ function AppContent() {
                   </>
                 )}
               </div>
-
-              {/* Author & Admin Access Controls */}
-              {session && (
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      setEditingChar(null);
-                      setIsCharModalOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal text-beige dark:bg-white dark:text-black font-mono text-[9px] uppercase tracking-widest font-bold hover:opacity-90 transition-opacity shadow-sm"
-                    title="Add new character analysis"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Add Character</span>
-                  </button>
-
-                  {isAdmin && (
-                    <button
-                      onClick={() => setIsAuthorModalOpen(true)}
-                      className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-widest border border-charcoal/20 dark:border-white/20 hover:border-charcoal opacity-70 hover:opacity-100 transition-all"
-                      title="Manage single-use codes and authors"
-                    >
-                      <KeyRound className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Codes</span>
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-2 pl-2 border-l border-charcoal/10 dark:border-white/10">
-                    <div className="flex flex-col items-end">
-                      <span className="font-serif text-xs font-bold leading-none">{authorName}</span>
-                      <span className="font-mono text-[8px] uppercase tracking-wider opacity-40 leading-tight">
-                        {isAdmin ? 'Admin' : 'Author'}
-                      </span>
-                    </div>
-                    
-                    <button
-                      onClick={() => logout()}
-                      className="p-1 opacity-40 hover:opacity-100 transition-opacity"
-                      title="Sign out"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )}
             </nav>
 
       <AnimatePresence mode="wait">
@@ -3075,156 +2934,183 @@ function AppContent() {
                         : `Exploring ${worksInMedium.length} ${pluralize(worksInMedium.length, 'work')} within the ${activeMedium} medium.`
                       }
                     </p>
+
                   </>
                 ) : (
-                  <>
-                    <h1 
-                      onClick={() => {
-                        if (showWorkShareOptions) {
-                          setShowWorkShareOptions(false);
-                          if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                        } else {
+                  <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                    {currentWorkData && (
+                      <div 
+                        onClick={() => currentWorkData.imageUrl && handleCopyImage(currentWorkData.imageUrl)}
+                        className="w-48 aspect-video bg-charcoal/5 rounded-sm overflow-hidden flex items-center justify-center cursor-pointer relative group/work-img active:scale-[0.98] transition-transform"
+                        title="Click to copy image link"
+                      >
+                        <SmartWorkImage 
+                          src={currentWorkData.imageUrl} 
+                          alt={currentWorkData.title}
+                          className="w-full h-full group-hover/work-img:scale-105 transition-transform"
+                          isOpaque={currentWorkData.isOpaque}
+                          medium={currentWorkData.medium}
+                        />
+                        <AnimatePresence>
+                          {copyStatus === 'image' && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none"
+                            >
+                              <span className="font-mono text-[8px] uppercase tracking-widest text-charcoal">Link Copied</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                    <div>
+                      <h1 
+                        onClick={() => {
+                          if (showWorkShareOptions) {
+                            setShowWorkShareOptions(false);
+                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                          } else {
+                            setShowWorkShareOptions(true);
+                            if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                            workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                          }
+                        }}
+                        onMouseEnter={() => {
                           setShowWorkShareOptions(true);
                           if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
+                        }}
+                        onMouseLeave={() => {
                           workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                        }
-                      }}
-                      onMouseEnter={() => {
-                        setShowWorkShareOptions(true);
-                        if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                      }}
-                      onMouseLeave={() => {
-                        workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                      }}
-                      className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-3 select-none relative cursor-pointer"
-                    >
-                      {activeWork}
-                      <AnimatePresence mode="wait">
-                        {copyStatus && (copyStatus === 'work-mini' || copyStatus === 'work-macro') ? (
-                          <motion.span
-                            key={copyStatus}
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-charcoal/40 pointer-events-none"
-                          >
-                            {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
-                          </motion.span>
-                        ) : showWorkShareOptions && (
-                          <motion.div
-                            key="work-share-options"
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            onMouseEnter={() => {
-                              if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
-                            }}
-                            onMouseLeave={() => {
-                              workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
-                            }}
-                            className="absolute -top-6 left-0 flex items-center gap-4 py-1"
-                          >
-                            <button 
-                              onClick={() => {
-                                const currentPageUrl = window.location.href.split('#')[0];
-                                const baseOriginUrl = window.location.origin;
-                                
-                                const limit = 15;
-                                const sorted = [...filteredCharacters].sort((a, b) => {
-                                  const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
-                                  const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
-                                  return da - db;
-                                });
-                                const firstChars = sorted.slice(0, limit);
-                                const remainingCount = filteredCharacters.length - limit;
-  
-                                const charList = firstChars.map(c => {
-                                  const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
-                                    ? `${c.initialDevelopment} › ${c.finalDevelopment}`
-                                    : (c.finalDevelopment || c.initialDevelopment);
-                                  
-                                  const hasAnalysis = hasAnalysisInTree(c);
-                                  const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
-                                  const typeWithLink = hasAnalysis
-                                    ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
-                                    : typeDisplay;
-                                  
-                                  const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
-                                  const emotionalName = c.emotionalAttitude 
-                                    ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
-                                    : '';
-                                  const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
-
-                                  return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
-                                }).join('\n');
-                                const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
-  
-                                const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
-                                
-                                navigator.clipboard.writeText(shareText).then(() => {
-                                  setCopyStatus('work-mini');
-                                  setShowWorkShareOptions(false);
-                                  setTimeout(() => setCopyStatus(null), 2000);
-                                });
-                              }}
-                              className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                        }}
+                        className="font-serif text-4xl xs:text-5xl md:text-7xl leading-[1.1] tracking-tight mb-2 select-none relative cursor-pointer"
+                      >
+                        {activeWork}
+                        <AnimatePresence mode="wait">
+                          {copyStatus && (copyStatus === 'work-mini' || copyStatus === 'work-macro') ? (
+                            <motion.span
+                              key={copyStatus}
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute -top-6 left-0 font-mono text-[9px] uppercase tracking-widest text-charcoal/40 pointer-events-none"
                             >
-                              Mini
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const currentPageUrl = window.location.href.split('#')[0];
-                                const baseOriginUrl = window.location.origin;
-  
-                                const sorted = [...filteredCharacters].sort((a, b) => {
-                                  const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
-                                  const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
-                                  return da - db;
-                                });
-
-                                const charList = sorted.map(c => {
-                                  const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
-                                    ? `${c.initialDevelopment} › ${c.finalDevelopment}`
-                                    : (c.finalDevelopment || c.initialDevelopment);
-                                  
-                                  const hasAnalysis = hasAnalysisInTree(c);
-                                  const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
-                                  const typeWithLink = hasAnalysis
-                                    ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
-                                    : typeDisplay;
-                                  
-                                  const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
-                                  const emotionalName = c.emotionalAttitude 
-                                    ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
-                                    : '';
-                                  const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
-
-                                  return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
-                                }).join('\n');
-  
-                                const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
-                                
-                                navigator.clipboard.writeText(shareText).then(() => {
-                                  setCopyStatus('work-macro');
-                                  setShowWorkShareOptions(false);
-                                  setTimeout(() => setCopyStatus(null), 2000);
-                                });
+                              {copyStatus === 'work-macro' ? 'Full Work Catalog Copied' : 'Work Summary Copied'}
+                            </motion.span>
+                          ) : showWorkShareOptions && (
+                            <motion.div
+                              key="work-share-options"
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              onMouseEnter={() => {
+                                if (workShareOptionsTimeoutRef.current) clearTimeout(workShareOptionsTimeoutRef.current);
                               }}
-                              className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                              onMouseLeave={() => {
+                                workShareOptionsTimeoutRef.current = setTimeout(() => setShowWorkShareOptions(false), 1500);
+                              }}
+                              className="absolute -top-6 left-0 flex items-center gap-4 py-1"
                             >
-                              Macro
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </h1>
-                    <p className="text-base opacity-70 leading-relaxed">
-                      {searchQuery 
-                        ? `Found ${filteredCharacters.length} ${pluralize(filteredCharacters.length, 'subject')} matching "${searchQuery}" in ${activeWork}.`
-                        : `Exploring ${filteredCharacters.length} indexed ${pluralize(filteredCharacters.length, 'subject')} within ${activeWork}${currentWorkData?.year ? ` (${currentWorkData.year})` : ''}.`
-                      }
-                    </p>
-                  </>
+                              <button 
+                                onClick={() => {
+                                  const currentPageUrl = window.location.href.split('#')[0];
+                                  const baseOriginUrl = window.location.origin;
+                                  
+                                  const limit = 15;
+                                  const sorted = [...filteredCharacters].sort((a, b) => {
+                                    const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
+                                    const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
+                                    return da - db;
+                                  });
+                                  const firstChars = sorted.slice(0, limit);
+                                  const remainingCount = filteredCharacters.length - limit;
+    
+                                  const charList = firstChars.map(c => {
+                                    const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                      ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                      : (c.finalDevelopment || c.initialDevelopment);
+                                    
+                                    const hasAnalysis = hasAnalysisInTree(c);
+                                    const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
+                                    const typeWithLink = hasAnalysis
+                                      ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : typeDisplay;
+                                    
+                                    const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
+                                    const emotionalName = c.emotionalAttitude 
+                                      ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
+                                      : '';
+                                    const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
+
+                                    return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
+                                  }).join('\n');
+                                  const suffix = remainingCount > 0 ? ` *...and ${remainingCount} more*` : '';
+    
+                                  const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}${suffix}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                                  
+                                  navigator.clipboard.writeText(shareText).then(() => {
+                                    setCopyStatus('work-mini');
+                                    setShowWorkShareOptions(false);
+                                    setTimeout(() => setCopyStatus(null), 2000);
+                                  });
+                                }}
+                                className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                              >
+                                Mini
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const currentPageUrl = window.location.href.split('#')[0];
+                                  const baseOriginUrl = window.location.origin;
+    
+                                   const sorted = [...filteredCharacters].sort((a, b) => {
+                                     const da = parseDatabaseDate(a.publishedDate || '')?.getTime() || 0;
+                                     const db = parseDatabaseDate(b.publishedDate || '')?.getTime() || 0;
+                                     return da - db;
+                                   });
+
+                                   const charList = sorted.map(c => {
+                                    const devTicker = c.initialDevelopment && c.finalDevelopment && c.initialDevelopment !== c.finalDevelopment
+                                      ? `${c.initialDevelopment} › ${c.finalDevelopment}`
+                                      : (c.finalDevelopment || c.initialDevelopment);
+                                    
+                                    const hasAnalysis = hasAnalysisInTree(c);
+                                    const typeDisplay = formatTypeDisplay(c.type, c.rawQuadra, c.subtype);
+                                    const typeWithLink = hasAnalysis
+                                      ? `[${typeDisplay}](${baseOriginUrl}/${slugify(c.medium)}/${slugify(c.source)}/${slugify(c.name)}#analysis)`
+                                      : typeDisplay;
+                                    
+                                    const effectiveJAxis = c.judgmentAxis || deriveAxesFromQuadra(c.rawQuadra || c.quadra).judgment;
+                                    const emotionalName = c.emotionalAttitude 
+                                      ? (getEmotionalDescriptor(c.emotionalAttitude, effectiveJAxis) || getEmotionalCategory(c.emotionalAttitude) || c.emotionalAttitude) 
+                                      : '';
+                                    const emotionalSuffix = emotionalName ? ` (${emotionalName})` : '';
+
+                                    return `- ${c.name} **${typeWithLink}**${emotionalSuffix} ${devTicker}`;
+                                  }).join('\n');
+    
+                                  const shareText = `# [${activeWork}](${currentPageUrl})\n${charList}\n-# Shared from [CT in Fiction](${baseOriginUrl})`;
+                                  
+                                  navigator.clipboard.writeText(shareText).then(() => {
+                                    setCopyStatus('work-macro');
+                                    setShowWorkShareOptions(false);
+                                    setTimeout(() => setCopyStatus(null), 2000);
+                                  });
+                                }}
+                                className="font-mono text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer"
+                              >
+                                Macro
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </h1>
+                      <p className="font-mono text-xs uppercase tracking-widest opacity-50">
+                        Release Year: {currentWorkData?.year} • {filteredCharacters.length} Indexed {pluralize(filteredCharacters.length, 'Subject')}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
               
@@ -3296,28 +3182,29 @@ function AppContent() {
                   </div>
                 </div>
               ) : (currentView === 'feed' || currentView === 'work') && (
-                <div id="searchbar-area" className="flex flex-col gap-3.5 w-full pt-2">
-                  <div className="relative w-full max-w-2xl flex items-center gap-3">
+                <div id="searchbar-area" className="flex flex-col gap-4 w-full lg:w-auto pt-2">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <div className="relative flex-1 min-w-0">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                       <input 
                         type="text"
                         placeholder="Search subjects..."
-                        className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full text-base"
+                        className="bg-transparent border-b border-charcoal/20 py-2 pl-10 pr-4 focus:outline-none focus:border-charcoal transition-colors w-full sm:w-64 md:w-80"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
                     <button 
                       onClick={() => setShowFilters(!showFilters)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-mono text-[9px] uppercase tracking-widest flex-shrink-0 cursor-pointer ${
+                      className={`flex items-center gap-2 p-2 sm:px-4 sm:py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-widest flex-shrink-0 ${
                         (showFilters || hasArchetypeFilters) ? 'bg-charcoal text-beige border-charcoal' : 'border-charcoal/20 hover:border-charcoal'
                       }`}
                       title={showFilters ? 'Hide Filters' : 'Show Filters'}
                     >
                       <Filter className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Filter'}</span>
+                      <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                     </button>
+
                   </div>
     
                   <AnimatePresence>
@@ -3585,7 +3472,7 @@ function AppContent() {
                     data-quadra={(char.quadra || char.rawQuadra || '').toLowerCase()}
                     onClick={() => handleSelectCharacter(char)}
                   >
-                    <div className="character-image-container aspect-[16/9] mb-4 flex items-center justify-center bg-charcoal/5 overflow-hidden">
+                    <div className="character-image-container aspect-[16/9] flex items-center justify-center bg-charcoal/5 overflow-hidden">
                       <SmartSubjectImage 
                         src={char.imageUrl || ''} 
                         alt={char.name}
@@ -3721,27 +3608,12 @@ function AppContent() {
                   <span className="font-mono text-xs uppercase tracking-[0.2em] opacity-40 block">
                     Subject Profile
                   </span>
-                  <div className="flex items-center gap-2">
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setEditingChar(selectedCharacter);
-                          setIsCharModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal/5 hover:bg-charcoal/10 rounded-full font-mono text-[10px] uppercase tracking-wider text-charcoal transition-colors border border-charcoal/10"
-                        title="Edit this character analysis"
-                      >
-                        <Edit className="w-3 h-3" />
-                        <span>Edit</span>
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => handleSelectCharacter(null)}
-                      className="p-2 -mr-2 hover:bg-black/5 rounded-full transition-colors"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => handleSelectCharacter(null)}
+                    className="p-2 -mr-2 hover:bg-black/5 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
 
                 <div className="mb-12 relative group/subject">
@@ -4496,43 +4368,6 @@ function AppContent() {
           <a href="mailto:osayandeosas1000@gmail.com" className="hover:opacity-100 transition-opacity">Contact</a>
         </div>
       </footer>
-
-      {/* Author & Admin Modals */}
-      <CodeLoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-
-      <CharacterEditModal
-        isOpen={isCharModalOpen}
-        onClose={() => {
-          setIsCharModalOpen(false);
-          setEditingChar(null);
-        }}
-        character={editingChar}
-        onSaved={() => {
-          loadData(false, true);
-        }}
-        onOpenWorkManager={() => {
-          setIsWorkModalOpen(true);
-        }}
-      />
-
-      <WorkManagerModal
-        isOpen={isWorkModalOpen}
-        onClose={() => setIsWorkModalOpen(false)}
-        onWorksUpdated={() => {
-          loadData(false, true);
-        }}
-      />
-
-      <AuthorManagerModal
-        isOpen={isAuthorModalOpen}
-        onClose={() => setIsAuthorModalOpen(false)}
-        onAuthorsUpdated={() => {
-          loadData(false, true);
-        }}
-      />
     </div>
   );
 }
